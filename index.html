@@ -65,6 +65,21 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 .card{padding:10px 12px;display:grid;gap:4px}
 #aviso{position:fixed;left:50%;transform:translateX(-50%);top:calc(110px + env(safe-area-inset-top));z-index:20;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:700;display:none;max-width:calc(100% - 32px);text-align:center}
 #upd{position:fixed;left:8px;right:8px;top:calc(110px + env(safe-area-inset-top));z-index:15;display:none;padding:10px 12px;align-items:center;gap:10px;justify-content:space-between}
+#home{position:fixed;inset:0;z-index:30;background:var(--bg);overflow:auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));display:none}
+#home.on{display:block}.hw{max-width:620px;margin:0 auto;display:grid;gap:14px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+#home h1{margin:2px 0 0;font-size:27px;line-height:1.15}
+.ok-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#223A28;color:#6DBA7F;font-size:12.5px;font-weight:700}
+.choice{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--ln);background:var(--sf);cursor:pointer;text-decoration:none;color:var(--ink)}
+.choice .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:#223A28}
+.choice strong{display:block;font-size:18px}.choice small{color:var(--mut);font-size:13.5px}
+.choice .seta{color:var(--mut);font-size:22px}
+.fz{display:grid;gap:8px}
+.fzb{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:54px;padding:8px 14px;border-radius:12px;border:1px solid var(--ln);background:var(--sf);font-weight:700;text-align:left;cursor:pointer}
+.fzb small{display:block;font-weight:500;color:var(--mut);font-size:12.5px}
+.bar{display:flex;gap:6px;width:100%}.bar .bt{white-space:nowrap}.bar .bt{flex:1;min-height:40px;border-radius:10px;border:1px solid var(--ln);background:var(--bg);font-weight:700;font-size:13px;cursor:pointer}
+#b-home{min-width:48px;min-height:46px;border-radius:12px;background:var(--sf);border:1px solid var(--ln);font-weight:700;cursor:pointer}
+.toprow{display:flex;gap:6px}
 #pin{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;place-items:center;padding:24px}
 #pin .box{padding:22px;display:grid;gap:12px;width:min(360px,100%)}
 #pin input{min-height:52px;font-size:24px;text-align:center;letter-spacing:.3em;border-radius:10px;border:1px solid var(--ln);background:var(--sf)}
@@ -72,7 +87,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 </head>
 <body>
 <svg id="mapa" role="img" aria-label="Mapa da fazenda"></svg>
-<div class="top"><select id="selm" aria-label="Fazenda"></select><div id="sub"></div></div>
+<div class="top"><div class="toprow"><button id="b-home" aria-label="Voltar ao início">←</button><select id="selm" aria-label="Fazenda"></select></div><div id="sub"></div></div>
 <div class="ctl">
   <button id="b-in" aria-label="Aproximar">＋</button>
   <button id="b-out" aria-label="Afastar">－</button>
@@ -88,6 +103,15 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 <div id="aviso"></div>
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheet"><div class="sh-h"><b id="sh-t"></b><button class="btn" id="sh-x">Fechar</button></div><div class="sh-b" id="sh-b"></div></div>
+<div id="home"><div class="hw">
+  <div><div class="eyebrow">Estradas · Projeto Sucuriú</div><h1>O que você deseja fazer?</h1></div>
+  <div><span class="ok-chip">✓ Funciona sem internet</span> <span class="muted" id="h-ver"></span></div>
+  <button class="choice" id="h-mapa"><span class="ic">🗺️</span><span><strong>Mapa das estradas</strong><small>Mapa da fazenda com GPS e a situação de cada trecho.</small></span><span class="seta">›</span></button>
+  <button class="choice" id="h-pontos"><span class="ic">📍</span><span><strong>Pontos marcados</strong><small id="h-np">Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.</small></span><span class="seta">›</span></button>
+  <a class="choice" href="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8" target="_blank" rel="noopener"><span class="ic">📋</span><span><strong>Painel de Campo</strong><small>Microplanejamento, acompanhamento e lançamentos. Precisa de internet.</small></span><span class="seta">›</span></a>
+  <div class="eyebrow" style="margin-top:6px">Fazendas</div>
+  <div class="fz" id="h-fz"></div>
+</div></div>
 <div id="pin"><div class="box"><b style="font-size:19px">Estradas Sucuriú</b><div class="muted">Digite o código de acesso da equipe.</div><input id="pin-i" inputmode="numeric" autocomplete="off" maxlength="8"><button class="btn pri" id="pin-ok">Entrar</button></div></div>
 
 <script>
@@ -271,9 +295,19 @@ window.addEventListener("online",()=>buscarDados(true));
 const PIN_H="7c14d3";function h(s){let x=5381;for(const c of s)x=((x<<5)+x+c.charCodeAt(0))>>>0;return (x%0xffffff).toString(16).padStart(6,"0");}
 async function iniciar(){await carregarPontos();
   const r=await fetch("dados/mapas.json").catch(()=>null);if(!r||!r.ok){document.body.innerHTML='<div style="padding:24px">Abra o app uma vez com internet para baixar os mapas.</div>';return;}
-  DADOS=await r.json();montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();
+  DADOS=await r.json();montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();home();
   if(navigator.onLine)setTimeout(()=>buscarDados(true),2500);}
 function entrar(){$("#pin").style.display="none";iniciar();}
+function home(){$("#home").classList.add("on");fecharFolha();if(!DADOS)return;
+  $("#h-ver").textContent="· mapas de "+DADOS.versao;
+  $("#h-np").textContent=PONTOS.length?`${PONTOS.length} ponto(s) marcados neste celular. Toque para ver e enviar.`:"Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.";
+  $("#h-fz").innerHTML=DADOS.fazendas.map(f=>`<div class="fzb" style="display:grid;gap:8px"><div><b>${esc(f.mapas[0].nome)}</b> <small style="display:inline">· ${esc(f.cod)}</small></div>
+    <div class="bar">${f.mapas.map(m=>`<button class="bt" data-abre="${LISTA.indexOf(m)}">${m.acesso?"Acesso":"Estradas internas"}</button>`).join("")}</div></div>`).join("");
+  $("#h-fz").querySelectorAll("[data-abre]").forEach(b=>b.onclick=()=>abrirMapa(+b.dataset.abre));}
+function abrirMapa(i){if(i!=null&&i!==I){I=i;desenhar();}$("#home").classList.remove("on");requestAnimationFrame(()=>{VB=VB||null;aplicar();});}
+$("#h-mapa").onclick=()=>abrirMapa(null);
+$("#h-pontos").onclick=()=>{abrirMapa(null);$("#b-menu").onclick();};
+$("#b-home").onclick=home;
 if(LS.get("pin_ok",false))entrar();else{$("#pin").style.display="grid";const ok=()=>{if(h($("#pin-i").value.trim())===PIN_H){LS.set("pin_ok",true);entrar();}else{aviso("Código errado.");$("#pin-i").value="";}};$("#pin-ok").onclick=ok;$("#pin-i").onkeydown=e=>{if(e.key==="Enter")ok();};}
 </script>
 </body>
