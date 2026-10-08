@@ -12,6 +12,8 @@
 <link rel="icon" href="icones/icone-192.png">
 <link rel="apple-touch-icon" href="icones/icone-192.png">
 <style>
+:root[data-tema="claro"]{--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--tal:#F1E6C4;--tall:#C9B98A;--np:#8E938B}
+:root[data-tema="sol"]{--bg:#FFFFFF;--sf:#FFFFFF;--ln:#3A3A3A;--ink:#000;--mut:#1F1F1F;--tal:#F4E9C8;--tall:#8A7A4A;--np:#6E726B;--zero:#D0453A;--ok:#00702A}
 :root{--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--tal:#3A3526;--tall:#6B6247;
   --ok:#2E8B57;--and:#E0A100;--prep:#3B7DD8;--zero:#E58B83;--np:#A9ADA6;--mk:#B07CE8;--gps:#1A73E8;--danger:#F08A80}
 *{box-sizing:border-box}
@@ -34,13 +36,13 @@ svg#mapa{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-se
 .top{position:fixed;top:calc(8px + env(safe-area-inset-top));left:8px;right:64px;display:grid;gap:6px;z-index:2}
 .box{background:var(--sf);border:1px solid var(--ln);border-radius:12px}
 #selm{width:100%;min-height:46px;padding:0 12px;font-weight:700;background:var(--sf);border:1px solid var(--ln);border-radius:12px}
-#sub{font-size:12px;color:var(--mut);padding:0 4px;text-shadow:0 1px 2px #000}
+#sub{font-size:12px;color:var(--mut);padding:0 4px}
 .ctl{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;display:grid;gap:8px;z-index:2}
 .ctl button{width:48px;height:48px;border-radius:12px;background:var(--sf);border:1px solid var(--ln);font-size:21px;font-weight:700;cursor:pointer;display:grid;place-items:center}
 .ctl button.on{background:var(--gps);border-color:var(--gps)}
-#esc{position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2;background:#262C27dd;border-radius:8px;padding:4px 8px;font:600 12px ui-monospace,monospace;display:flex;gap:8px;align-items:center}
+#esc{position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2;background:var(--sf);opacity:.92;border-radius:8px;padding:4px 8px;font:600 12px ui-monospace,monospace;display:flex;gap:8px;align-items:center}
 #esc i{display:block;height:5px;border:2px solid var(--ink);border-top:0}
-#leg{position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2;background:#262C27dd;border-radius:8px;padding:5px 8px;font-size:11px;display:flex;gap:4px 9px;flex-wrap:wrap;justify-content:flex-end;max-width:62%}
+#leg{position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2;background:var(--sf);opacity:.92;border-radius:8px;padding:5px 8px;font-size:11px;display:flex;gap:4px 9px;flex-wrap:wrap;justify-content:flex-end;max-width:62%}
 #leg i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}
 #info{position:fixed;left:8px;right:8px;bottom:calc(44px + env(safe-area-inset-bottom));z-index:3;padding:10px 12px;line-height:1.5;display:none}
 #info hr{border:0;border-top:1px solid var(--ln);margin:6px 0}
@@ -71,14 +73,17 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 #home h1{margin:2px 0 0;font-size:27px;line-height:1.15}
 .ok-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#223A28;color:#6DBA7F;font-size:12.5px;font-weight:700}
 .choice{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--ln);background:var(--sf);cursor:pointer;text-decoration:none;color:var(--ink)}
-.choice .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:#223A28}
+.choice .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:var(--bg)}
+.temas{display:flex;gap:6px;flex-wrap:wrap}.temas button{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--ln);background:var(--sf);font-weight:700;cursor:pointer}.temas button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.ctl button{position:relative}.ctl button .lb{display:none}
+@media (min-width:900px) and (hover:hover){.ctl{grid-template-columns:auto}.ctl button{width:auto;min-width:48px;padding:0 12px;grid-auto-flow:column;gap:8px;justify-content:start;font-size:19px}.ctl button .lb{display:inline;font-size:14px;font-weight:700}}
 .choice strong{display:block;font-size:18px}.choice small{color:var(--mut);font-size:13.5px}
 .choice .seta{color:var(--mut);font-size:22px}
 .fz{display:grid;gap:8px}
 .fzb{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:54px;padding:8px 14px;border-radius:12px;border:1px solid var(--ln);background:var(--sf);font-weight:700;text-align:left;cursor:pointer}
 .fzb small{display:block;font-weight:500;color:var(--mut);font-size:12.5px}
 .bar{display:flex;gap:6px;width:100%}.bar .bt{white-space:nowrap}.bar .bt{flex:1;min-height:40px;border-radius:10px;border:1px solid var(--ln);background:var(--bg);font-weight:700;font-size:13px;cursor:pointer}
-#b-home{min-width:48px;min-height:46px;border-radius:12px;background:var(--sf);border:1px solid var(--ln);font-weight:700;cursor:pointer}
+#b-home{min-width:48px;padding:0 12px;white-space:nowrap;min-height:46px;border-radius:12px;background:var(--sf);border:1px solid var(--ln);font-weight:700;cursor:pointer}
 .toprow{display:flex;gap:6px}
 #pin{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;place-items:center;padding:24px}
 #pin .box{padding:22px;display:grid;gap:12px;width:min(360px,100%)}
@@ -87,14 +92,14 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 </head>
 <body>
 <svg id="mapa" role="img" aria-label="Mapa da fazenda"></svg>
-<div class="top"><div class="toprow"><button id="b-home" aria-label="Voltar ao início">←</button><select id="selm" aria-label="Fazenda"></select></div><div id="sub"></div></div>
+<div class="top"><div class="toprow"><button id="b-home" aria-label="Voltar ao início" title="Voltar ao início">← Início</button><select id="selm" aria-label="Fazenda"></select></div><div id="sub"></div></div>
 <div class="ctl">
-  <button id="b-in" aria-label="Aproximar">＋</button>
-  <button id="b-out" aria-label="Afastar">－</button>
-  <button id="b-fit" aria-label="Mapa inteiro">⤢</button>
-  <button id="b-gps" aria-label="Onde estou">◉</button>
-  <button id="b-pt" aria-label="Marcar ponto">📍</button>
-  <button id="b-menu" aria-label="Mais opções">☰</button>
+  <button id="b-in" aria-label="Aproximar" title="Aproximar">＋<span class="lb">Aproximar</span></button>
+  <button id="b-out" aria-label="Afastar" title="Afastar">－<span class="lb">Afastar</span></button>
+  <button id="b-fit" aria-label="Ver a fazenda inteira" title="Ver a fazenda inteira">⤢<span class="lb">Ver a fazenda inteira</span></button>
+  <button id="b-gps" aria-label="Onde estou (GPS)" title="Onde estou (GPS)">◉<span class="lb">Onde estou (GPS)</span></button>
+  <button id="b-pt" aria-label="Marcar ponto" title="Marcar ponto">📍<span class="lb">Marcar ponto</span></button>
+  <button id="b-menu" aria-label="Talhões, pontos e mais" title="Talhões, pontos e mais">☰<span class="lb">Talhões, pontos e mais</span></button>
 </div>
 <div id="info" class="box"></div>
 <div id="esc"></div>
@@ -106,6 +111,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 <div id="home"><div class="hw">
   <div><div class="eyebrow">Estradas · Projeto Sucuriú</div><h1>O que você deseja fazer?</h1></div>
   <div><span class="ok-chip">✓ Funciona sem internet</span> <span class="muted" id="h-ver"></span></div>
+  <div class="temas" id="h-tema"><span class="muted" style="align-self:center">Tela:</span><button data-tema="escuro">Escuro</button><button data-tema="claro">Claro</button><button data-tema="sol">Sol (forte)</button></div>
   <button class="choice" id="h-mapa"><span class="ic">🗺️</span><span><strong>Mapa das estradas</strong><small>Mapa da fazenda com GPS e a situação de cada trecho.</small></span><span class="seta">›</span></button>
   <button class="choice" id="h-pontos"><span class="ic">📍</span><span><strong>Pontos marcados</strong><small id="h-np">Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.</small></span><span class="seta">›</span></button>
   <a class="choice" id="h-painel" href="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8" target="_blank" rel="noopener"><span class="ic">📋</span><span><strong>Painel de Campo</strong><small>Microplanejamento, acompanhamento e lançamentos. Precisa de internet.</small></span><span class="seta">›</span></a>
@@ -298,6 +304,9 @@ async function iniciar(){await carregarPontos();
   DADOS=await r.json();montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();home();
   if(navigator.onLine)setTimeout(()=>buscarDados(true),2500);}
 function entrar(){$("#pin").style.display="none";iniciar();}
+function tema(t){document.documentElement.setAttribute("data-tema",t);LS.set("tema",t);document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tema===t));
+  const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.content=t==="escuro"?"#1F2420":"#F2F1EC";}
+document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.onclick=()=>tema(b.dataset.tema));tema(LS.get("tema","escuro"));
 function home(){$("#home").classList.add("on");fecharFolha();if(!DADOS)return;
   $("#h-ver").textContent="· mapas de "+DADOS.versao;
   $("#h-np").textContent=PONTOS.length?`${PONTOS.length} ponto(s) marcados neste celular. Toque para ver e enviar.`:"Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.";
@@ -312,7 +321,7 @@ const PAINEL="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8";
 function abrirPainel(e){if(!navigator.onLine){e.preventDefault();aviso("O Painel precisa de internet.");return;}
   if(/Android/i.test(navigator.userAgent)){e.preventDefault();location.href="intent://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url="+encodeURIComponent(PAINEL)+";end";}}
 document.addEventListener("click",e=>{const a=e.target.closest("#h-painel,.painel-lk");if(a)abrirPainel(e);});
-if(LS.get("pin_ok",false))entrar();else{$("#pin").style.display="grid";const ok=()=>{if(h($("#pin-i").value.trim())===PIN_H){LS.set("pin_ok",true);entrar();}else{aviso("Código errado.");$("#pin-i").value="";}};$("#pin-ok").onclick=ok;$("#pin-i").onkeydown=e=>{if(e.key==="Enter")ok();};}
+entrar();if(false){$("#pin").style.display="grid";const ok=()=>{if(h($("#pin-i").value.trim())===PIN_H){LS.set("pin_ok",true);entrar();}else{aviso("Código errado.");$("#pin-i").value="";}};$("#pin-ok").onclick=ok;$("#pin-i").onkeydown=e=>{if(e.key==="Enter")ok();};}
 </script>
 </body>
 </html>
