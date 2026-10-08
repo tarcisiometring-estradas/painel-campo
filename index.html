@@ -283,11 +283,18 @@ async function enviarPontos(){const txt=PONTOS.map(p=>`• ${p.tipo} – ${p.faz
   try{await navigator.clipboard.writeText(cab+txt);aviso("Lista copiada. Cole no WhatsApp.");}catch(e){aviso("Não consegui compartilhar neste aparelho.");}}
 
 /* ================= carregar, trocar fazenda, atualizar ================= */
+/* situação dos trechos: vem do painel toda madrugada (dados/situacao.json) */
+let SIT=null;
+function aplicarSit(){if(!DADOS||!SIT||!SIT.mapas)return;DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{const s=SIT.mapas[f.cod]&&SIT.mapas[f.cod][m.acesso?"A":"I"];if(!s)return;
+  m.trechos.forEach(t=>{const v=s[t.n];if(v){t.st=v[0];t.partes=v[1]||[];}});}));}
+async function buscarSit(forcar){try{const r=await fetch("dados/situacao.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)return false;const d=await r.json();
+  const mudou=!SIT||d.em!==SIT.em;SIT=d;if(mudou)aplicarSit();return mudou;}catch(e){return false;}}
+function dataSit(){if(!SIT||!SIT.em)return "";const d=new Date(SIT.em);return isNaN(d)?"":d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
 function montarLista(){LISTA=[];DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{m.cod=f.cod;m.id=f.cod+(m.acesso?"-acesso":"");LISTA.push(m);}));
   $("#selm").innerHTML=DADOS.fazendas.map(f=>`<optgroup label="${esc(f.mapas[0].nome)}">${f.mapas.map(m=>`<option value="${LISTA.indexOf(m)}">${esc(m.nome)} · ${m.acesso?"Acesso":"Estradas internas"}</option>`).join("")}</optgroup>`).join("");}
 $("#selm").onchange=e=>{I=+e.target.value;desenhar();};
 async function buscarDados(forcar){try{const r=await fetch("dados/mapas.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)throw 0;const d=await r.json();
-    const mudou=!DADOS||d.versao!==DADOS.versao;if(mudou){const id=LISTA[I]&&LISTA[I].id;DADOS=d;montarLista();const k=LISTA.findIndex(m=>m.id===(id||LS.get("mapa","")));I=k>=0?k:0;desenhar();}return mudou&&forcar;}catch(e){return false;}}
+    const mudou=!DADOS||d.versao!==DADOS.versao;if(mudou){const id=LISTA[I]&&LISTA[I].id;DADOS=d;aplicarSit();montarLista();const k=LISTA.findIndex(m=>m.id===(id||LS.get("mapa","")));I=k>=0?k:0;desenhar();}const ms=await buscarSit(forcar);if(ms&&!mudou)desenhar();if($("#home").classList.contains("on"))home();return (mudou||ms)&&forcar;}catch(e){return false;}}
 let swNovo=null;
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(reg=>{
   const ver=w=>{if(!w)return;w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller){swNovo=w;$("#upd").style.display="flex";}});};
@@ -301,14 +308,14 @@ window.addEventListener("online",()=>buscarDados(true));
 const PIN_H="7c14d3";function h(s){let x=5381;for(const c of s)x=((x<<5)+x+c.charCodeAt(0))>>>0;return (x%0xffffff).toString(16).padStart(6,"0");}
 async function iniciar(){await carregarPontos();
   const r=await fetch("dados/mapas.json").catch(()=>null);if(!r||!r.ok){document.body.innerHTML='<div style="padding:24px">Abra o app uma vez com internet para baixar os mapas.</div>';return;}
-  DADOS=await r.json();montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();home();
+  DADOS=await r.json();await buscarSit(false);montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();home();
   if(navigator.onLine)setTimeout(()=>buscarDados(true),2500);}
 function entrar(){$("#pin").style.display="none";iniciar();}
 function tema(t){document.documentElement.setAttribute("data-tema",t);LS.set("tema",t);document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tema===t));
   const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.content=t==="escuro"?"#1F2420":"#F2F1EC";}
 document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.onclick=()=>tema(b.dataset.tema));tema(LS.get("tema","escuro"));
 function home(){$("#home").classList.add("on");fecharFolha();if(!DADOS)return;
-  $("#h-ver").textContent="· mapas de "+DADOS.versao;
+  $("#h-ver").textContent="· mapas de "+DADOS.versao+(dataSit()?" · situação de "+dataSit():"");
   $("#h-np").textContent=PONTOS.length?`${PONTOS.length} ponto(s) marcados neste celular. Toque para ver e enviar.`:"Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.";
   $("#h-fz").innerHTML=DADOS.fazendas.map(f=>`<div class="fzb" style="display:grid;gap:8px"><div><b>${esc(f.mapas[0].nome)}</b> <small style="display:inline">· ${esc(f.cod)}</small></div>
     <div class="bar">${f.mapas.map(m=>`<button class="bt" data-abre="${LISTA.indexOf(m)}">${m.acesso?"Acesso":"Estradas internas"}</button>`).join("")}</div></div>`).join("");
