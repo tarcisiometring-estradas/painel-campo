@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1F2420">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Estradas Sucuriú</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone-192.png">
+<link rel="apple-touch-icon" href="icones/icone-192.png">
+<style>
+:root{--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--tal:#3A3526;--tall:#6B6247;
+  --ok:#2E8B57;--and:#E0A100;--prep:#3B7DD8;--zero:#E58B83;--np:#A9ADA6;--mk:#B07CE8;--gps:#1A73E8;--danger:#F08A80}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+button,select,input,textarea{font:inherit;color:inherit}
+svg#mapa{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;background:var(--bg)}
+.tal{fill:var(--tal);stroke:var(--tall);stroke-width:1;vector-effect:non-scaling-stroke}
+.tr{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:var(--tw,3px);vector-effect:non-scaling-stroke}
+.s-pronto,.s-g-ok{stroke:var(--ok)}.s-agulhado,.s-g-and{stroke:var(--and)}.s-preparo{stroke:var(--prep)}.s-falta,.s-g-zero{stroke:var(--zero)}
+.s-nc,.s-g-np,.s-g-fora{stroke:var(--np);stroke-width:calc(var(--tw,3px)*.55);stroke-dasharray:6 5}
+.alt.s-pronto,.alt.s-g-ok{stroke:#1F6E43}.alt.s-agulhado,.alt.s-g-and{stroke:#B98400}.alt.s-preparo{stroke:#2A62B0}.alt.s-falta,.alt.s-g-zero{stroke:#C9655C}
+.tr.sel{stroke-width:calc(var(--tw,3px)*1.9)}
+.viz{fill:none;stroke-width:1.6px;stroke-opacity:.8;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.hit{fill:none;stroke:transparent;stroke-width:26;vector-effect:non-scaling-stroke}
+.nb text{font:700 10.5px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
+.nb circle{fill:transparent}.nb.sel circle{fill:var(--ink)}.nb.sel text{fill:var(--bg);stroke:none}
+.tt{font:700 12px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--tal);stroke-width:3px}
+.ts{font:500 9.5px system-ui,sans-serif;fill:var(--mut);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--tal);stroke-width:3px}
+.pin{fill:var(--mk);stroke:#fff;stroke-width:2;vector-effect:non-scaling-stroke}
+.top{position:fixed;top:calc(8px + env(safe-area-inset-top));left:8px;right:64px;display:grid;gap:6px;z-index:2}
+.box{background:var(--sf);border:1px solid var(--ln);border-radius:12px}
+#selm{width:100%;min-height:46px;padding:0 12px;font-weight:700;background:var(--sf);border:1px solid var(--ln);border-radius:12px}
+#sub{font-size:12px;color:var(--mut);padding:0 4px;text-shadow:0 1px 2px #000}
+.ctl{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;display:grid;gap:8px;z-index:2}
+.ctl button{width:48px;height:48px;border-radius:12px;background:var(--sf);border:1px solid var(--ln);font-size:21px;font-weight:700;cursor:pointer;display:grid;place-items:center}
+.ctl button.on{background:var(--gps);border-color:var(--gps)}
+#esc{position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2;background:#262C27dd;border-radius:8px;padding:4px 8px;font:600 12px ui-monospace,monospace;display:flex;gap:8px;align-items:center}
+#esc i{display:block;height:5px;border:2px solid var(--ink);border-top:0}
+#leg{position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2;background:#262C27dd;border-radius:8px;padding:5px 8px;font-size:11px;display:flex;gap:4px 9px;flex-wrap:wrap;justify-content:flex-end;max-width:62%}
+#leg i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}
+#info{position:fixed;left:8px;right:8px;bottom:calc(44px + env(safe-area-inset-bottom));z-index:3;padding:10px 12px;line-height:1.5;display:none}
+#info hr{border:0;border-top:1px solid var(--ln);margin:6px 0}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12.5px;font-weight:700;background:var(--ln)}
+.p-pronto,.p-g-ok{background:var(--ok)}.p-agulhado,.p-g-and{background:var(--and);color:#1F2420}.p-preparo{background:var(--prep)}.p-falta,.p-g-zero{background:var(--zero);color:#1F2420}
+.btn{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);font-weight:700;cursor:pointer}
+.btn.pri{background:var(--ok);border-color:var(--ok);color:#fff}.btn.dan{color:var(--danger);background:transparent}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10;display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:88%;z-index:11;background:var(--bg);border-radius:16px 16px 0 0;border-top:1px solid var(--ln);display:none;flex-direction:column}
+.sheet.on,.scrim.on{display:flex}.scrim.on{display:block}
+.sh-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--ln)}.sh-h b{flex:1;font-size:17px}
+.sh-b{overflow:auto;padding:14px;padding-bottom:calc(24px + env(safe-area-inset-bottom));display:grid;gap:12px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 8px;border-bottom:1px solid var(--ln);text-align:right}th:first-child,td:first-child{text-align:left}th{color:var(--mut);font-size:12px;text-transform:uppercase}
+.muted{color:var(--mut);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chips button{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--ln);background:var(--sf);font-weight:700}
+.chips button[aria-pressed=true]{background:var(--mk);border-color:var(--mk);color:#fff}
+textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px solid var(--ln);background:var(--sf)}
+.foto{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;border-radius:10px;border:1px solid var(--mk);color:var(--mk);font-weight:700;overflow:hidden}
+.foto input{position:absolute;inset:0;opacity:0}
+.thumb{width:100%;max-height:220px;object-fit:contain;border-radius:10px;background:#000}
+.card{padding:10px 12px;display:grid;gap:4px}
+#aviso{position:fixed;left:50%;transform:translateX(-50%);top:calc(110px + env(safe-area-inset-top));z-index:20;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:700;display:none;max-width:calc(100% - 32px);text-align:center}
+#upd{position:fixed;left:8px;right:8px;top:calc(110px + env(safe-area-inset-top));z-index:15;display:none;padding:10px 12px;align-items:center;gap:10px;justify-content:space-between}
+#pin{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;place-items:center;padding:24px}
+#pin .box{padding:22px;display:grid;gap:12px;width:min(360px,100%)}
+#pin input{min-height:52px;font-size:24px;text-align:center;letter-spacing:.3em;border-radius:10px;border:1px solid var(--ln);background:var(--sf)}
+</style>
+</head>
+<body>
+<svg id="mapa" role="img" aria-label="Mapa da fazenda"></svg>
+<div class="top"><select id="selm" aria-label="Fazenda"></select><div id="sub"></div></div>
+<div class="ctl">
+  <button id="b-in" aria-label="Aproximar">＋</button>
+  <button id="b-out" aria-label="Afastar">－</button>
+  <button id="b-fit" aria-label="Mapa inteiro">⤢</button>
+  <button id="b-gps" aria-label="Onde estou">◉</button>
+  <button id="b-pt" aria-label="Marcar ponto">📍</button>
+  <button id="b-menu" aria-label="Mais opções">☰</button>
+</div>
+<div id="info" class="box"></div>
+<div id="esc"></div>
+<div id="leg"></div>
+<div id="upd" class="box"><span>Mapas novos disponíveis.</span><button class="btn pri" id="b-upd">Atualizar agora</button></div>
+<div id="aviso"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"><div class="sh-h"><b id="sh-t"></b><button class="btn" id="sh-x">Fechar</button></div><div class="sh-b" id="sh-b"></div></div>
+<div id="pin"><div class="box"><b style="font-size:19px">Estradas Sucuriú</b><div class="muted">Digite o código de acesso da equipe.</div><input id="pin-i" inputmode="numeric" autocomplete="off" maxlength="8"><button class="btn pri" id="pin-ok">Entrar</button></div></div>
+
+<script>
+"use strict";
+/* ================= dados ================= */
+let DADOS=null,LISTA=[],I=0,VB=null,sel=null;
+const GPS={on:false,fix:null,watch:null,erro:"",seguir:false};
+const $=s=>document.querySelector(s);
+const fmt=v=>(isFinite(v)?v:0).toLocaleString("pt-BR",{maximumFractionDigits:2});
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fM=m=>m>=1000?fmt(Math.round(m/10)/100)+" km":fmt(Math.round(m))+" m";
+const ST_N={pronto:"Trecho pronto",agulhado:"Agulhado",preparo:"Preparo feito",falta:"Falta preparo",nc:"Não conferido","g-zero":"Não iniciado","g-and":"Em andamento","g-ok":"Concluído","g-np":"Não previsto","g-fora":"Não previsto"};
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+function aviso(t){const a=$("#aviso");a.textContent=t;a.style.display="block";clearTimeout(aviso.t);aviso.t=setTimeout(()=>a.style.display="none",2800);}
+
+/* ================= georreferência ================= */
+const n2g=(M,x,y)=>{const c=M.geo;const px=c.x0+(x-c.n0)*c.s,py=c.y0+(y-c.n0)*c.s,yu=c.H-py,b=c.bb;const u=(px-b[0])/(b[2]-b[0]),v=(yu-b[1])/(b[3]-b[1]);const [BL,TL,TR,BR]=c.g;const f=i=>(1-u)*(1-v)*BL[i]+(1-u)*v*TL[i]+u*v*TR[i]+u*(1-v)*BR[i];return [f(0),f(1)];};
+const g2n=(M,lat,lon)=>{let x=M.w/2,y=M.h/2;for(let i=0;i<7;i++){const p=n2g(M,x,y),px=n2g(M,x+1,y),py=n2g(M,x,y+1);const a=px[0]-p[0],b=py[0]-p[0],c=px[1]-p[1],d=py[1]-p[1],det=a*d-b*c;if(!det)break;const e0=lat-p[0],e1=lon-p[1];x+=(d*e0-b*e1)/det;y+=(-c*e0+a*e1)/det;}return [x,y];};
+const dist=(a,b)=>{const R=6371008.8,r=Math.PI/180;const p1=a[0]*r,p2=b[0]*r,dp=p2-p1,dl=(b[1]-a[1])*r;return 2*R*Math.asin(Math.sqrt(Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2));};
+const mpu=m=>dist(n2g(m,0,m.h/2),n2g(m,100,m.h/2))/100;
+
+/* ================= pontos marcados (ficam no celular) ================= */
+const DB={db:null,
+  abrir(){return new Promise(ok=>{if(this.db)return ok(this.db);let r;try{r=indexedDB.open("estradas",1);}catch(e){return ok(null);}
+    r.onupgradeneeded=()=>{r.result.createObjectStore("pontos",{keyPath:"id"});};r.onsuccess=()=>{this.db=r.result;ok(this.db);};r.onerror=()=>ok(null);});},
+  async todos(){const d=await this.abrir();if(!d)return [];return new Promise(ok=>{const q=d.transaction("pontos").objectStore("pontos").getAll();q.onsuccess=()=>ok(q.result||[]);q.onerror=()=>ok([]);});},
+  async por(p){const d=await this.abrir();if(!d)throw new Error("sem banco");return new Promise((ok,er)=>{const t=d.transaction("pontos","readwrite");t.objectStore("pontos").put(p);t.oncomplete=ok;t.onerror=()=>er(t.error);});},
+  async tirar(id){const d=await this.abrir();if(!d)return;return new Promise(ok=>{const t=d.transaction("pontos","readwrite");t.objectStore("pontos").delete(id);t.oncomplete=ok;t.onerror=ok;});}};
+let PONTOS=[];
+async function carregarPontos(){PONTOS=await DB.todos();PONTOS.sort((a,b)=>b.em.localeCompare(a.em));}
+const TIPOS=["Buraco","Erosão","Bueiro / tubo","Atoleiro","Mata-burro","Ponte","Árvore caída","Outro"];
+
+/* ================= desenho ================= */
+const M=()=>LISTA[I];const sv=()=>$("#mapa");
+const raz=()=>{const r=sv().getBoundingClientRect();return r.width&&r.height?r.height/r.width:1;};
+function bbCont(m){if(m._bb)return m._bb;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;const ad=p=>{x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);};
+  m.trechos.forEach(t=>t.pts.forEach(ad));m.talhoes.forEach(t=>t.pts.forEach(ad));const g=Math.max(x1-x0,y1-y0)*0.04;
+  return m._bb=x1>x0?{x:x0-g,y:y0-g,w:x1-x0+2*g,h:y1-y0+2*g}:{x:0,y:0,w:m.w,h:m.h};}
+function inteiro(){const r=raz(),b=bbCont(M());let w,h;if(b.h/b.w>r){h=b.h;w=h/r;}else{w=b.w;h=w*r;}return {x:b.x+b.w/2-w/2,y:b.y+b.h/2-h/2,w,h};}
+function vizinho(m){if(m._viz!=null)return m._viz;const o=LISTA.find(x=>x.cod===m.cod&&x!==m);if(!o)return m._viz="";
+  return m._viz=o.trechos.map(t=>{const pp=t.pts.map(q=>{const g=n2g(o,q[0],q[1]);const p=g2n(m,g[0],g[1]);return p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" ");
+    return `<polyline class="viz s-${t.st}" points="${pp}"/>`;}).join("");}
+function desenhar(){const m=M();sel=null;VB=LS.get("vb_"+m.id,null);
+  $("#selm").value=String(I);
+  $("#sub").textContent=`${m.mapa} · mapas de ${DADOS.versao}`;
+  sv().innerHTML=m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
+    m.trechos.map(t=>`<polyline class="tr s-${t.st}${t.n%2?"":" alt"}" data-n="${t.n}" points="${t.pts.join(" ")}"/><polyline class="hit" data-n="${t.n}" points="${t.pts.join(" ")}"/>`).join("")+
+    m.talhoes.filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fx tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${Math.max(...xs)-Math.min(...xs)}" data-h="${Math.max(...ys)-Math.min(...ys)}" data-n="${String(t.id).length}"><text class="tt" x="${t.lab[0]}" y="${t.lab[1]}">${esc(t.id)}</text>${t.ha?`<text class="ts" x="${t.lab[0]}" y="${t.lab[1]+12}">${fmt(Math.round(t.ha*10)/10)} ha</text>`:""}</g>`;}).join("")+
+    m.trechos.filter(t=>t.mid).map(t=>`<g class="fx nb" data-n="${t.n}" data-cx="${t.mid[0]}" data-cy="${t.mid[1]}"><circle cx="${t.mid[0]}" cy="${t.mid[1]}" r="10"/><text x="${t.mid[0]}" y="${t.mid[1]}">${t.n}</text></g>`).join("")+
+    `<g id="pins"></g><g id="gps"></g>`;
+  $("#leg").innerHTML=m.trechos.some(t=>!String(t.st).startsWith("g-"))||true?`<span><i style="background:var(--ok)"></i>Pronto</span><span><i style="background:var(--and)"></i>Agulhado / andamento</span><span><i style="background:var(--prep)"></i>Preparo</span><span><i style="background:var(--zero)"></i>Falta</span><span><i style="background:var(--np)"></i>Sem previsão</span>`:"";
+  info();aplicar();LS.set("mapa",m.id);}
+let raf=0;
+function aplicar(){const s=sv();if(!VB)VB=inteiro();const nh=VB.w*raz();VB.y+=(VB.h-nh)/2;VB.h=nh;s.setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);
+  const z=inteiro().w/VB.w;s.style.setProperty("--tw",Math.max(1.6,Math.min(2+1.7*Math.sqrt(Math.max(z-1,0)),7)).toFixed(2)+"px");
+  if(!raf)raf=requestAnimationFrame(()=>{raf=0;rotulos();LS.set("vb_"+M().id,VB);});}
+function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)return;const uu=VB.w/r0.width;
+  const tf=(g,k)=>{const cx=+g.dataset.cx,cy=+g.dataset.cy;g.setAttribute("transform",`translate(${cx} ${cy}) scale(${k}) translate(${-cx} ${-cy})`);};
+  const cx=[];const livre=(x,y,w,h)=>{const b=[x-w/2,y-h/2,x+w/2,y+h/2];if(cx.some(c=>b[0]<c[2]&&b[2]>c[0]&&b[1]<c[3]&&b[3]>c[1]))return false;cx.push(b);return true;};
+  const tela=g=>[(+g.dataset.cx-VB.x)/uu,(+g.dataset.cy-VB.y)/uu];const dentro=(x,y)=>x>-40&&y>-40&&x<r0.width+40&&y<r0.height+40;
+  const mids=m.trechos.map(t=>t.mid).filter(Boolean);let gm=60*uu;if(mids.length>1){const ds=[];for(let i=1;i<mids.length;i++)ds.push(Math.hypot(mids[i][0]-mids[i-1][0],mids[i][1]-mids[i-1][1]));ds.sort((a,b)=>a-b);gm=ds[ds.length>>1]||gm;}
+  const ver=gm/uu>=34;
+  [...s.querySelectorAll(".nb")].sort((a,b)=>(+b.dataset.n===sel)-(+a.dataset.n===sel)).forEach(g=>{tf(g,uu);const isSel=+g.dataset.n===sel;g.classList.toggle("sel",isSel);const [x,y]=tela(g);
+    if(!isSel&&(!ver||!dentro(x,y))){g.style.display="none";return;}g.style.display=(livre(x,y,String(g.dataset.n).length*6.5+8,15)||isSel)?"":"none";});
+  s.querySelectorAll(".tr").forEach(p=>p.classList.toggle("sel",+p.dataset.n===sel));
+  [...s.querySelectorAll(".tl")].map(g=>({g,w:+g.dataset.w/uu,h:+g.dataset.h/uu})).sort((a,b)=>b.w-a.w).forEach(o=>{const g=o.g,wN=(+g.dataset.n)*7.2+6;const [x,y]=tela(g);
+    if(o.w<wN*1.6||o.h<20||!dentro(x,y)){g.style.display="none";return;}tf(g,uu);const sub=g.querySelector(".ts");const cs=!!sub&&o.w>=60&&o.h>=46;if(sub)sub.style.display=cs?"":"none";
+    g.style.display=livre(x,y+(cs?6:0),Math.max(wN,cs?50:0),cs?28:15)?"":"none";});
+  $("#pins").innerHTML=PONTOS.map(p=>{const [x,y]=g2n(m,p.lat,p.lon);if(x<-m.w||y<-m.h||x>2*m.w||y>2*m.h)return "";return `<circle class="pin" data-pt="${p.id}" cx="${x}" cy="${y}" r="${8*uu}"/>`;}).join("");
+  const gg=$("#gps");gg.innerHTML="";if(GPS.on&&GPS.fix){const [x,y]=g2n(m,GPS.fix.lat,GPS.fix.lon);gg.innerHTML=`<circle cx="${x}" cy="${y}" r="${GPS.fix.acc/mpu(m)}" fill="#1A73E8" fill-opacity=".15"/><circle cx="${x}" cy="${y}" r="${12*uu}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${8*uu}" fill="#1A73E8"/>`;}
+  const mp=mpu(m)*uu,alvo=mp*100,p=Math.pow(10,Math.floor(Math.log10(alvo))),n=[1,2,5,10].map(k=>k*p).filter(k=>k<=alvo).pop()||p;$("#esc").innerHTML=`<i style="width:${Math.round(n/mp)}px"></i>${fM(n)}`;}
+function info(){const m=M();const t=sel!=null?m.trechos.find(x=>x.n===sel):null;let h="";
+  if(t)h=`<b>Trecho ${t.n}${m.acesso?" do acesso":""}</b> · ${esc(t.tipo)} · ${fmt(t.m)} m<br><span class="pill p-${t.st}">${ST_N[t.st]||t.st}</span> ${t.partes&&t.partes.length?esc(t.partes.join(" · ")):""}`;
+  if(GPS.on){const f=GPS.fix;let g=GPS.erro?esc(GPS.erro):!f?"Procurando o sinal do GPS…":"";
+    if(f){let best=null;for(const tr of m.trechos)for(const p of tr.pts){const d=dist([f.lat,f.lon],n2g(m,p[0],p[1]));if(!best||d<best.d)best={d,n:tr.n};}
+      g=`<b>Você está aqui</b> · ±${Math.round(f.acc)} m${best?` · mais perto: <b>T${best.n}</b> a ${fM(best.d)}`:""}`;}
+    h=(h?h+"<hr>":"")+g;}
+  $("#info").innerHTML=h;$("#info").style.display=h?"block":"none";}
+function zoom(f,x,y){const m=M();const b=bbCont(m);const w=Math.min(Math.max(VB.w*f,b.w/80),b.w*3),h=w*raz();if(x==null){x=VB.x+VB.w/2;y=VB.y+VB.h/2;}const kx=(x-VB.x)/VB.w,ky=(y-VB.y)/VB.h;VB={x:x-kx*w,y:y-ky*h,w,h};aplicar();}
+const toN=(cx,cy)=>{const r=sv().getBoundingClientRect();return [VB.x+(cx-r.left)*VB.w/r.width,VB.y+(cy-r.top)*VB.h/r.height];};
+
+/* ================= gestos ================= */
+let G=null,moveu=false;
+sv().addEventListener("pointerdown",e=>{G=G||{P:new Map()};G.P.set(e.pointerId,{x:e.clientX,y:e.clientY});G.v0={...VB};G.ini=new Map([...G.P].map(([k,v])=>[k,{...v}]));if(G.P.size===1)moveu=false;});
+window.addEventListener("pointermove",e=>{if(!G||!G.P.has(e.pointerId))return;G.P.set(e.pointerId,{x:e.clientX,y:e.clientY});const r=sv().getBoundingClientRect(),v0=G.v0,ps=[...G.P.values()],is=[...G.P.keys()].map(k=>G.ini.get(k));
+  if(ps.length===1){const dx=ps[0].x-is[0].x,dy=ps[0].y-is[0].y;if(!moveu&&Math.hypot(dx,dy)<7)return;moveu=true;GPS.seguir=false;VB.x=v0.x-dx*v0.w/r.width;VB.y=v0.y-dy*v0.h/r.height;aplicar();}
+  else{moveu=true;GPS.seguir=false;const d0=Math.hypot(is[0].x-is[1].x,is[0].y-is[1].y)||1,d1=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y)||1;const m0={x:(is[0].x+is[1].x)/2,y:(is[0].y+is[1].y)/2},m1={x:(ps[0].x+ps[1].x)/2,y:(ps[0].y+ps[1].y)/2};
+    const n0=[v0.x+(m0.x-r.left)*v0.w/r.width,v0.y+(m0.y-r.top)*v0.h/r.height];const b=bbCont(M());const w=Math.min(Math.max(v0.w*d0/d1,b.w/80),b.w*3),h=w*raz();VB={w,h,x:n0[0]-(m1.x-r.left)*w/r.width,y:n0[1]-(m1.y-r.top)*h/r.height};aplicar();}
+  e.preventDefault();},{passive:false});
+const fim=e=>{if(!G||!G.P.has(e.pointerId))return;G.P.delete(e.pointerId);if(G.P.size){G.v0={...VB};G.ini=new Map([...G.P].map(([k,v])=>[k,{...v}]));}else G=null;};
+window.addEventListener("pointerup",fim);window.addEventListener("pointercancel",fim);
+sv().addEventListener("wheel",e=>{e.preventDefault();const [x,y]=toN(e.clientX,e.clientY);zoom(e.deltaY>0?1.2:1/1.2,x,y);},{passive:false});
+sv().addEventListener("click",e=>{if(moveu){moveu=false;return;}
+  const p=e.target.closest("[data-pt]");if(p){abrirPonto(p.dataset.pt);return;}
+  const h=e.target.closest(".hit,.nb");if(h){const n=+h.dataset.n;sel=sel===n?null:n;}else sel=null;info();aplicar();});
+window.addEventListener("resize",()=>{if(VB)aplicar();});
+
+/* ================= GPS ================= */
+function gpsLigar(){if(!navigator.geolocation){GPS.on=true;GPS.erro="Este aparelho não tem GPS disponível no navegador.";info();return;}
+  GPS.on=true;GPS.seguir=true;$("#b-gps").classList.add("on");
+  GPS.watch=navigator.geolocation.watchPosition(p=>{GPS.fix={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy||0};GPS.erro="";
+    if(GPS.seguir){const m=M();const [x,y]=g2n(m,GPS.fix.lat,GPS.fix.lon);const b=bbCont(m);
+      if(x>=b.x&&y>=b.y&&x<=b.x+b.w&&y<=b.y+b.h){const w=Math.min(VB.w,b.w/5);VB={x:x-w/2,y:y-w*raz()/2,w,h:w*raz()};}else{const o=LISTA.findIndex(mm=>{const [a,c]=g2n(mm,GPS.fix.lat,GPS.fix.lon);const bb=bbCont(mm);return !mm.acesso&&a>=bb.x&&c>=bb.y&&a<=bb.x+bb.w&&c<=bb.y+bb.h;});if(o>=0&&o!==I){I=o;desenhar();aviso("Você está na "+M().nome);}}
+      GPS.seguir=false;}
+    aplicar();info();},
+    er=>{GPS.erro=er.code===1?"Localização bloqueada. Libere a localização para este app nas configurações do celular.":"Sem sinal de GPS ainda. Vá para céu aberto.";info();},
+    {enableHighAccuracy:true,maximumAge:4000,timeout:30000});info();}
+function gpsDesligar(){try{navigator.geolocation.clearWatch(GPS.watch);}catch(e){}Object.assign(GPS,{on:false,fix:null,watch:null,erro:""});$("#b-gps").classList.remove("on");aplicar();info();}
+$("#b-gps").onclick=()=>{if(GPS.on&&GPS.fix&&!GPS.seguir){GPS.seguir=true;const m=M();const [x,y]=g2n(m,GPS.fix.lat,GPS.fix.lon);const w=Math.min(VB.w,bbCont(m).w/5);VB={x:x-w/2,y:y-w*raz()/2,w,h:w*raz()};aplicar();GPS.seguir=false;return;}GPS.on?gpsDesligar():gpsLigar();};
+$("#b-in").onclick=()=>zoom(1/1.6);$("#b-out").onclick=()=>zoom(1.6);$("#b-fit").onclick=()=>{VB=null;aplicar();};
+
+/* ================= folhas ================= */
+function abrirFolha(t,h){$("#sh-t").textContent=t;$("#sh-b").innerHTML=h;$("#sheet").classList.add("on");$("#scrim").classList.add("on");}
+function fecharFolha(){$("#sheet").classList.remove("on");$("#scrim").classList.remove("on");}
+$("#sh-x").onclick=fecharFolha;$("#scrim").onclick=fecharFolha;
+
+/* marcar ponto */
+let NOVO=null;
+$("#b-pt").onclick=()=>{const m=M();let lat,lon,orig;
+  if(GPS.on&&GPS.fix){lat=GPS.fix.lat;lon=GPS.fix.lon;orig=`sua posição (±${Math.round(GPS.fix.acc)} m)`;}
+  else{const c=[VB.x+VB.w/2,VB.y+VB.h/2];[lat,lon]=n2g(m,c[0],c[1]);orig="centro da tela (ligue o GPS ◉ para marcar onde você está)";}
+  NOVO={id:"p"+Date.now().toString(36),lat,lon,tipo:"",obs:"",foto:null,fazenda:m.nome,mapa:m.mapa,em:new Date().toISOString()};
+  folhaPonto(orig);};
+function folhaPonto(orig){abrirFolha("Marcar ponto",`<div class="muted">Local: ${esc(orig)}<br>${NOVO.lat.toFixed(6)}, ${NOVO.lon.toFixed(6)}</div>
+  <b>O que é?</b><div class="chips">${TIPOS.map(t=>`<button data-tp="${esc(t)}" aria-pressed="${NOVO.tipo===t}">${esc(t)}</button>`).join("")}</div>
+  <label class="foto">📷 ${NOVO.foto?"Trocar foto":"Tirar foto"}<input type="file" accept="image/*" capture="environment" id="pt-foto"></label>
+  ${NOVO.foto?`<img class="thumb" id="pt-th">`:""}
+  <textarea id="pt-obs" placeholder="Observação (opcional)">${esc(NOVO.obs)}</textarea>
+  <div class="row"><button class="btn pri" id="pt-salvar">Salvar ponto</button><button class="btn" id="pt-canc">Cancelar</button></div>`);
+  if(NOVO.foto)$("#pt-th").src=URL.createObjectURL(NOVO.foto);
+  $("#sh-b").querySelectorAll("[data-tp]").forEach(b=>b.onclick=()=>{NOVO.obs=$("#pt-obs").value;NOVO.tipo=b.dataset.tp;folhaPonto(orig);});
+  $("#pt-foto").onchange=async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;NOVO.obs=$("#pt-obs").value;try{NOVO.foto=await reduzir(f);}catch(x){aviso("Não consegui ler a foto.");}folhaPonto(orig);};
+  $("#pt-canc").onclick=fecharFolha;
+  $("#pt-salvar").onclick=async()=>{NOVO.obs=$("#pt-obs").value.trim();if(!NOVO.tipo){aviso("Escolha o que é o ponto.");return;}
+    try{await DB.por(NOVO);}catch(e){aviso("Não consegui salvar no celular.");return;}await carregarPontos();fecharFolha();aplicar();aviso("Ponto salvo no celular.");};}
+function reduzir(file){return new Promise((ok,er)=>{const img=new Image();img.onload=()=>{const s=Math.min(1,1400/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);c.toBlob(b=>b?ok(b):er(),"image/jpeg",.8);URL.revokeObjectURL(img.src);};img.onerror=er;img.src=URL.createObjectURL(file);});}
+function abrirPonto(id){const p=PONTOS.find(x=>x.id===id);if(!p)return;
+  abrirFolha(p.tipo,`<div class="muted">${esc(p.fazenda)} · ${new Date(p.em).toLocaleString("pt-BR")}<br>${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}</div>${p.foto?`<img class="thumb" id="pv-th">`:""}${p.obs?`<div>${esc(p.obs)}</div>`:""}
+  <div class="row"><button class="btn dan" id="pv-del">Apagar ponto</button></div>`);
+  if(p.foto)$("#pv-th").src=URL.createObjectURL(p.foto);
+  $("#pv-del").onclick=()=>{$("#pv-del").outerHTML=`<span><b>Apagar mesmo?</b> <button class="btn dan" id="pv-sim">Sim</button> <button class="btn" id="pv-nao">Não</button></span>`;
+    $("#pv-sim").onclick=async()=>{await DB.tirar(id);await carregarPontos();fecharFolha();aplicar();aviso("Ponto apagado.");};$("#pv-nao").onclick=()=>abrirPonto(id);};}
+
+/* menu */
+$("#b-menu").onclick=()=>{const m=M();const tal=m.talhoes.filter(t=>t.id).sort((a,b)=>String(a.id).localeCompare(String(b.id),"pt",{numeric:true}));
+  const cont={};m.trechos.forEach(t=>{cont[t.st]=(cont[t.st]||0)+(t.m||0);});
+  abrirFolha(m.nome+" · "+m.mapa,`
+  <div class="box card"><b>Situação dos trechos</b>${Object.entries(cont).map(([k,v])=>`<div class="row" style="justify-content:space-between"><span class="pill p-${k}">${ST_N[k]||k}</span><span>${fM(v)}</span></div>`).join("")}<div class="muted">Situação de ${esc(DADOS.versao)}.</div></div>
+  ${tal.length?`<div class="box card"><b>Talhões</b><table><thead><tr><th>Talhão</th><th>Área</th><th>Volume</th></tr></thead><tbody>${tal.map(t=>`<tr><td><b>${esc(t.id)}</b></td><td>${t.ha?fmt(t.ha)+" ha":"—"}</td><td>${t.vol?fmt(t.vol)+" m³":"—"}</td></tr>`).join("")}</tbody></table></div>`:""}
+  <div class="box card"><b>Pontos marcados neste celular (${PONTOS.length})</b>${PONTOS.slice(0,30).map(p=>`<div class="row" style="justify-content:space-between"><span>${esc(p.tipo)} · ${esc(p.fazenda)}</span><span class="muted">${new Date(p.em).toLocaleDateString("pt-BR")}${p.foto?" · 📷":""}</span></div>`).join("")}
+    ${PONTOS.length?`<div class="row"><button class="btn" id="m-env">📤 Enviar pontos (WhatsApp / e-mail)</button></div><div class="muted">Manda a lista com as fotos e o link de cada ponto no mapa.</div>`:`<div class="muted">Use o 📍 para marcar buraco, erosão, bueiro… com foto. Fica guardado no celular, mesmo sem sinal.</div>`}</div>
+  <div class="box card"><b>Sobre o app</b><div class="muted">Funciona sem internet. Quando o celular pega sinal, os mapas se atualizam sozinhos.<br>Mapas de ${esc(DADOS.versao)} · ${LISTA.length/2|0} fazendas.</div>
+    <div class="row"><button class="btn" id="m-att">Procurar atualização agora</button></div>
+    <div class="muted">Lançar produção e ler a mensagem do encarregado: no Painel de Campo (precisa de internet).</div>
+    <a class="btn" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)" href="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8" target="_blank" rel="noopener">Abrir Painel de Campo</a></div>`);
+  const env=$("#m-env");if(env)env.onclick=enviarPontos;
+  $("#m-att").onclick=async()=>{if(!navigator.onLine){aviso("Sem internet agora. Tente quando pegar sinal.");return;}const r=await buscarDados(true);aviso(r?"Mapas atualizados.":"Já está com os mapas mais novos.");if(r)fecharFolha();};};
+async function enviarPontos(){const txt=PONTOS.map(p=>`• ${p.tipo} – ${p.fazenda} – ${new Date(p.em).toLocaleString("pt-BR")}${p.obs?" – "+p.obs:""}\n  https://maps.google.com/?q=${p.lat.toFixed(6)},${p.lon.toFixed(6)}`).join("\n");
+  const cab=`*Pontos marcados – Estradas Sucuriú*\n`;
+  const files=PONTOS.filter(p=>p.foto).slice(0,10).map((p,i)=>new File([p.foto],`ponto_${i+1}_${p.tipo.replace(/\W+/g,"_")}.jpg`,{type:"image/jpeg"}));
+  try{if(navigator.canShare&&files.length&&navigator.canShare({files})){await navigator.share({text:cab+txt,files});return;}if(navigator.share){await navigator.share({text:cab+txt});return;}}catch(e){if(e&&e.name==="AbortError")return;}
+  try{await navigator.clipboard.writeText(cab+txt);aviso("Lista copiada. Cole no WhatsApp.");}catch(e){aviso("Não consegui compartilhar neste aparelho.");}}
+
+/* ================= carregar, trocar fazenda, atualizar ================= */
+function montarLista(){LISTA=[];DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{m.cod=f.cod;m.id=f.cod+(m.acesso?"-acesso":"");LISTA.push(m);}));
+  $("#selm").innerHTML=DADOS.fazendas.map(f=>`<optgroup label="${esc(f.mapas[0].nome)}">${f.mapas.map(m=>`<option value="${LISTA.indexOf(m)}">${esc(m.nome)} · ${m.acesso?"Acesso":"Estradas internas"}</option>`).join("")}</optgroup>`).join("");}
+$("#selm").onchange=e=>{I=+e.target.value;desenhar();};
+async function buscarDados(forcar){try{const r=await fetch("dados/mapas.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)throw 0;const d=await r.json();
+    const mudou=!DADOS||d.versao!==DADOS.versao;if(mudou){const id=LISTA[I]&&LISTA[I].id;DADOS=d;montarLista();const k=LISTA.findIndex(m=>m.id===(id||LS.get("mapa","")));I=k>=0?k:0;desenhar();}return mudou&&forcar;}catch(e){return false;}}
+let swNovo=null;
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(reg=>{
+  const ver=w=>{if(!w)return;w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller){swNovo=w;$("#upd").style.display="flex";}});};
+  ver(reg.installing);reg.addEventListener("updatefound",()=>ver(reg.installing));
+  setInterval(()=>{if(navigator.onLine)reg.update().catch(()=>{});},30*60*1000);}).catch(()=>{});
+  let recarregou=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(recarregou)return;recarregou=true;location.reload();});}
+$("#b-upd").onclick=()=>{if(swNovo)swNovo.postMessage("ativar");else location.reload();};
+window.addEventListener("online",()=>buscarDados(true));
+
+/* código de acesso simples da equipe (só evita curioso; não é segurança) */
+const PIN_H="7c14d3";function h(s){let x=5381;for(const c of s)x=((x<<5)+x+c.charCodeAt(0))>>>0;return (x%0xffffff).toString(16).padStart(6,"0");}
+async function iniciar(){await carregarPontos();
+  const r=await fetch("dados/mapas.json").catch(()=>null);if(!r||!r.ok){document.body.innerHTML='<div style="padding:24px">Abra o app uma vez com internet para baixar os mapas.</div>';return;}
+  DADOS=await r.json();montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();
+  if(navigator.onLine)setTimeout(()=>buscarDados(true),2500);}
+function entrar(){$("#pin").style.display="none";iniciar();}
+if(LS.get("pin_ok",false))entrar();else{$("#pin").style.display="grid";const ok=()=>{if(h($("#pin-i").value.trim())===PIN_H){LS.set("pin_ok",true);entrar();}else{aviso("Código errado.");$("#pin-i").value="";}};$("#pin-ok").onclick=ok;$("#pin-i").onkeydown=e=>{if(e.key==="Enter")ok();};}
+</script>
+</body>
+</html>
