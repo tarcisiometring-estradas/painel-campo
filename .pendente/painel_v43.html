@@ -660,8 +660,12 @@ function faltasLinha(l){const f=[];const t=tipoUn(unDe(l));const tem=v=>String(v
   if(!tem(l.direto)&&!tem(l.u)){if(t==="volume"||t==="area"){if(!tem(l.c))f.push("comprimento");if(!tem(l.l))f.push("largura");}
     if(t==="volume"&&!tem(l.e))f.push("espessura");if(t==="cont"&&!tem(l.c))f.push("quantidade");}
   if((l.fam==="TS"||l.fam==="TB")&&!tem(l.dmt))f.push("DMT");return f;}
-function pedidoFaltas(r){const ls=r.linhas.map((l,i)=>[l,i,faltasLinha(l)]).filter(x=>x[2].length);if(!ls.length)return "";
-  const dt=r.data?fD(r.data):"";return `Bom dia! Na mensagem${dt?" do dia "+dt:""}${r.fazenda?" da fazenda "+r.fazenda:""} faltou informação:\n`+ls.map(([l,i,f])=>`• ${nomeDe(l)}${l.trecho?" (trecho "+l.trecho+")":""}: falta ${f.join(", ")}`).join("\n")+`\n\nPor favor, mande sempre neste modelo:\n\n`+MODELO_MSG;}
+function pedidoFaltas(r){const dt=r.data?fD(r.data):"";const hh=new Date().getHours();const cab=`${hh<12?"Bom dia":hh<18?"Boa tarde":"Boa noite"}! Sobre a mensagem${dt?" do dia "+dt:""}${r.fazenda?" da fazenda "+r.fazenda:""}:\n`;
+  const CAMPO={"trecho ou talhão":"Trecho ou talhão:","comprimento":"Comprimento (m):","largura":"Largura (m):","espessura":"Espessura (cm):","quantidade":"Quantidade:","DMT":"DMT (km):"};
+  if(!r.linhas.length)return cab+`não consegui entender os serviços. Por favor, mande de novo preenchendo assim:\n\n`+MODELO_MSG;
+  const ls=r.linhas.map(l=>[l,faltasLinha(l)]).filter(x=>x[1].length);const dv=r.linhas.filter(l=>l.duvida&&!faltasLinha(l).length);if(!ls.length&&!dv.length)return "";
+  return cab+`faltou informação. Por favor, responda preenchendo:\n\n`+ls.map(([l,f])=>`Serviço: ${nomeDe(l)}${l.trecho?" – trecho "+l.trecho:""}${l.talhao?" – talhão "+l.talhao:""}\n`+f.map(x=>CAMPO[x]||x+":").join("\n")).join("\n\n")
+    +(dv.length?`\n\nConfirme também:\n`+dv.map(l=>`• ${nomeDe(l)}: ${l.duvida}`).join("\n"):"");}
 function copiarTexto(txt,ok){const fb=()=>abrir({kind:"copia",titulo:"Copie o texto",txt});
   try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>toast(ok),fb);else fb();}catch(e){fb();}}
 function aprendidos(r){const L=(((DATA.config||{}).aprendizado||{}).lista||[]).filter(x=>!r.fin||!x.fin||x.fin===r.fin);const eps=fk(r.eps||"");
@@ -788,9 +792,10 @@ function colarHTML(){
     <label class="f">3. Mensagem do encarregado (WhatsApp)<textarea class="inp" id="rev-texto" data-rev="texto" rows="7" placeholder="Cole aqui a mensagem inteira, do jeito que veio">${esc(r.texto)}</textarea></label>
     ${r.pedirFin&&!r.fin?`<div class="confirm" style="background:var(--warn-soft)"><b>Esta mensagem é de qual escopo?</b>${escolhaFin("rev-fin-ler")}</div>`:""}
     <div class="row">${SAMPLE?`<button class="btn primary" data-a="rev-claude" ${r.lendo?"disabled":""}>${r.lendo?`<span class="spin"></span> Lendo a mensagem…`:"Ler mensagem"}</button>${r.lendo?`<button class="btn" data-a="rev-parar">Parar</button>`:""}`:`<div class="note">A leitura automática ainda não está liberada nesta tela. Abra o link no navegador (Chrome, Edge, Firefox, Safari…) com a sua conta do claude.ai e, se aparecer um pedido de permissão, toque em <b>Permitir</b>. Enquanto isso, use <b>+ Linha à mão</b>.</div>`}
-      <button class="btn" data-a="rev-linha">+ Linha à mão</button><button class="btn" data-a="rev-modelo" title="Copia o modelo de mensagem para mandar às empreiteiras">📄 Modelo de mensagem</button></div>
+      <button class="btn" data-a="rev-linha">+ Linha à mão</button></div>
     ${r.aviso?`<div class="note">${esc(r.aviso)}</div>`:""}
-    ${(()=>{const ls=r.linhas.map((l,i)=>[l,i,faltasLinha(l)]).filter(x=>x[2].length);return ls.length?`<div class="confirm" style="background:var(--warn-soft)"><b>Faltou informação na mensagem</b><ul style="margin:6px 0 8px 18px">${ls.map(([l,i,f])=>`<li>Linha ${i+1} · ${esc(nomeDe(l))}: falta <b>${esc(f.join(", "))}</b></li>`).join("")}</ul><button class="btn primary" data-a="rev-pedir">📋 Copiar pedido para o encarregado</button><div class="muted small">Cole no WhatsApp do encarregado. Vai junto o modelo certo de mensagem.</div></div>`:"";})()}
+    ${(()=>{const ls=r.linhas.map((l,i)=>[l,i,faltasLinha(l)]).filter(x=>x[2].length);if(!ls.length&&!r.linhas.length&&r.aviso&&/Não encontrei/.test(r.aviso))return `<div class="confirm" style="background:var(--warn-soft)"><b>Não entendi esta mensagem</b><div class="muted small">Peça ao encarregado para mandar de novo, preenchendo os campos.</div><button class="btn primary" data-a="rev-pedir">📋 Copiar pedido para o encarregado</button></div>`;
+      return ls.length?`<div class="confirm" style="background:var(--warn-soft)"><b>Faltou informação na mensagem</b><ul style="margin:6px 0 8px 18px">${ls.map(([l,i,f])=>`<li>Linha ${i+1} · ${esc(nomeDe(l))}: falta <b>${esc(f.join(", "))}</b></li>`).join("")}</ul><button class="btn primary" data-a="rev-pedir">📋 Copiar pedido para o encarregado</button><div class="muted small">Cole no WhatsApp do encarregado. Vai junto o modelo certo de mensagem.</div></div>`:"";})()}
     ${Object.keys(r.aps||{}).length?`<div class="sec"><h3>Dados do apontamento</h3><div class="list">${Object.entries(r.aps).map(([k,a])=>{const dia=pn(a.ha.dia);const mt=metaDe(a.frente,a.eps||r.eps);const ok=isFinite(dia)&&dia>=mt;
       return `<div class="card"><div class="nm">${esc(a.fazenda||r.fazenda||"Fazenda do topo")} · ${a.data?fD(a.data):"data do topo"}${a.frente?" · frente "+esc(a.frente):""}${a.eps?" · EPS "+esc(a.eps):""}</div>
       <div class="sub">${[a.tipo,a.supervisor&&"Supervisor "+a.supervisor,a.tecnico&&"Técnico "+a.tecnico,a.encarregado&&"Encarregado "+a.encarregado].filter(Boolean).map(esc).join(" · ")}</div>
@@ -2732,7 +2737,6 @@ async function onClick(ev){
   case "ac-tab": ST.ac=d.t;render();break;
   case "rev-novo": REV={fazenda:"",data:hoje(),eps:"",encarregado:"",texto:"",linhas:[]};guardarRev();render();setTimeout(()=>{const x=document.getElementById("rev-texto");if(x)x.focus();},50);break;
   case "rev-eps-chip": REV.eps=d.v;guardarRev();render();break;
-  case "rev-modelo": copiarTexto(MODELO_MSG,"Modelo copiado. Cole no grupo das empreiteiras.");break;
   case "rev-pedir": {const t=pedidoFaltas(REV);if(t)copiarTexto(t,"Pedido copiado. Cole no WhatsApp do encarregado.");break;}
   case "rev-fin": REV.fin=d.v;REV.pedirFin=false;guardarRev();render();break;
   case "rev-claude": if(!String(REV.texto||"").trim()){toast("Cole a mensagem primeiro.");return;}if(!REV.fin&&/\bIMP\s?-?\d/i.test(REV.texto))REV.fin="implantacao";if(!REV.fin){REV.pedirFin=true;render();return;}lerMensagem();break;
