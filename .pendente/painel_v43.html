@@ -637,7 +637,46 @@ function metaDe(frente,eps){const c=cfgMetas();if(/arauco/i.test(String(eps||"")
 const EPS_BASE=["FERMAQ","Casa Grande","Hidroplan","GTM","Geopampa","Arauco (própria)"];
 function nomeEPS(e){const t=String(e||"").trim();if(!t)return "";const kk=x=>fk(x).replace(/[^a-z0-9]/g,"").replace(/[qk]/g,"c").replace(/ss/g,"s");const k=kk(t);const todas=[...EPS_BASE,...listaEPS()];
   const m=todas.find(x=>kk(x)===k)||todas.find(x=>{const y=kk(x);return y.length>2&&(k.includes(y)||y.includes(k));});return m||t;}
-function listaEPS(){const s=new Set(EPS_BASE);Object.values(DATA.os).forEach(o=>o.eps&&s.add(o.eps));Object.values(DATA.lanc).forEach(l=>l.eps&&s.add(l.eps));return [...s].sort();}
+const MODELO_MSG=`*PRODUÇÃO DO DIA*
+Data:
+Empresa:
+Encarregado:
+Fazenda:
+Frente:
+
+Serviço:
+Trecho:
+Talhão:
+Comprimento (m):
+Largura (m):
+Espessura (cm):
+DMT (km):
+Quantidade (se for unidade ou hora):
+Obs:
+
+(repita de "Serviço" até "Obs" para cada serviço do dia)`;
+function faltasLinha(l){const f=[];const t=tipoUn(unDe(l));const tem=v=>String(v==null?"":v).trim()!=="";
+  if(!tem(l.trecho)&&!tem(l.talhao))f.push("trecho ou talhão");
+  if(!tem(l.direto)&&!tem(l.u)){if(t==="volume"||t==="area"){if(!tem(l.c))f.push("comprimento");if(!tem(l.l))f.push("largura");}
+    if(t==="volume"&&!tem(l.e))f.push("espessura");if(t==="cont"&&!tem(l.c))f.push("quantidade");}
+  if((l.fam==="TS"||l.fam==="TB")&&!tem(l.dmt))f.push("DMT");return f;}
+function pedidoFaltas(r){const ls=r.linhas.map((l,i)=>[l,i,faltasLinha(l)]).filter(x=>x[2].length);if(!ls.length)return "";
+  const dt=r.data?fD(r.data):"";return `Bom dia! Na mensagem${dt?" do dia "+dt:""}${r.fazenda?" da fazenda "+r.fazenda:""} faltou informação:\n`+ls.map(([l,i,f])=>`• ${nomeDe(l)}${l.trecho?" (trecho "+l.trecho+")":""}: falta ${f.join(", ")}`).join("\n")+`\n\nPor favor, mande sempre neste modelo:\n\n`+MODELO_MSG;}
+function copiarTexto(txt,ok){const fb=()=>abrir({kind:"copia",titulo:"Copie o texto",txt});
+  try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>toast(ok),fb);else fb();}catch(e){fb();}}
+function aprendidos(r){const L=(((DATA.config||{}).aprendizado||{}).lista||[]).filter(x=>!r.fin||!x.fin||x.fin===r.fin);const eps=fk(r.eps||"");
+  const o=L.slice().sort((a,b)=>((fk(b.eps)===eps)-(fk(a.eps)===eps))||((!!b.corr)-(!!a.corr)));const out=[],vis=new Set();
+  for(const x of o){const k=fk(x.txt);if(vis.has(k))continue;vis.add(k);out.push(x);if(out.length>=40)break;}
+  return out.length?out.map(x=>`"${String(x.txt).slice(0,120).replace(/"/g,"'")}" → ${x.cod||"null"}|${x.nome}${x.eps?" (empresa "+x.eps+")":""}`).join("\n"):"(ainda nenhuma)";}
+async function aprender(r,linhas){try{const c=((DATA.config||{}).aprendizado)||{};let L=(c.lista||[]).slice();
+  const novos=linhas.filter(l=>l.txt&&l.sug).map(l=>({txt:String(l.txt).slice(0,160),cod:codDe(l)||null,nome:nomeDe(l),eps:l.apEps||nomeEPS(r.eps)||"",fin:r.fin||"",corr:(codDe(l)||null)!==(l.sug.cod||null)||nomeDe(l)!==l.sug.nome,em:new Date().toISOString()}));
+  if(!novos.length)return;const ks=new Set(novos.map(x=>fk(x.txt)));L=novos.concat(L.filter(x=>!ks.has(fk(x.txt))));
+  L=L.filter(x=>x.corr).slice(0,200).concat(L.filter(x=>!x.corr).slice(0,100)).sort((a,b)=>String(b.em).localeCompare(String(a.em)));
+  const doc={lista:L,em:new Date().toISOString()};await DB.doc("config/aprendizado").set(clone(doc));DATA.config.aprendizado=doc;}catch(e){}}
+async function lembrarEPS(nomes){try{const c=((DATA.config||{}).eps)||{};const L=(c.lista||[]).slice();let mud=false;
+  nomes.forEach(n=>{n=String(n||"").trim();if(n&&!EPS_BASE.concat(L).some(x=>fk(x)===fk(n))){L.push(n);mud=true;}});
+  if(mud){const doc={lista:L,em:new Date().toISOString()};await DB.doc("config/eps").set(clone(doc));DATA.config.eps=doc;}}catch(e){}}
+function listaEPS(){const s=new Set(EPS_BASE);(((DATA.config||{}).eps||{}).lista||[]).forEach(e=>e&&s.add(e));Object.values(DATA.os).forEach(o=>o.eps&&s.add(o.eps));Object.values(DATA.lanc).forEach(l=>l.eps&&s.add(l.eps));return [...s].sort();}
 
 /* ---------- INÍCIO ---------- */
 function renderHome(){
@@ -735,6 +774,7 @@ function colarHTML(){
   const escolhaFin=(acao)=>`<div class="big-choice">${Object.keys(FIN).map(k=>`<button class="sim" data-a="${acao}" data-v="${k}" aria-pressed="${r.fin===k}">${FIN[k]}</button>`).join("")}</div>`;
   return `<div class="stack">
     <div class="member" style="${r.fin?"":"border-color:var(--warn);border-width:2px"}"><b>1. Escopo desta mensagem</b>${escolhaFin("rev-fin")}${r.fin?"":`<div class="muted small">Toque em Implantação ou Abastecimento.</div>`}</div>
+    <div class="member" style="${String(r.eps||"").trim()?"":"border-color:var(--warn);border-width:2px"}"><b>Empreiteira</b><div class="big-choice" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))">${eps.map(e=>`<button class="sim" style="min-height:48px;font-size:15px" data-a="rev-eps-chip" data-v="${esc(e)}" aria-pressed="${fk(r.eps||"")===fk(e)}">${esc(e)}</button>`).join("")}</div><div class="muted small">Não está na lista? Escreva o nome no campo <b>Empresa</b> abaixo. Ela fica guardada para as próximas.</div></div>
     <div class="lbl">2. Dados (o Claude preenche pela mensagem; complete se faltar)</div>
     <div class="grid2">
       <label class="f">Fazenda<input class="inp" id="rev-faz" data-rev="fazenda" list="dl-faz" value="${esc(r.fazenda)}" placeholder="Se a mensagem não disser"></label>
@@ -748,8 +788,9 @@ function colarHTML(){
     <label class="f">3. Mensagem do encarregado (WhatsApp)<textarea class="inp" id="rev-texto" data-rev="texto" rows="7" placeholder="Cole aqui a mensagem inteira, do jeito que veio">${esc(r.texto)}</textarea></label>
     ${r.pedirFin&&!r.fin?`<div class="confirm" style="background:var(--warn-soft)"><b>Esta mensagem é de qual escopo?</b>${escolhaFin("rev-fin-ler")}</div>`:""}
     <div class="row">${SAMPLE?`<button class="btn primary" data-a="rev-claude" ${r.lendo?"disabled":""}>${r.lendo?`<span class="spin"></span> Lendo a mensagem…`:"Ler mensagem"}</button>${r.lendo?`<button class="btn" data-a="rev-parar">Parar</button>`:""}`:`<div class="note">A leitura automática ainda não está liberada nesta tela. Abra o link no navegador (Chrome, Edge, Firefox, Safari…) com a sua conta do claude.ai e, se aparecer um pedido de permissão, toque em <b>Permitir</b>. Enquanto isso, use <b>+ Linha à mão</b>.</div>`}
-      <button class="btn" data-a="rev-linha">+ Linha à mão</button></div>
+      <button class="btn" data-a="rev-linha">+ Linha à mão</button><button class="btn" data-a="rev-modelo" title="Copia o modelo de mensagem para mandar às empreiteiras">📄 Modelo de mensagem</button></div>
     ${r.aviso?`<div class="note">${esc(r.aviso)}</div>`:""}
+    ${(()=>{const ls=r.linhas.map((l,i)=>[l,i,faltasLinha(l)]).filter(x=>x[2].length);return ls.length?`<div class="confirm" style="background:var(--warn-soft)"><b>Faltou informação na mensagem</b><ul style="margin:6px 0 8px 18px">${ls.map(([l,i,f])=>`<li>Linha ${i+1} · ${esc(nomeDe(l))}: falta <b>${esc(f.join(", "))}</b></li>`).join("")}</ul><button class="btn primary" data-a="rev-pedir">📋 Copiar pedido para o encarregado</button><div class="muted small">Cole no WhatsApp do encarregado. Vai junto o modelo certo de mensagem.</div></div>`:"";})()}
     ${Object.keys(r.aps||{}).length?`<div class="sec"><h3>Dados do apontamento</h3><div class="list">${Object.entries(r.aps).map(([k,a])=>{const dia=pn(a.ha.dia);const mt=metaDe(a.frente,a.eps||r.eps);const ok=isFinite(dia)&&dia>=mt;
       return `<div class="card"><div class="nm">${esc(a.fazenda||r.fazenda||"Fazenda do topo")} · ${a.data?fD(a.data):"data do topo"}${a.frente?" · frente "+esc(a.frente):""}${a.eps?" · EPS "+esc(a.eps):""}</div>
       <div class="sub">${[a.tipo,a.supervisor&&"Supervisor "+a.supervisor,a.tecnico&&"Técnico "+a.tecnico,a.encarregado&&"Encarregado "+a.encarregado].filter(Boolean).map(esc).join(" · ")}</div>
@@ -2216,6 +2257,13 @@ MENSAGEM (pode conter vários apontamentos colados, de fazendas e dias diferente
 ${r.texto.slice(0,20000)}
 """
 
+TRADUÇÕES JÁ CONFERIDAS PELOS TÉCNICOS (texto do encarregado → cod|atividade certa). Valem mais que as regras abaixo: se aparecer o mesmo jeito de escrever, use a mesma atividade.
+${aprendidos(r)}
+
+MODELO PADRÃO (pedimos às empreiteiras): "*PRODUÇÃO DO DIA*" com Data, Empresa, Encarregado, Fazenda, Frente e, para cada serviço, Serviço, Trecho, Talhão, Comprimento (m), Largura (m), Espessura (cm), DMT (km), Quantidade, Obs. Cada "Serviço:" é uma linha.
+
+MENSAGENS FORA DO PADRÃO: cada empreiteira escreve do seu jeito, com apelidos, erros de digitação e abreviações. Entenda o sentido e traduza para a atividade do catálogo que quer dizer a mesma coisa. Se não tiver certeza, use a mais provável e explique em "duvida".
+
 COMO OS ENCARREGADOS ESCREVEM (modelo "Apontamento diário"):
 - Cabeçalho de cada apontamento: "Data: 26/09/26", "Fazenda: ...", supervisor, líder e coordenador da Arauco (ignore), "Encarregado FERMAQ: Douglas" (encarregado = Douglas, eps = FERMAQ). Empresas (EPS) conhecidas: ${listaEPS().join(", ")}. Procure o nome da empresa no cabeçalho ou em qualquer parte do apontamento (ex.: "Coordenador: Fermaq", "Encarregado Casa Grande"). Se não achar a empresa, use eps null — nunca adivinhe. Linhas como "[24/9 19:00] +55 67 ..." são carimbo do WhatsApp: ignore. Cada novo "Apontamento diário" abre um novo apontamento.
 - Ponto em número: "2.870" e "1.050" são milhar (2870, 1050); "0.20", "0.05", "112.5" e "215.9" são decimal. Decida pelo contexto da conta.
@@ -2296,6 +2344,7 @@ async function lerMensagem(){
       it.talhao=x.talhao?String(x.talhao):"";it.trecho=x.trecho?String(x.trecho):"";it.obs=x.obs?String(x.obs):"";
       it.txt=x.trecho_msg?String(x.trecho_msg):"";it.duvida=x.duvida?String(x.duvida):"";
       if(ap&&ap.data&&/^\d{4}-\d{2}-\d{2}$/.test(ap.data))it.apData=ap.data;
+      it.sug={cod:codDe(it)||null,nome:nomeDe(it)};
       if(ap&&ap.fazenda)it.apFaz=String(ap.fazenda);if(ap&&ap.frente)it.apFr=String(ap.frente);if(ap&&ap.encarregado)it.apEnc=String(ap.encarregado);if(ap&&ap.eps)it.apEps=nomeEPS(ap.eps);
       novas.push(it);
     }
@@ -2682,6 +2731,9 @@ async function onClick(ev){
   /* acompanhamento */
   case "ac-tab": ST.ac=d.t;render();break;
   case "rev-novo": REV={fazenda:"",data:hoje(),eps:"",encarregado:"",texto:"",linhas:[]};guardarRev();render();setTimeout(()=>{const x=document.getElementById("rev-texto");if(x)x.focus();},50);break;
+  case "rev-eps-chip": REV.eps=d.v;guardarRev();render();break;
+  case "rev-modelo": copiarTexto(MODELO_MSG,"Modelo copiado. Cole no grupo das empreiteiras.");break;
+  case "rev-pedir": {const t=pedidoFaltas(REV);if(t)copiarTexto(t,"Pedido copiado. Cole no WhatsApp do encarregado.");break;}
   case "rev-fin": REV.fin=d.v;REV.pedirFin=false;guardarRev();render();break;
   case "rev-claude": if(!String(REV.texto||"").trim()){toast("Cole a mensagem primeiro.");return;}if(!REV.fin&&/\bIMP\s?-?\d/i.test(REV.texto))REV.fin="implantacao";if(!REV.fin){REV.pedirFin=true;render();return;}lerMensagem();break;
   case "rev-fin-ler": REV.fin=d.v;REV.pedirFin=false;guardarRev();lerMensagem();break;
@@ -2753,10 +2805,11 @@ async function onClick(ev){
     const agora=Date.now();let nL=0,nG=0,ok=true;const docs=[];
     Object.entries(grupos).forEach(([gk0,g],gi)=>{const g0=g[0];const ap=APS[gk0]||null;
       const id=uid("lc");const linhas={};
-      g.filter(l=>!l._so).forEach((l,i)=>{const x=limpo(Object.assign({},l,{ord:agora+gi*1000+i}));["apData","apFaz","apEnc","apEps","apFr"].forEach(k=>delete x[k]);linhas[x.id]=x;});
+      g.filter(l=>!l._so).forEach((l,i)=>{const x=limpo(Object.assign({},l,{ord:agora+gi*1000+i}));["apData","apFaz","apEnc","apEps","apFr","sug"].forEach(k=>delete x[k]);linhas[x.id]=x;});
       docs.push({id,data:g0.apData||r.data,fazenda:nomeFazenda(g0.apFaz||r.fazenda||""),fin:finDaFazenda(g0.apFaz||r.fazenda)||r.fin||"",eps:g0.apEps||nomeEPS(r.eps)||"",encarregado:g0.apEnc||r.encarregado||"",frente:paFrente((ap&&ap.frente)||(g.find(l=>l.apFr)||{}).apFr||r.frente||frenteUlt(nomeFazenda(g0.apFaz||r.fazenda||""),g0.apEps||nomeEPS(r.eps)),g0.apEps||nomeEPS(r.eps)||""),ha:ap&&ap.ha&&ap.ha.dia!==""?{dia:ap.ha.dia}:null,imp:ap?{tipo:ap.tipo,supervisor:ap.supervisor,tecnico:ap.tecnico,km:ap.km,inicio:ap.inicio,entrega:ap.entrega,finalizada:ap.finalizada}:null,obsAp:ap?ap.obs:"",texto:r.texto||"",linhas,val:{},por:quem(),criadoEm:new Date().toISOString(),ord:agora+gi});
     });
     for(const doc of docs){if(await escrever(()=>DB.doc("lanc/"+doc.id).set(clone(doc)),null)){DATA.lanc[doc.id]=doc;nG++;nL+=Object.keys(doc.linhas).length;}else{ok=false;break;}}
+    if(nG){const rr=REV;aprender(rr,rr.linhas.filter(l=>!l._so));lembrarEPS(docs.map(d=>d.eps));}
     if(nG)toast(`Salvo: ${nL} linhas em ${nG} lançamento(s)${docs.some(d=>d.ha&&d.ha.dia)?", com hectares do dia":""}.`);
     if(ok){REV=null;guardarRev();ST.ac="validar";}else{const salvos=new Set(docs.slice(0,nG).flatMap(d=>Object.keys(d.linhas)));REV.linhas=REV.linhas.filter(l=>!salvos.has(l.id));guardarRev();}
     render();
