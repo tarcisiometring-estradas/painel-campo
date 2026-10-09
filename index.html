@@ -12,9 +12,9 @@
 <link rel="icon" href="icones/icone-192.png">
 <link rel="apple-touch-icon" href="icones/icone-192.png">
 <style>
-:root[data-tema="claro"]{--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--tal:#F1E6C4;--tall:#C9B98A;--np:#8E938B}
-:root[data-tema="sol"]{--bg:#FFFFFF;--sf:#FFFFFF;--ln:#3A3A3A;--ink:#000;--mut:#1F1F1F;--tal:#F4E9C8;--tall:#8A7A4A;--np:#6E726B;--zero:#D0453A;--ok:#00702A}
-:root{--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--tal:#3A3526;--tall:#6B6247;
+:root[data-tema="claro"]{--r-colh:#C9A24E;--r-meio:#5E8A66;--r-novo:#A9C3A0;--r-sem:#D6CFC4;--r-cad:#5E4E44;--r-sel:#B86A4E;--r-ln:rgba(60,50,40,.35);--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--tal:#F1E6C4;--tall:#C9B98A;--np:#8E938B}
+:root[data-tema="sol"]{--r-colh:#C9A24E;--r-meio:#3F6B4A;--r-novo:#8FB08A;--r-sem:#CFC8BC;--r-cad:#000;--r-sel:#B0402A;--r-ln:rgba(0,0,0,.5);--bg:#FFFFFF;--sf:#FFFFFF;--ln:#3A3A3A;--ink:#000;--mut:#1F1F1F;--tal:#F4E9C8;--tall:#8A7A4A;--np:#6E726B;--zero:#D0453A;--ok:#00702A}
+:root{--r-colh:#B8954A;--r-meio:#4F7A5A;--r-novo:#7E9A78;--r-sem:#4A463F;--r-cad:#D8C3B0;--r-sel:#D08A70;--r-ln:rgba(0,0,0,.35);--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--tal:#3A3526;--tall:#6B6247;
   --ok:#2E8B57;--and:#E0A100;--prep:#3B7DD8;--zero:#E58B83;--np:#A9ADA6;--mk:#B07CE8;--gps:#1A73E8;--danger:#F08A80}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
@@ -34,6 +34,13 @@ svg#mapa{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-se
 .nb circle{fill:transparent}.nb.sel circle{fill:var(--ink)}.nb.sel text{fill:var(--bg);stroke:none}
 .tt{font:700 12px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--tal);stroke-width:3px}
 .ts{font:500 9.5px system-ui,sans-serif;fill:var(--mut);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--tal);stroke-width:3px}
+svg#reg{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;background:var(--bg);display:none}
+body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
+.rf{stroke:var(--r-ln);stroke-width:.6px;vector-effect:non-scaling-stroke;fill-opacity:.85;cursor:pointer}.rf.colh{fill:var(--r-colh)}.rf.meio{fill:var(--r-meio)}.rf.novo{fill:var(--r-novo)}.rf.sem{fill:var(--r-sem)}
+.rf.cad{stroke:var(--r-cad);stroke-width:2.2px}.rf.sel{stroke:var(--r-sel);stroke-width:3px}
+.rt{fill:none;stroke:var(--r-ln);stroke-width:.7px;vector-effect:non-scaling-stroke;pointer-events:none}
+.rtl text{font:600 10px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+.rlab{font:600 11.5px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px;pointer-events:none}.rlab.cad{font-weight:800;fill:var(--r-cad)}
 .pin{fill:var(--mk);stroke:#fff;stroke-width:2;vector-effect:non-scaling-stroke}
 .top{position:fixed;top:calc(8px + env(safe-area-inset-top));left:8px;right:64px;display:grid;gap:6px;z-index:2}
 .box{background:var(--sf);border:1px solid var(--ln);border-radius:12px}
@@ -93,7 +100,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 </style>
 </head>
 <body>
-<svg id="mapa" role="img" aria-label="Mapa da fazenda"></svg>
+<svg id="mapa" role="img" aria-label="Mapa da fazenda"></svg><svg id="reg" role="img" aria-label="Mapa da região"></svg>
 <div class="top"><div class="toprow"><button id="b-home" aria-label="Voltar ao início" title="Voltar ao início">← Início</button><select id="selm" aria-label="Fazenda"></select></div><div id="sub"></div></div>
 <div class="ctl">
   <button id="b-in" aria-label="Aproximar" title="Aproximar">＋<span class="lb">Aproximar</span></button>
@@ -114,7 +121,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <div><div class="eyebrow">Estradas · Projeto Sucuriú</div><h1>O que você deseja fazer?</h1></div>
   <div><span class="ok-chip">✓ Funciona sem internet</span> <span class="muted" id="h-ver"></span></div>
   <div class="temas" id="h-tema"><span class="muted" style="align-self:center">Tela:</span><button data-tema="escuro">Escuro</button><button data-tema="claro">Claro</button><button data-tema="sol">Sol (forte)</button></div>
-  <button class="choice" id="h-mapa"><span class="ic">🗺️</span><span><strong>Mapa das estradas</strong><small>Mapa da fazenda com GPS e a situação de cada trecho.</small></span><span class="seta">›</span></button>
+  <button class="choice" id="h-mapa"><span class="ic">🗺️</span><span><strong>Mapa das estradas</strong><small>Todas as fazendas da região. Aproxime numa fazenda para ver os trechos.</small></span><span class="seta">›</span></button>
   <button class="choice" id="h-pontos"><span class="ic">📍</span><span><strong>Pontos marcados</strong><small id="h-np">Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.</small></span><span class="seta">›</span></button>
   <a class="choice" id="h-painel" href="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8" target="_blank" rel="noopener"><span class="ic">📋</span><span><strong>Painel de Campo</strong><small>Microplanejamento, acompanhamento e lançamentos. Precisa de internet.</small></span><span class="seta">›</span></a>
   <div class="eyebrow" style="margin-top:6px">Fazendas</div>
@@ -175,7 +182,7 @@ function rodMapa(m){if(!ROD||!LS.get("rod","1"))return "";if(m._rod!=null)return
   const vis=new Set();lab=lab.sort((a,b)=>b[2]-a[2]).filter(x=>{if(vis.has(x[0]))return false;vis.add(x[0]);return true;});
   return m._rod=`<g class="rodg">${h}</g>`+lab.map(([n,p])=>`<g class="fx rl" data-cx="${p[0]}" data-cy="${p[1]}"><text class="rodl" x="${p[0]}" y="${p[1]}">${esc(n)}</text></g>`).join("");}
 function desenhar(){const m=M();sel=null;VB=null;
-  $("#selm").value=String(I);
+  if(!REG.on)$("#selm").value=String(I);
   $("#sub").textContent=`${m.mapa} · mapas de ${DADOS.versao}`;
   sv().innerHTML=rodMapa(m)+m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
     m.trechos.map(t=>`<polyline class="tr s-${t.st}${t.n%2?"":" alt"}" data-n="${t.n}" points="${t.pts.join(" ")}"/><polyline class="hit" data-n="${t.n}" points="${t.pts.join(" ")}"/>`).join("")+
@@ -204,14 +211,14 @@ function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)
   $("#pins").innerHTML=PONTOS.map(p=>{const [x,y]=g2n(m,p.lat,p.lon);if(x<-m.w||y<-m.h||x>2*m.w||y>2*m.h)return "";return `<circle class="pin" data-pt="${p.id}" cx="${x}" cy="${y}" r="${8*uu}"/>`;}).join("");
   const gg=$("#gps");gg.innerHTML="";if(GPS.on&&GPS.fix){const [x,y]=g2n(m,GPS.fix.lat,GPS.fix.lon);gg.innerHTML=`<circle cx="${x}" cy="${y}" r="${GPS.fix.acc/mpu(m)}" fill="#1A73E8" fill-opacity=".15"/><circle cx="${x}" cy="${y}" r="${12*uu}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${8*uu}" fill="#1A73E8"/>`;}
   const mp=mpu(m)*uu,alvo=mp*100,p=Math.pow(10,Math.floor(Math.log10(alvo))),n=[1,2,5,10].map(k=>k*p).filter(k=>k<=alvo).pop()||p;$("#esc").innerHTML=`<i style="width:${Math.round(n/mp)}px"></i>${fM(n)}`;}
-function info(){const m=M();const t=sel!=null?m.trechos.find(x=>x.n===sel):null;let h="";
+function info(){if(REG.on)return;const m=M();const t=sel!=null?m.trechos.find(x=>x.n===sel):null;let h="";
   if(t)h=`<b>Trecho ${t.n}${m.acesso?" do acesso":""}</b> · ${esc(t.tipo)} · ${fmt(t.m)} m<br><span class="pill p-${t.st}">${ST_N[t.st]||t.st}</span> ${t.partes&&t.partes.length?esc(t.partes.join(" · ")):""}`;
   if(GPS.on){const f=GPS.fix;let g=GPS.erro?esc(GPS.erro):!f?"Procurando o sinal do GPS…":"";
     if(f){let best=null;for(const tr of m.trechos)for(const p of tr.pts){const d=dist([f.lat,f.lon],n2g(m,p[0],p[1]));if(!best||d<best.d)best={d,n:tr.n};}
       g=`<b>Você está aqui</b> · ±${Math.round(f.acc)} m${best?` · mais perto: <b>T${best.n}</b> a ${fM(best.d)}`:""}`;}
     h=(h?h+"<hr>":"")+g;}
   $("#info").innerHTML=h;$("#info").style.display=h?"block":"none";}
-function zoom(f,x,y){const m=M();const b=bbCont(m);const w=Math.min(Math.max(VB.w*f,b.w/80),b.w*3),h=w*raz();if(x==null){x=VB.x+VB.w/2;y=VB.y+VB.h/2;}const kx=(x-VB.x)/VB.w,ky=(y-VB.y)/VB.h;VB={x:x-kx*w,y:y-ky*h,w,h};aplicar();}
+function zoom(f,x,y){const m=M();const b=bbCont(m);if(VB.w*f>b.w*2.2&&REG.dados){irRegiao(true);return;}const w=Math.min(Math.max(VB.w*f,b.w/80),b.w*3),h=w*raz();if(x==null){x=VB.x+VB.w/2;y=VB.y+VB.h/2;}const kx=(x-VB.x)/VB.w,ky=(y-VB.y)/VB.h;VB={x:x-kx*w,y:y-ky*h,w,h};aplicar();}
 const toN=(cx,cy)=>{const r=sv().getBoundingClientRect();return [VB.x+(cx-r.left)*VB.w/r.width,VB.y+(cy-r.top)*VB.h/r.height];};
 
 /* ================= gestos ================= */
@@ -220,7 +227,7 @@ sv().addEventListener("pointerdown",e=>{G=G||{P:new Map()};G.P.set(e.pointerId,{
 window.addEventListener("pointermove",e=>{if(!G||!G.P.has(e.pointerId))return;G.P.set(e.pointerId,{x:e.clientX,y:e.clientY});const r=sv().getBoundingClientRect(),v0=G.v0,ps=[...G.P.values()],is=[...G.P.keys()].map(k=>G.ini.get(k));
   if(ps.length===1){const dx=ps[0].x-is[0].x,dy=ps[0].y-is[0].y;if(!moveu&&Math.hypot(dx,dy)<7)return;moveu=true;GPS.seguir=false;VB.x=v0.x-dx*v0.w/r.width;VB.y=v0.y-dy*v0.h/r.height;aplicar();}
   else{moveu=true;GPS.seguir=false;const d0=Math.hypot(is[0].x-is[1].x,is[0].y-is[1].y)||1,d1=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y)||1;const m0={x:(is[0].x+is[1].x)/2,y:(is[0].y+is[1].y)/2},m1={x:(ps[0].x+ps[1].x)/2,y:(ps[0].y+ps[1].y)/2};
-    const n0=[v0.x+(m0.x-r.left)*v0.w/r.width,v0.y+(m0.y-r.top)*v0.h/r.height];const b=bbCont(M());const w=Math.min(Math.max(v0.w*d0/d1,b.w/80),b.w*3),h=w*raz();VB={w,h,x:n0[0]-(m1.x-r.left)*w/r.width,y:n0[1]-(m1.y-r.top)*h/r.height};aplicar();}
+    const n0=[v0.x+(m0.x-r.left)*v0.w/r.width,v0.y+(m0.y-r.top)*v0.h/r.height];const b=bbCont(M());if(v0.w*d0/d1>b.w*2.4&&REG.dados){G=null;irRegiao(true);return;}const w=Math.min(Math.max(v0.w*d0/d1,b.w/80),b.w*3),h=w*raz();VB={w,h,x:n0[0]-(m1.x-r.left)*w/r.width,y:n0[1]-(m1.y-r.top)*h/r.height};aplicar();}
   e.preventDefault();},{passive:false});
 const fim=e=>{if(!G||!G.P.has(e.pointerId))return;G.P.delete(e.pointerId);if(G.P.size){G.v0={...VB};G.ini=new Map([...G.P].map(([k,v])=>[k,{...v}]));}else G=null;};
 window.addEventListener("pointerup",fim);window.addEventListener("pointercancel",fim);
@@ -228,7 +235,7 @@ sv().addEventListener("wheel",e=>{e.preventDefault();const [x,y]=toN(e.clientX,e
 sv().addEventListener("click",e=>{if(moveu){moveu=false;return;}
   const p=e.target.closest("[data-pt]");if(p){abrirPonto(p.dataset.pt);return;}
   const h=e.target.closest(".hit,.nb");if(h){const n=+h.dataset.n;sel=sel===n?null:n;}else sel=null;info();aplicar();});
-let rsz=0;window.addEventListener("resize",()=>{clearTimeout(rsz);rsz=setTimeout(()=>{if(VB){const c=[VB.x+VB.w/2,VB.y+VB.h/2];const h=VB.w*raz();VB={x:VB.x,y:c[1]-h/2,w:VB.w,h};aplicar();}},120);});
+let rsz=0;window.addEventListener("resize",()=>{clearTimeout(rsz);rsz=setTimeout(()=>{if(REG.on){rAplicar();return;}if(VB){const c=[VB.x+VB.w/2,VB.y+VB.h/2];const h=VB.w*raz();VB={x:VB.x,y:c[1]-h/2,w:VB.w,h};aplicar();}},120);});
 
 /* ================= GPS ================= */
 function gpsLigar(){if(!navigator.geolocation){GPS.on=true;GPS.erro="Este aparelho não tem GPS disponível no navegador.";info();return;}
@@ -237,7 +244,7 @@ function gpsLigar(){if(!navigator.geolocation){GPS.on=true;GPS.erro="Este aparel
     if(GPS.seguir){const m=M();const [x,y]=g2n(m,GPS.fix.lat,GPS.fix.lon);const b=bbCont(m);
       if(x>=b.x&&y>=b.y&&x<=b.x+b.w&&y<=b.y+b.h){const w=Math.min(VB.w,b.w/5);VB={x:x-w/2,y:y-w*raz()/2,w,h:w*raz()};}else{const o=LISTA.findIndex(mm=>{const [a,c]=g2n(mm,GPS.fix.lat,GPS.fix.lon);const bb=bbCont(mm);return !mm.acesso&&a>=bb.x&&c>=bb.y&&a<=bb.x+bb.w&&c<=bb.y+bb.h;});if(o>=0&&o!==I){I=o;desenhar();aviso("Você está na "+M().nome);}}
       GPS.seguir=false;}
-    aplicar();info();},
+    if(REG.on)rGps();else{aplicar();info();}},
     er=>{GPS.erro=er.code===1?"Localização bloqueada. Libere a localização para este app nas configurações do celular.":"Sem sinal de GPS ainda. Vá para céu aberto.";info();},
     {enableHighAccuracy:true,maximumAge:4000,timeout:30000});info();}
 function gpsDesligar(){try{navigator.geolocation.clearWatch(GPS.watch);}catch(e){}Object.assign(GPS,{on:false,fix:null,watch:null,erro:""});$("#b-gps").classList.remove("on");aplicar();info();}
@@ -297,6 +304,102 @@ async function enviarPontos(){const txt=PONTOS.map(p=>`• ${p.tipo} – ${p.faz
   try{if(navigator.canShare&&files.length&&navigator.canShare({files})){await navigator.share({text:cab+txt,files});return;}if(navigator.share){await navigator.share({text:cab+txt});return;}}catch(e){if(e&&e.name==="AbortError")return;}
   try{await navigator.clipboard.writeText(cab+txt);aviso("Lista copiada. Cole no WhatsApp.");}catch(e){aviso("Não consegui compartilhar neste aparelho.");}}
 
+/* ================= mapa da região (todas as fazendas) =================
+   Afastado: região inteira. Aproximando numa fazenda do painel, entra sozinho no mapa detalhado dos trechos.
+   Afastando o mapa detalhado, volta para a região. */
+const REG={on:false,dados:null,tal:null,VB:null,sel:null,carregandoTal:false};
+const RK=Math.cos(19.5*Math.PI/180),RU=111.32;/* 1 unidade = 111,32 m */
+const RP=(lon,lat)=>[lon*RK*1000,-lat*1000];const RG=(x,y)=>[-y/1000,x/(RK*1000)];/* -> [lat,lon] */
+const rsv=()=>$("#reg");
+const CLN={colh:"Colheita próxima",meio:"Meio do ciclo",novo:"Plantio novo",sem:"Sem plantio informado"};
+function rClasse(f){const tot=Object.values(f.anos).reduce((a,b)=>a+b,0);if(!tot)return "sem";if(f.colh/tot>=.3)return "colh";
+  const nv=Object.entries(f.anos).filter(([a])=>+a>=2023).reduce((s,[,v])=>s+v,0);return nv/tot>=.5?"novo":"meio";}
+fetch("dados/regiao.json").then(r=>r.ok?r.json():null).then(d=>{if(!d)return;REG.dados=d;d.faz.forEach(f=>{f.cl=rClasse(f);f.P=RP(f.c[0],f.c[1]);
+  const xs=f.r.flat().map(p=>RP(p[0],p[1]));f.bb=[Math.min(...xs.map(p=>p[0])),Math.min(...xs.map(p=>p[1])),Math.max(...xs.map(p=>p[0])),Math.max(...xs.map(p=>p[1]))];});
+  if(REG.on)rDesenhar();}).catch(()=>{});
+function rTal(){if(REG.tal||REG.carregandoTal)return;REG.carregandoTal=true;fetch("dados/talhoes.json").then(r=>r.ok?r.json():null).then(d=>{REG.tal=d;REG.carregandoTal=false;if(REG.on){rDetalhe();rRotulos();}}).catch(()=>{REG.carregandoTal=false;});}
+const rPath=rs=>rs.map(r=>"M"+r.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join("L")+"Z").join("");
+function rDesenhar(){const D=REG.dados;const s=rsv();if(!D){s.innerHTML="";return;}
+  let h=`<g id="r-rod">${ROD?ROD.rod.map(([c,n,t,pts])=>`<polyline class="rod ${c}${t?" t":""}" points="${pts.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join(" ")}"/>`).join(""):""}</g><g id="r-fz">`;
+  D.faz.forEach((f,i)=>{h+=`<path class="rf ${f.cl}${f.cod?" cad":""}" data-f="${i}" d="${rPath(f.r)}"/>`;});
+  h+=`</g><g id="r-det"></g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=h;REG.detK="";rAplicar();}
+function rTudo(){const D=REG.dados;const fs=D.faz.filter(f=>f.cod);const L=fs.length?fs:D.faz;
+  return [Math.min(...L.map(f=>f.bb[0])),Math.min(...L.map(f=>f.bb[1])),Math.max(...L.map(f=>f.bb[2])),Math.max(...L.map(f=>f.bb[3]))];}
+function rIrPara(b,m=.25){const w=Math.max(b[2]-b[0],(b[3]-b[1])/raz())*(1+2*m)+2;const h=w*raz();REG.VB={x:(b[0]+b[2])/2-w/2,y:(b[1]+b[3])/2-h/2,w,h};rAplicar();}
+function rAplicar(){const s=rsv();const r=s.getBoundingClientRect();if(!r.width||!REG.dados)return;if(!REG.VB){rIrPara(rTudo());return;}
+  const V=REG.VB;const h=V.w*raz();V.y+=(V.h-h)/2;V.h=h;s.setAttribute("viewBox",`${V.x} ${V.y} ${V.w} ${V.h}`);
+  cancelAnimationFrame(REG.raf);REG.raf=requestAnimationFrame(()=>{rDetalhe();rRotulos();rGps();rEscala();});}
+/* talhões das fazendas que ainda não estão no painel, quando aproxima */
+function rDetalhe(){const V=REG.VB,g=$("#r-det");if(!g)return;if(V.w>160){if(REG.detK){g.innerHTML="";REG.detK="";}return;}
+  if(!REG.tal){rTal();return;}const vis=REG.dados.faz.filter(f=>f.bb[2]>V.x&&f.bb[0]<V.x+V.w&&f.bb[3]>V.y&&f.bb[1]<V.y+V.h);const k=vis.map(f=>f.id).join(",");if(k===REG.detK)return;REG.detK=k;
+  g.innerHTML=vis.map(f=>(REG.tal[f.id]||[]).map(t=>{const P=RP(t[4][0],t[4][1]);return `<path class="rt" d="${rPath([t[3]])}"/><g class="rtl" style="display:none" data-x="${P[0]}" data-y="${P[1]}" data-w="${t[1]}"><text x="${P[0]}" y="${P[1]}">${esc(t[0])}</text></g>`;}).join("")).join("");}
+function rRotulos(){const s=rsv(),r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.width;const oc=[];const livre=(x,y,w,h)=>{const b=[x-w/2,y-h/2,x+w/2,y+h/2];if(oc.some(c=>b[0]<c[2]&&b[2]>c[0]&&b[1]<c[3]&&b[3]>c[1]))return false;oc.push(b);return true;};
+  const tela=(x,y)=>[(x-V.x)/u,(y-V.y)/u];const dentro=(x,y)=>x>-30&&y>-20&&x<r.width+30&&y<r.height+20;
+  const F=REG.dados.faz;let h="";
+  const ord=F.map((f,i)=>i).sort((a,b)=>(b===REG.sel)-(a===REG.sel)||(!!F[b].cod-!!F[a].cod)||((F[b].bb[2]-F[b].bb[0])-(F[a].bb[2]-F[a].bb[0])));
+  for(const i of ord){const f=F[i];const wpx=(f.bb[2]-f.bb[0])/u;if(f.n==="(sem nome)"||(i!==REG.sel&&!f.cod&&wpx<60))continue;const [x,y]=tela(f.P[0],f.P[1]);if(!dentro(x,y))continue;
+    const w=f.n.length*6.6+8;if(!livre(x,y,w,16))continue;h+=`<text class="rlab${f.cod?" cad":""}" transform="translate(${f.P[0]} ${f.P[1]}) scale(${u})">${esc(f.n)}</text>`;}
+  $("#r-lab").innerHTML=h;
+  s.querySelectorAll(".rtl").forEach(g=>{const [x,y]=tela(+g.dataset.x,+g.dataset.y);const t=g.firstChild;const ok=dentro(x,y)&&livre(x,y,t.textContent.length*6.5+6,14);g.style.display=ok?"":"none";if(ok)g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y}) scale(${u}) translate(${-g.dataset.x} ${-g.dataset.y})`);});
+  s.querySelectorAll(".rf").forEach(p=>p.classList.toggle("sel",+p.dataset.f===REG.sel));}
+function rGps(){const g=$("#r-gps");if(!g)return;g.innerHTML="";if(!(GPS.on&&GPS.fix))return;const r=rsv().getBoundingClientRect(),u=REG.VB.w/r.width;const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);
+  g.innerHTML=`<circle cx="${x}" cy="${y}" r="${12*u}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${8*u}" fill="#1A73E8"/>`;}
+function rEscala(){const r=rsv().getBoundingClientRect();const mp=REG.VB.w/r.width*RU,alvo=mp*100,p=Math.pow(10,Math.floor(Math.log10(alvo))),n=[1,2,5,10].map(k=>k*p).filter(k=>k<=alvo).pop()||p;$("#esc").innerHTML=`<i style="width:${Math.round(n/mp)}px"></i>${fM(n)}`;}
+function rLegenda(){$("#leg").innerHTML=`<span><i style="background:var(--r-colh)"></i>Colheita próxima</span><span><i style="background:var(--r-meio)"></i>Meio do ciclo</span><span><i style="background:var(--r-novo)"></i>Plantio novo</span><span><i style="background:transparent;outline:2px solid var(--r-cad)"></i>No painel</span>`;}
+/* entrar e sair do mapa detalhado */
+function rMapaDe(f){return LISTA.findIndex(m=>m.cod===f.cod&&!m.acesso)>=0?LISTA.findIndex(m=>m.cod===f.cod&&!m.acesso):LISTA.findIndex(m=>m.cod===f.cod);}
+function rEntrar(f,manterVista){const i=rMapaDe(f);if(i<0)return;const V=REG.VB;REG.on=false;document.body.classList.remove("regiao");I=i;desenhar();
+  if(manterVista&&V){const m=M();const c=RG(V.x+V.w/2,V.y+V.h/2);const [x,y]=g2n(m,c[0],c[1]);const w=V.w*RU/mpu(m);const h=w*raz();VB={x:x-w/2,y:y-h/2,w,h};aplicar();}
+  aviso(f.n);LS.set("modo","fazenda");}
+function irRegiao(centro){REG.on=true;document.body.classList.add("regiao");$("#info").style.display="none";$("#selm").value="R";$("#sub").textContent="Região · "+(REG.dados?REG.dados.faz.length+" fazendas":"carregando…");
+  if(!rsv().innerHTML)rDesenhar();
+  if(centro){const m=M();const c=[VB.x+VB.w/2,VB.y+VB.h/2];const [lat,lon]=n2g(m,c[0],c[1]);const [x,y]=RP(lon,lat);const w=VB.w*mpu(m)/RU;const h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};}
+  rLegenda();rAplicar();rInfo();LS.set("modo","regiao");}
+function rChecarEntrada(){const V=REG.VB;const cx=V.x+V.w/2,cy=V.y+V.h/2;const f=REG.dados.faz.find(f=>f.cod&&cx>=f.bb[0]&&cx<=f.bb[2]&&cy>=f.bb[1]&&cy<=f.bb[3]);
+  if(f&&V.w<(f.bb[2]-f.bb[0])*1.4)rEntrar(f,true);}
+function rZoom(k,x,y){const V=REG.VB;if(x==null){x=V.x+V.w/2;y=V.y+V.h/2;}const w=Math.min(Math.max(V.w*k,3),9000),h=w*raz();const kx=(x-V.x)/V.w,ky=(y-V.y)/V.h;REG.VB={x:x-kx*w,y:y-ky*h,w,h};rAplicar();if(k<1)rChecarEntrada();}
+/* ficha */
+function rInfo(){const el=$("#info");if(REG.sel==null){el.style.display="none";return;}const f=REG.dados.faz[REG.sel];const anos=Object.entries(f.anos);const mx=Math.max(1,...anos.map(([,v])=>v));
+  const gm=`https://www.google.com/maps/dir/?api=1&destination=${f.c[1]},${f.c[0]}&travelmode=driving`;
+  el.innerHTML=`<b style="font-size:16px">${esc(f.n)}</b> · ${fmt(f.ha)} ha · ${f.t} talhões<br><span class="muted">${CLN[f.cl]}${f.colh?` · ${fmt(f.colh)} ha plantados até 2019`:""}</span>
+   ${anos.length?`<div style="display:grid;gap:2px;margin:6px 0">${anos.map(([y,v])=>`<div style="display:grid;grid-template-columns:38px 1fr 64px;gap:6px;align-items:center;font-size:12px"><span class="muted">${y}</span><i style="display:block;height:7px;border-radius:2px;width:${Math.max(3,100*v/mx)}%;background:var(${+y<=2019?"--r-colh":+y>=2023?"--r-novo":"--r-meio"})"></i><span class="muted" style="text-align:right">${fmt(v)} ha</span></div>`).join("")}</div>`:""}
+   <div class="row" style="margin-top:6px">${f.cod?`<button class="btn pri" id="r-abrir">Abrir mapa das estradas</button>`:`<button class="btn pri" id="r-cad">Pedir cadastro no painel</button>`}<a class="btn" style="display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)" href="${gm}" target="_blank" rel="noopener">🚗 Como chegar</a><button class="btn" id="r-x">✕</button></div>
+   ${f.cod?"":`<div class="muted" style="margin-top:4px">Ainda não está no painel. Aproxime para ver os talhões desta base. Os trechos entram com o pacote da Geoplant.</div>`}`;
+  el.style.display="block";
+  const a=$("#r-abrir");if(a)a.onclick=()=>{rEntrar(f,false);};
+  const c=$("#r-cad");if(c)c.onclick=async()=>{const t=`*Cadastrar fazenda no Painel de Campo*\nFazenda: ${f.n}\nÁrea: ${fmt(f.ha)} ha · ${f.t} talhões\nLocal: https://maps.google.com/?q=${f.c[1].toFixed(5)},${f.c[0].toFixed(5)}\nPrecisa do pacote da Geoplant (mapas de trechos e estradas).`;
+    try{if(navigator.share){await navigator.share({text:t});return;}}catch(e){if(e&&e.name==="AbortError")return;}try{await navigator.clipboard.writeText(t);aviso("Pedido copiado. Cole no WhatsApp.");}catch(e){aviso("Não consegui compartilhar.");}};
+  $("#r-x").onclick=()=>{REG.sel=null;rRotulos();rInfo();};}
+/* gestos da região */
+(()=>{let P=new Map(),v0=null,ini=null,mv=false;const s=rsv();
+  s.addEventListener("pointerdown",e=>{P.set(e.pointerId,[e.clientX,e.clientY]);v0={...REG.VB};ini=new Map([...P].map(([k,v])=>[k,[...v]]));if(P.size===1)mv=false;});
+  window.addEventListener("pointermove",e=>{if(!REG.on||!P.has(e.pointerId))return;P.set(e.pointerId,[e.clientX,e.clientY]);const r=s.getBoundingClientRect();const ps=[...P.values()],is=[...P.keys()].map(k=>ini.get(k));
+    if(ps.length===1){const dx=ps[0][0]-is[0][0],dy=ps[0][1]-is[0][1];if(!mv&&Math.hypot(dx,dy)<7)return;mv=true;REG.VB={...v0,x:v0.x-dx*v0.w/r.width,y:v0.y-dy*v0.h/r.height};rAplicar();}
+    else{mv=true;const d0=Math.hypot(is[0][0]-is[1][0],is[0][1]-is[1][1])||1,d1=Math.hypot(ps[0][0]-ps[1][0],ps[0][1]-ps[1][1])||1;const m0=[(is[0][0]+is[1][0])/2-r.left,(is[0][1]+is[1][1])/2-r.top],m1=[(ps[0][0]+ps[1][0])/2-r.left,(ps[0][1]+ps[1][1])/2-r.top];
+      const n0=[v0.x+m0[0]*v0.w/r.width,v0.y+m0[1]*v0.h/r.height];const w=Math.min(Math.max(v0.w*d0/d1,3),9000),h=w*raz();REG.VB={w,h,x:n0[0]-m1[0]*w/r.width,y:n0[1]-m1[1]*h/r.height};rAplicar();}
+    e.preventDefault();},{passive:false});
+  const fimR=e=>{if(!P.has(e.pointerId))return;const pinça=P.size===2;P.delete(e.pointerId);if(P.size){v0={...REG.VB};ini=new Map([...P].map(([k,v])=>[k,[...v]]));}if(pinça&&REG.on)rChecarEntrada();};
+  window.addEventListener("pointerup",fimR);window.addEventListener("pointercancel",fimR);
+  s.addEventListener("wheel",e=>{e.preventDefault();const r=s.getBoundingClientRect(),V=REG.VB;rZoom(e.deltaY>0?1.2:1/1.2,V.x+(e.clientX-r.left)*V.w/r.width,V.y+(e.clientY-r.top)*V.h/r.height);},{passive:false});
+  s.addEventListener("click",e=>{if(mv){mv=false;return;}const t=e.target.closest(".rf");if(t){const i=+t.dataset.f;REG.sel=REG.sel===i?null:i;}else{
+      /* toque perto de uma fazenda pequena também vale */
+      const r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.width,x=V.x+(e.clientX-r.left)*u,y=V.y+(e.clientY-r.top)*u;let best=null,bd=1e9;
+      REG.dados.faz.forEach((f,i)=>{const d=Math.hypot(Math.max(f.bb[0]-x,0,x-f.bb[2]),Math.max(f.bb[1]-y,0,y-f.bb[3]))/u;if(d<bd){bd=d;best=i;}});REG.sel=bd<=24?best:null;}
+    rRotulos();rInfo();});})();
+/* botões: na região eles agem na região */
+(()=>{const orig={};["b-in","b-out","b-fit","b-gps","b-pt","b-menu"].forEach(id=>{orig[id]=$("#"+id).onclick;});
+  $("#b-in").onclick=()=>REG.on?rZoom(1/1.6):orig["b-in"]();
+  $("#b-out").onclick=()=>REG.on?rZoom(1.6):orig["b-out"]();
+  $("#b-fit").onclick=()=>{if(REG.on){REG.VB=null;rAplicar();}else orig["b-fit"]();};
+  $("#b-gps").onclick=()=>{if(!REG.on)return orig["b-gps"]();if(!GPS.on){gpsLigar();GPS.seguir=false;aviso("Ligando o GPS…");return;}if(GPS.fix){const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);const w=Math.min(REG.VB.w,60),h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};rAplicar();rChecarEntrada();}else gpsDesligar();};
+  $("#b-pt").onclick=()=>{if(!REG.on)return orig["b-pt"]();let lat,lon,o;if(GPS.on&&GPS.fix){lat=GPS.fix.lat;lon=GPS.fix.lon;o=`sua posição (±${Math.round(GPS.fix.acc)} m)`;}else{const V=REG.VB;[lat,lon]=RG(V.x+V.w/2,V.y+V.h/2);o="centro da tela (ligue o GPS ◉ para marcar onde você está)";}
+    const [x,y]=RP(lon,lat);const f=REG.dados&&REG.dados.faz.find(f=>x>=f.bb[0]&&x<=f.bb[2]&&y>=f.bb[1]&&y<=f.bb[3]);
+    NOVO={id:"p"+Date.now().toString(36),lat,lon,tipo:"",obs:"",foto:null,fazenda:f?f.n:"Fora das fazendas",mapa:"Região",em:new Date().toISOString()};folhaPonto(o);};
+  $("#b-menu").onclick=()=>{if(!REG.on)return orig["b-menu"]();const D=REG.dados;if(!D)return;const c={colh:0,meio:0,novo:0,sem:0};D.faz.forEach(f=>c[f.cl]+=f.ha);
+    abrirFolha("Região · "+D.faz.length+" fazendas",`<div class="box card"><b>Fazendas no painel</b>${D.faz.filter(f=>f.cod).map(f=>`<button class="fzb" data-rf="${f.id}">${esc(f.n)}<small>${fmt(f.ha)} ha</small></button>`).join("")}</div>
+     <div class="box card"><b>Área por fase do plantio</b>${Object.keys(c).map(k=>`<div class="row" style="justify-content:space-between"><span>${CLN[k]}</span><span>${fmt(Math.round(c[k]/1000))} mil ha</span></div>`).join("")}<div class="muted">Base de polígonos de ${esc(D.versao)}. Colheita próxima = 30% ou mais da área plantada até 2019.</div></div>`);
+    $("#sh-b").querySelectorAll("[data-rf]").forEach(b=>b.onclick=()=>{fecharFolha();const f=D.faz[+b.dataset.rf];rEntrar(f,false);});};})();
+
 /* ================= carregar, trocar fazenda, atualizar ================= */
 /* situação dos trechos: vem do painel toda madrugada (dados/situacao.json) */
 let SIT=null;
@@ -306,8 +409,8 @@ async function buscarSit(forcar){try{const r=await fetch("dados/situacao.json"+(
   const mudou=!SIT||d.em!==SIT.em;SIT=d;if(mudou)aplicarSit();return mudou;}catch(e){return false;}}
 function dataSit(){if(!SIT||!SIT.em)return "";const d=new Date(SIT.em);return isNaN(d)?"":d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
 function montarLista(){LISTA=[];DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{m.cod=f.cod;m.id=f.cod+(m.acesso?"-acesso":"");LISTA.push(m);}));
-  $("#selm").innerHTML=DADOS.fazendas.map(f=>`<optgroup label="${esc(f.mapas[0].nome)}">${f.mapas.map(m=>`<option value="${LISTA.indexOf(m)}">${esc(m.nome)} · ${m.acesso?"Acesso":"Estradas internas"}</option>`).join("")}</optgroup>`).join("");}
-$("#selm").onchange=e=>{I=+e.target.value;desenhar();};
+  $("#selm").innerHTML=`<option value="R">🌎 Região – todas as fazendas</option>`+DADOS.fazendas.map(f=>`<optgroup label="${esc(f.mapas[0].nome)}">${f.mapas.map(m=>`<option value="${LISTA.indexOf(m)}">${esc(m.nome)} · ${m.acesso?"Acesso":"Estradas internas"}</option>`).join("")}</optgroup>`).join("");}
+$("#selm").onchange=e=>{if(e.target.value==="R"){irRegiao(false);return;}I=+e.target.value;if(REG.on){REG.on=false;document.body.classList.remove("regiao");LS.set("modo","fazenda");}desenhar();};
 async function buscarDados(forcar){try{const r=await fetch("dados/mapas.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)throw 0;const d=await r.json();
     const mudou=!DADOS||d.versao!==DADOS.versao;if(mudou){const id=LISTA[I]&&LISTA[I].id;DADOS=d;aplicarSit();montarLista();const k=LISTA.findIndex(m=>m.id===(id||LS.get("mapa","")));I=k>=0?k:0;desenhar();}const ms=await buscarSit(forcar);if(ms&&!mudou)desenhar();if($("#home").classList.contains("on"))home();return (mudou||ms)&&forcar;}catch(e){return false;}}
 let swNovo=null;
@@ -335,9 +438,9 @@ function home(){$("#home").classList.add("on");fecharFolha();if(!DADOS)return;
   $("#h-fz").innerHTML=DADOS.fazendas.map(f=>`<div class="fzb" style="display:grid;gap:8px"><div><b>${esc(f.mapas[0].nome)}</b> <small style="display:inline">· ${esc(f.cod)}</small></div>
     <div class="bar">${f.mapas.map(m=>`<button class="bt" data-abre="${LISTA.indexOf(m)}">${m.acesso?"Acesso":"Estradas internas"}</button>`).join("")}</div></div>`).join("");
   $("#h-fz").querySelectorAll("[data-abre]").forEach(b=>b.onclick=()=>abrirMapa(+b.dataset.abre));}
-function abrirMapa(i){if(i!=null&&i!==I){I=i;desenhar();}$("#home").classList.remove("on");requestAnimationFrame(()=>{VB=null;aplicar();});}
+function abrirMapa(i){$("#home").classList.remove("on");if(i==null){REG.VB=null;irRegiao(false);return;}if(REG.on){REG.on=false;document.body.classList.remove("regiao");}if(i!==I){I=i;desenhar();}else $("#selm").value=String(I);requestAnimationFrame(()=>{VB=null;aplicar();});}
 $("#h-mapa").onclick=()=>abrirMapa(null);
-$("#h-pontos").onclick=()=>{abrirMapa(null);$("#b-menu").onclick();};
+$("#h-pontos").onclick=()=>{abrirMapa(I);$("#b-menu").onclick();};
 $("#b-home").onclick=home;
 const PAINEL="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8";
 function abrirPainel(e){if(!navigator.onLine){e.preventDefault();aviso("O Painel precisa de internet.");return;}
