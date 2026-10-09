@@ -26,6 +26,8 @@ svg#mapa{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-se
 .s-nc,.s-g-np,.s-g-fora{stroke:var(--np);stroke-width:calc(var(--tw,3px)*.55);stroke-dasharray:6 5}
 .alt.s-pronto,.alt.s-g-ok{stroke:#1F6E43}.alt.s-agulhado,.alt.s-g-and{stroke:#B98400}.alt.s-preparo{stroke:#2A62B0}.alt.s-falta,.alt.s-g-zero{stroke:#C9655C}
 .tr.sel{stroke-width:calc(var(--tw,3px)*1.9)}
+.rod{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.rod.F{stroke:#7A6A5E;stroke-width:2.6px}.rod.E{stroke:#9C948A;stroke-width:1.6px}.rod.E.t{stroke-dasharray:5 4}
+.rodl{font:600 11px system-ui,sans-serif;fill:var(--mut);paint-order:stroke;stroke:var(--bg);stroke-width:3px;text-anchor:middle}
 .viz{fill:none;stroke-width:1.6px;stroke-opacity:.8;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .hit{fill:none;stroke:transparent;stroke-width:26;vector-effect:non-scaling-stroke}
 .nb text{font:700 10.5px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
@@ -160,15 +162,27 @@ function inteiro(){const r=raz(),b=bbCont(M());let w,h;if(b.h/b.w>r){h=b.h;w=h/r
 function vizinho(m){if(m._viz!=null)return m._viz;const o=LISTA.find(x=>x.cod===m.cod&&x!==m);if(!o)return m._viz="";
   return m._viz=o.trechos.map(t=>{const pp=t.pts.map(q=>{const g=n2g(o,q[0],q[1]);const p=g2n(m,g[0],g[1]);return p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" ");
     return `<polyline class="viz s-${t.st}" points="${pp}"/>`;}).join("");}
+/* rodovias federais e estaduais de MS (OpenStreetMap), por baixo dos mapas */
+let ROD=null;fetch("dados/rodovias/MS.json").then(r=>r.ok?r.json():null).then(d=>{if(!d)return;ROD=d;if(DADOS&&LISTA.length)desenhar();}).catch(()=>{});
+function rodMapa(m){if(!ROD||!LS.get("rod","1"))return "";if(m._rod!=null)return m._rod;
+  const cs=[[0,0],[m.w,0],[0,m.h],[m.w,m.h]].map(p=>n2g(m,p[0],p[1]));const la=cs.map(c=>c[0]),lo=cs.map(c=>c[1]);
+  const pad=Math.max(Math.max(...la)-Math.min(...la),Math.max(...lo)-Math.min(...lo))*0.6;
+  const b=[Math.min(...lo)-pad,Math.min(...la)-pad,Math.max(...lo)+pad,Math.max(...la)+pad];let lab=[];
+  const h=ROD.rod.filter(r=>r[3].some(p=>p[0]>=b[0]&&p[0]<=b[2]&&p[1]>=b[1]&&p[1]<=b[3])).map(r=>{const P=r[3].map(p=>g2n(m,p[1],p[0]));
+    let best=null,bl=0;for(let i=1;i<P.length;i++){const l=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);if(l>bl){bl=l;best=[(P[i][0]+P[i-1][0])/2,(P[i][1]+P[i-1][1])/2];}}
+    if(best)lab.push([r[1],best,bl]);
+    return `<polyline class="rod ${r[0]}${r[2]?" t":""}" points="${P.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}"/>`;}).join("");
+  const vis=new Set();lab=lab.sort((a,b)=>b[2]-a[2]).filter(x=>{if(vis.has(x[0]))return false;vis.add(x[0]);return true;});
+  return m._rod=`<g class="rodg">${h}</g>`+lab.map(([n,p])=>`<g class="fx rl" data-cx="${p[0]}" data-cy="${p[1]}"><text class="rodl" x="${p[0]}" y="${p[1]}">${esc(n)}</text></g>`).join("");}
 function desenhar(){const m=M();sel=null;VB=null;
   $("#selm").value=String(I);
   $("#sub").textContent=`${m.mapa} · mapas de ${DADOS.versao}`;
-  sv().innerHTML=m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
+  sv().innerHTML=rodMapa(m)+m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
     m.trechos.map(t=>`<polyline class="tr s-${t.st}${t.n%2?"":" alt"}" data-n="${t.n}" points="${t.pts.join(" ")}"/><polyline class="hit" data-n="${t.n}" points="${t.pts.join(" ")}"/>`).join("")+
     m.talhoes.filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fx tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${Math.max(...xs)-Math.min(...xs)}" data-h="${Math.max(...ys)-Math.min(...ys)}" data-n="${String(t.id).length}"><text class="tt" x="${t.lab[0]}" y="${t.lab[1]}">${esc(t.id)}</text>${t.ha?`<text class="ts" x="${t.lab[0]}" y="${t.lab[1]+12}">${fmt(Math.round(t.ha*10)/10)} ha</text>`:""}</g>`;}).join("")+
     m.trechos.filter(t=>t.mid).map(t=>`<g class="fx nb" data-n="${t.n}" data-cx="${t.mid[0]}" data-cy="${t.mid[1]}"><circle cx="${t.mid[0]}" cy="${t.mid[1]}" r="10"/><text x="${t.mid[0]}" y="${t.mid[1]}">${t.n}</text></g>`).join("")+
     `<g id="pins"></g><g id="gps"></g>`;
-  $("#leg").innerHTML=m.trechos.some(t=>!String(t.st).startsWith("g-"))||true?`<span><i style="background:var(--ok)"></i>Pronto</span><span><i style="background:var(--and)"></i>Agulhado / andamento</span><span><i style="background:var(--prep)"></i>Preparo</span><span><i style="background:var(--zero)"></i>Falta</span><span><i style="background:var(--np)"></i>Sem previsão</span>`:"";
+  $("#leg").innerHTML=m.trechos.some(t=>!String(t.st).startsWith("g-"))||true?`<span><i style="background:var(--ok)"></i>Pronto</span><span><i style="background:var(--and)"></i>Agulhado / andamento</span><span><i style="background:var(--prep)"></i>Preparo</span><span><i style="background:var(--zero)"></i>Falta</span><span><i style="background:var(--np)"></i>Sem previsão</span>${ROD?`<span><i style="background:#8A7E73"></i>Rodovia BR/MS</span>`:""}`:"";
   info();aplicar();LS.set("mapa",m.id);}
 let raf=0;
 function aplicar(){const s=sv();const rr=s.getBoundingClientRect();if(!rr.width||!rr.height){requestAnimationFrame(aplicar);return;}if(!VB)VB=inteiro();const nh=VB.w*raz();VB.y+=(VB.h-nh)/2;VB.h=nh;s.setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);
@@ -183,6 +197,7 @@ function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)
   [...s.querySelectorAll(".nb")].sort((a,b)=>(+b.dataset.n===sel)-(+a.dataset.n===sel)).forEach(g=>{tf(g,uu);const isSel=+g.dataset.n===sel;g.classList.toggle("sel",isSel);const [x,y]=tela(g);
     if(!isSel&&(!ver||!dentro(x,y))){g.style.display="none";return;}g.style.display=(livre(x,y,String(g.dataset.n).length*6.5+8,15)||isSel)?"":"none";});
   s.querySelectorAll(".tr").forEach(p=>p.classList.toggle("sel",+p.dataset.n===sel));
+  s.querySelectorAll(".rl").forEach(g=>{tf(g,uu);const [x,y]=tela(g);g.style.display=dentro(x,y)&&livre(x,y,g.textContent.length*6.4+6,14)?"":"none";});
   [...s.querySelectorAll(".tl")].map(g=>({g,w:+g.dataset.w/uu,h:+g.dataset.h/uu})).sort((a,b)=>b.w-a.w).forEach(o=>{const g=o.g,wN=(+g.dataset.n)*7.2+6;const [x,y]=tela(g);
     if(o.w<wN*1.6||o.h<20||!dentro(x,y)){g.style.display="none";return;}tf(g,uu);const sub=g.querySelector(".ts");const cs=!!sub&&o.w>=60&&o.h>=46;if(sub)sub.style.display=cs?"":"none";
     g.style.display=livre(x,y+(cs?6:0),Math.max(wN,cs?50:0),cs?28:15)?"":"none";});
@@ -283,11 +298,18 @@ async function enviarPontos(){const txt=PONTOS.map(p=>`• ${p.tipo} – ${p.faz
   try{await navigator.clipboard.writeText(cab+txt);aviso("Lista copiada. Cole no WhatsApp.");}catch(e){aviso("Não consegui compartilhar neste aparelho.");}}
 
 /* ================= carregar, trocar fazenda, atualizar ================= */
+/* situação dos trechos: vem do painel toda madrugada (dados/situacao.json) */
+let SIT=null;
+function aplicarSit(){if(!DADOS||!SIT||!SIT.mapas)return;DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{const s=SIT.mapas[f.cod]&&SIT.mapas[f.cod][m.acesso?"A":"I"];if(!s)return;
+  m.trechos.forEach(t=>{const v=s[t.n];if(v){t.st=v[0];t.partes=v[1]||[];}});}));}
+async function buscarSit(forcar){try{const r=await fetch("dados/situacao.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)return false;const d=await r.json();
+  const mudou=!SIT||d.em!==SIT.em;SIT=d;if(mudou)aplicarSit();return mudou;}catch(e){return false;}}
+function dataSit(){if(!SIT||!SIT.em)return "";const d=new Date(SIT.em);return isNaN(d)?"":d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
 function montarLista(){LISTA=[];DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{m.cod=f.cod;m.id=f.cod+(m.acesso?"-acesso":"");LISTA.push(m);}));
   $("#selm").innerHTML=DADOS.fazendas.map(f=>`<optgroup label="${esc(f.mapas[0].nome)}">${f.mapas.map(m=>`<option value="${LISTA.indexOf(m)}">${esc(m.nome)} · ${m.acesso?"Acesso":"Estradas internas"}</option>`).join("")}</optgroup>`).join("");}
 $("#selm").onchange=e=>{I=+e.target.value;desenhar();};
 async function buscarDados(forcar){try{const r=await fetch("dados/mapas.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)throw 0;const d=await r.json();
-    const mudou=!DADOS||d.versao!==DADOS.versao;if(mudou){const id=LISTA[I]&&LISTA[I].id;DADOS=d;montarLista();const k=LISTA.findIndex(m=>m.id===(id||LS.get("mapa","")));I=k>=0?k:0;desenhar();}return mudou&&forcar;}catch(e){return false;}}
+    const mudou=!DADOS||d.versao!==DADOS.versao;if(mudou){const id=LISTA[I]&&LISTA[I].id;DADOS=d;aplicarSit();montarLista();const k=LISTA.findIndex(m=>m.id===(id||LS.get("mapa","")));I=k>=0?k:0;desenhar();}const ms=await buscarSit(forcar);if(ms&&!mudou)desenhar();if($("#home").classList.contains("on"))home();return (mudou||ms)&&forcar;}catch(e){return false;}}
 let swNovo=null;
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(reg=>{
   const ver=w=>{if(!w)return;w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller){swNovo=w;$("#upd").style.display="flex";}});};
@@ -301,14 +323,14 @@ window.addEventListener("online",()=>buscarDados(true));
 const PIN_H="7c14d3";function h(s){let x=5381;for(const c of s)x=((x<<5)+x+c.charCodeAt(0))>>>0;return (x%0xffffff).toString(16).padStart(6,"0");}
 async function iniciar(){await carregarPontos();
   const r=await fetch("dados/mapas.json").catch(()=>null);if(!r||!r.ok){document.body.innerHTML='<div style="padding:24px">Abra o app uma vez com internet para baixar os mapas.</div>';return;}
-  DADOS=await r.json();montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();home();
+  DADOS=await r.json();await buscarSit(false);montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();home();
   if(navigator.onLine)setTimeout(()=>buscarDados(true),2500);}
 function entrar(){$("#pin").style.display="none";iniciar();}
 function tema(t){document.documentElement.setAttribute("data-tema",t);LS.set("tema",t);document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tema===t));
   const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.content=t==="escuro"?"#1F2420":"#F2F1EC";}
 document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.onclick=()=>tema(b.dataset.tema));tema(LS.get("tema","escuro"));
 function home(){$("#home").classList.add("on");fecharFolha();if(!DADOS)return;
-  $("#h-ver").textContent="· mapas de "+DADOS.versao;
+  $("#h-ver").textContent="· mapas de "+DADOS.versao+(dataSit()?" · situação de "+dataSit():"");
   $("#h-np").textContent=PONTOS.length?`${PONTOS.length} ponto(s) marcados neste celular. Toque para ver e enviar.`:"Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.";
   $("#h-fz").innerHTML=DADOS.fazendas.map(f=>`<div class="fzb" style="display:grid;gap:8px"><div><b>${esc(f.mapas[0].nome)}</b> <small style="display:inline">· ${esc(f.cod)}</small></div>
     <div class="bar">${f.mapas.map(m=>`<button class="bt" data-abre="${LISTA.indexOf(m)}">${m.acesso?"Acesso":"Estradas internas"}</button>`).join("")}</div></div>`).join("");
