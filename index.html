@@ -12,9 +12,9 @@
 <link rel="icon" href="icones/icone-192.png">
 <link rel="apple-touch-icon" href="icones/icone-192.png">
 <style>
-:root[data-tema="claro"]{--r-pd:#5E4E44;--r-colh:#C9A24E;--r-meio:#5E8A66;--r-novo:#A9C3A0;--r-sem:#D6CFC4;--r-cad:#5E4E44;--r-sel:#B86A4E;--r-ln:rgba(60,50,40,.35);--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--tal:#F1E6C4;--tall:#C9B98A;--np:#8E938B}
-:root[data-tema="sol"]{--r-pd:#3B2E25;--r-colh:#C9A24E;--r-meio:#3F6B4A;--r-novo:#8FB08A;--r-sem:#CFC8BC;--r-cad:#000;--r-sel:#B0402A;--r-ln:rgba(0,0,0,.5);--bg:#FFFFFF;--sf:#FFFFFF;--ln:#3A3A3A;--ink:#000;--mut:#1F1F1F;--tal:#F4E9C8;--tall:#8A7A4A;--np:#6E726B;--zero:#D0453A;--ok:#00702A}
-:root{--r-pd:#C9A97E;--r-colh:#B8954A;--r-meio:#4F7A5A;--r-novo:#7E9A78;--r-sem:#4A463F;--r-cad:#D8C3B0;--r-sel:#D08A70;--r-ln:rgba(0,0,0,.35);--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--tal:#3A3526;--tall:#6B6247;
+:root[data-tema="claro"]{--r-rota:#2F5F8A;--r-pd:#5E4E44;--r-colh:#C9A24E;--r-meio:#5E8A66;--r-novo:#A9C3A0;--r-sem:#D6CFC4;--r-cad:#5E4E44;--r-sel:#B86A4E;--r-ln:rgba(60,50,40,.35);--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--tal:#F1E6C4;--tall:#C9B98A;--np:#8E938B}
+:root[data-tema="sol"]{--r-rota:#123E66;--r-pd:#3B2E25;--r-colh:#C9A24E;--r-meio:#3F6B4A;--r-novo:#8FB08A;--r-sem:#CFC8BC;--r-cad:#000;--r-sel:#B0402A;--r-ln:rgba(0,0,0,.5);--bg:#FFFFFF;--sf:#FFFFFF;--ln:#3A3A3A;--ink:#000;--mut:#1F1F1F;--tal:#F4E9C8;--tall:#8A7A4A;--np:#6E726B;--zero:#D0453A;--ok:#00702A}
+:root{--r-rota:#7FA7C9;--r-pd:#C9A97E;--r-colh:#B8954A;--r-meio:#4F7A5A;--r-novo:#7E9A78;--r-sem:#4A463F;--r-cad:#D8C3B0;--r-sel:#D08A70;--r-ln:rgba(0,0,0,.35);--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--tal:#3A3526;--tall:#6B6247;
   --ok:#2E8B57;--and:#E0A100;--prep:#3B7DD8;--zero:#E58B83;--np:#A9ADA6;--mk:#B07CE8;--gps:#1A73E8;--danger:#F08A80}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
@@ -38,6 +38,7 @@ svg#reg{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-sel
 body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 .rf{stroke:var(--r-ln);stroke-width:.6px;vector-effect:non-scaling-stroke;fill-opacity:.85;cursor:pointer}.rf.colh{fill:var(--r-colh)}.rf.meio{fill:var(--r-meio)}.rf.novo{fill:var(--r-novo)}.rf.sem{fill:var(--r-sem)}
 .rf{fill:var(--r-sem)}.rf.cad{fill:var(--r-meio);stroke:var(--r-cad);stroke-width:1.6px}
+.rota{fill:none;stroke:var(--r-rota);stroke-width:4px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.rota-b{fill:none;stroke:var(--bg);stroke-width:8px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.9}
 .pd rect{fill:var(--r-pd);stroke:var(--bg);stroke-width:2px}.pd text{font:700 11.5px system-ui,sans-serif;fill:var(--r-pd);dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px}.pd{cursor:pointer}.rf.sel{stroke:var(--r-sel);stroke-width:3px}
 .rt{fill:none;stroke:var(--r-ln);stroke-width:.7px;vector-effect:non-scaling-stroke;pointer-events:none}
 .rtl text{font:600 10px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
@@ -182,10 +183,12 @@ function rodMapa(m){if(!ROD||!LS.get("rod","1"))return "";if(m._rod!=null)return
     return `<polyline class="rod ${r[0]}${r[2]?" t":""}" points="${P.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}"/>`;}).join("");
   const vis=new Set();lab=lab.sort((a,b)=>b[2]-a[2]).filter(x=>{if(vis.has(x[0]))return false;vis.add(x[0]);return true;});
   return m._rod=`<g class="rodg">${h}</g>`+lab.map(([n,p])=>`<g class="fx rl" data-cx="${p[0]}" data-cy="${p[1]}"><text class="rodl" x="${p[0]}" y="${p[1]}">${esc(n)}</text></g>`).join("");}
+function rtMapa(m){if(!RT.res)return "";if(m._rt!=null)return m._rt;const P=RT.res.pts.map(p=>g2n(m,p[1],p[0]));
+  const ok=P.filter(p=>p[0]>-m.w&&p[1]>-m.h&&p[0]<2*m.w&&p[1]<2*m.h);if(ok.length<2)return m._rt="";const pp=P.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");return m._rt=`<polyline class="rota-b" points="${pp}"/><polyline class="rota" points="${pp}"/>`;}
 function desenhar(){const m=M();sel=null;VB=null;
   if(!REG.on)$("#selm").value=String(I);
   $("#sub").textContent=`${m.mapa} · mapas de ${DADOS.versao}`;
-  sv().innerHTML=rodMapa(m)+m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
+  sv().innerHTML=rodMapa(m)+rtMapa(m)+m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
     m.trechos.map(t=>`<polyline class="tr s-${t.st}${t.n%2?"":" alt"}" data-n="${t.n}" points="${t.pts.join(" ")}"/><polyline class="hit" data-n="${t.n}" points="${t.pts.join(" ")}"/>`).join("")+
     m.talhoes.filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fx tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${Math.max(...xs)-Math.min(...xs)}" data-h="${Math.max(...ys)-Math.min(...ys)}" data-n="${String(t.id).length}"><text class="tt" x="${t.lab[0]}" y="${t.lab[1]}">${esc(t.id)}</text>${t.ha?`<text class="ts" x="${t.lab[0]}" y="${t.lab[1]+12}">${fmt(Math.round(t.ha*10)/10)} ha</text>`:""}</g>`;}).join("")+
     m.trechos.filter(t=>t.mid).map(t=>`<g class="fx nb" data-n="${t.n}" data-cx="${t.mid[0]}" data-cy="${t.mid[1]}"><circle cx="${t.mid[0]}" cy="${t.mid[1]}" r="10"/><text x="${t.mid[0]}" y="${t.mid[1]}">${t.n}</text></g>`).join("")+
@@ -245,7 +248,7 @@ function gpsLigar(){if(!navigator.geolocation){GPS.on=true;GPS.erro="Este aparel
     if(GPS.seguir){const m=M();const [x,y]=g2n(m,GPS.fix.lat,GPS.fix.lon);const b=bbCont(m);
       if(x>=b.x&&y>=b.y&&x<=b.x+b.w&&y<=b.y+b.h){const w=Math.min(VB.w,b.w/5);VB={x:x-w/2,y:y-w*raz()/2,w,h:w*raz()};}else{const o=LISTA.findIndex(mm=>{const [a,c]=g2n(mm,GPS.fix.lat,GPS.fix.lon);const bb=bbCont(mm);return !mm.acesso&&a>=bb.x&&c>=bb.y&&a<=bb.x+bb.w&&c<=bb.y+bb.h;});if(o>=0&&o!==I){I=o;desenhar();aviso("Você está na "+M().nome);}}
       GPS.seguir=false;}
-    if(REG.on)rGps();else{aplicar();info();}},
+    if(REG.on){rGps();if(RT.res&&REG.sel==null&&REG.pd==null)rInfo();}else{aplicar();info();}},
     er=>{GPS.erro=er.code===1?"Localização bloqueada. Libere a localização para este app nas configurações do celular.":"Sem sinal de GPS ainda. Vá para céu aberto.";info();},
     {enableHighAccuracy:true,maximumAge:4000,timeout:30000});info();}
 function gpsDesligar(){try{navigator.geolocation.clearWatch(GPS.watch);}catch(e){}Object.assign(GPS,{on:false,fix:null,watch:null,erro:""});$("#b-gps").classList.remove("on");aplicar();info();}
@@ -312,7 +315,6 @@ const REG={on:false,dados:null,tal:null,VB:null,sel:null,carregandoTal:false};
 const PEDR=[{n:"Coplan (Construtora Planalto)",l:"MS-377, Inocência/Água Clara",c:[-52.14954,-19.97624]},{n:"Concreluz",l:"MS-112, Inocência",c:[-51.91670,-19.76751]},
   {n:"Mineradora Britasul",l:"MS-306 km 148, Indaiá do Sul (Cassilândia)",c:[-52.36217,-18.91016]},{n:"Pedreira Três Barras",l:"BR-158, Aparecida do Taboado",c:[-51.11501,-19.82021]},
   {n:"Mineração Fortaleza (Pedreira Cassilândia)",l:"BR-158 km 6, Cassilândia",c:[-51.69640,-19.12608]}];
-const gmRota=(o,d)=>`https://www.google.com/maps/dir/?api=1&origin=${o[1]},${o[0]}&destination=${d[1]},${d[0]}&travelmode=driving`;
 const kmR=(a,b)=>dist([a[1],a[0]],[b[1],b[0]])/1000;
 const RK=Math.cos(19.5*Math.PI/180),RU=111.32;/* 1 unidade = 111,32 m */
 const RP=(lon,lat)=>[lon*RK*1000,-lat*1000];const RG=(x,y)=>[-y/1000,x/(RK*1000)];/* -> [lat,lon] */
@@ -328,7 +330,7 @@ const rPath=rs=>rs.map(r=>"M"+r.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join("
 function rDesenhar(){const D=REG.dados;const s=rsv();if(!D){s.innerHTML="";return;}
   let h=`<g id="r-rod">${ROD?ROD.rod.map(([c,n,t,pts])=>`<polyline class="rod ${c}${t?" t":""}" points="${pts.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join(" ")}"/>`).join(""):""}</g><g id="r-fz">`;
   D.faz.forEach((f,i)=>{h+=`<path class="rf${f.cod?" cad":""}" data-f="${i}" d="${rPath(f.r)}"/>`;});
-  h+=`</g><g id="r-det"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=h;REG.detK="";rAplicar();}
+  h+=`</g><g id="r-det"></g><g id="r-rota"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=h;REG.detK="";rtDesenhar();rAplicar();}
 function rTudo(){const D=REG.dados;const fs=D.faz.filter(f=>f.cod);const L=fs.length?fs:D.faz;
   return [Math.min(...L.map(f=>f.bb[0])),Math.min(...L.map(f=>f.bb[1])),Math.max(...L.map(f=>f.bb[2])),Math.max(...L.map(f=>f.bb[3]))];}
 function rIrPara(b,m=.25){const w=Math.max(b[2]-b[0],(b[3]-b[1])/raz())*(1+2*m)+2;const h=w*raz();REG.VB={x:(b[0]+b[2])/2-w/2,y:(b[1]+b[3])/2-h/2,w,h};rAplicar();}
@@ -365,24 +367,94 @@ function irRegiao(centro){REG.on=true;document.body.classList.add("regiao");$("#
 function rChecarEntrada(){const V=REG.VB;const cx=V.x+V.w/2,cy=V.y+V.h/2;const f=REG.dados.faz.find(f=>f.cod&&cx>=f.bb[0]&&cx<=f.bb[2]&&cy>=f.bb[1]&&cy<=f.bb[3]);
   if(f&&V.w<(f.bb[2]-f.bb[0])*1.4)rEntrar(f,true);}
 function rZoom(k,x,y){const V=REG.VB;if(x==null){x=V.x+V.w/2;y=V.y+V.h/2;}const w=Math.min(Math.max(V.w*k,3),9000),h=w*raz();const kx=(x-V.x)/V.w,ky=(y-V.y)/V.h;REG.VB={x:x-kx*w,y:y-ky*h,w,h};rAplicar();if(k<1)rChecarEntrada();}
+/* ================= rota pelas estradas (dentro do app, sem internet) =================
+   Malha de estradas da região (OpenStreetMap: rodovias, vicinais e estradas de terra).
+   A rota sempre segue as estradas. Dentro da fazenda, valem os trechos do mapa. */
+const CIDADES=[["Três Lagoas",-51.703,-20.787],["Inocência",-51.928,-19.727],["Paraíso das Águas",-53.010,-19.025],["Água Clara",-52.879,-20.448],["Cassilândia",-51.734,-19.113],
+  ["Paranaíba",-51.191,-19.677],["Aparecida do Taboado",-51.094,-20.087],["Selvíria",-51.419,-20.367],["Chapadão do Sul",-52.623,-18.788],["Costa Rica",-53.129,-18.544],
+  ["Brasilândia",-52.037,-21.255],["Santa Rita do Pardo",-52.830,-21.302],["Ribas do Rio Pardo",-53.759,-20.444]];
+const VEL=[90,70,60,50,40,25,30,20];/* km/h por tipo: rodovia federal, estadual…, vicinal, terra, cidade, acesso */
+const RT={G:null,p:null,res:null,de:"gps",por:"",ate:""};
+function rtCarregar(){if(RT.G)return Promise.resolve(RT.G);if(RT.p)return RT.p;
+  RT.p=fetch("dados/estradas.json").then(r=>{if(!r.ok)throw 0;return r.json();}).then(d=>{const NN=d.n.length/2,X=new Float64Array(NN),Y=new Float64Array(NN);
+    for(let i=0;i<NN;i++){X[i]=(d.n[2*i]+d.x0)/1e5;Y[i]=(d.n[2*i+1]+d.y0)/1e5;}
+    const E=d.e,M=E.length,deg=new Int32Array(NN+1);for(const e of E){deg[e[0]]++;deg[e[1]]++;}
+    const off=new Int32Array(NN+1);for(let i=0;i<NN;i++)off[i+1]=off[i]+deg[i];const pos=off.slice(0,NN),aN=new Int32Array(2*M),aE=new Int32Array(2*M),aT=new Float32Array(2*M);
+    E.forEach((e,i)=>{const t=e[2]/(VEL[e[3]]/3.6);aN[pos[e[0]]]=e[1];aE[pos[e[0]]]=i;aT[pos[e[0]]++]=t;aN[pos[e[1]]]=e[0];aE[pos[e[1]]]=i;aT[pos[e[1]]++]=t;});
+    const grade=new Map();for(let i=0;i<NN;i++){const k=Math.floor(X[i]*20)+":"+Math.floor(Y[i]*20);let a=grade.get(k);if(!a)grade.set(k,a=[]);a.push(i);}
+    RT.G={X,Y,E,off,aN,aE,aT,grade,x0:d.x0,y0:d.y0,NN};return RT.G;}).catch(e=>{RT.p=null;throw e;});return RT.p;}
+function rtPerto(lon,lat){const G=RT.G;const cx=Math.floor(lon*20),cy=Math.floor(lat*20);let best=-1,bd=1e18;
+  for(let r=0;r<=8&&(best<0||r<=1);r++)for(let i=-r;i<=r;i++)for(let j=-r;j<=r;j++){if(Math.max(Math.abs(i),Math.abs(j))!==r)continue;const a=G.grade.get((cx+i)+":"+(cy+j));if(!a)continue;
+    for(const n of a){const dx=(G.X[n]-lon)*RK,dy=G.Y[n]-lat,d=dx*dx+dy*dy;if(d<bd){bd=d;best=n;}}}
+  return best;}
+function rtEntrada(f){let best=-1,bd=1e18;const pts=f.r.flat();const passo=Math.max(1,Math.floor(pts.length/40));
+  for(let i=0;i<pts.length;i+=passo){const p=pts[i];const n=rtPerto(p[0],p[1]);if(n<0)continue;const dx=(RT.G.X[n]-p[0])*RK,dy=RT.G.Y[n]-p[1],d=dx*dx+dy*dy;if(d<bd){bd=d;best=n;}}return best;}
+/* Dijkstra com fila de prioridade */
+function rtDijkstra(a,alvos){const G=RT.G,N=G.NN,dist=new Float64Array(N).fill(Infinity),pe=new Int32Array(N).fill(-1);const H=[];const push=(d,n)=>{H.push([d,n]);let i=H.length-1;while(i){const p=(i-1)>>1;if(H[p][0]<=H[i][0])break;[H[p],H[i]]=[H[i],H[p]];i=p;}};
+  const pop=()=>{const t=H[0],l=H.pop();if(H.length){H[0]=l;let i=0;for(;;){const a=2*i+1,b=a+1;let m=i;if(a<H.length&&H[a][0]<H[m][0])m=a;if(b<H.length&&H[b][0]<H[m][0])m=b;if(m===i)break;[H[m],H[i]]=[H[i],H[m]];i=m;}}return t;};
+  const falta=new Set(alvos);dist[a]=0;push(0,a);
+  while(H.length&&falta.size){const [d,u]=pop();if(d>dist[u])continue;falta.delete(u);for(let k=G.off[u];k<G.off[u+1];k++){const w=G.aN[k],nd=d+G.aT[k];if(nd<dist[w]){dist[w]=nd;pe[w]=G.aE[k];push(nd,w);}}}
+  return {dist,pe};}
+function rtCaminho(a,b,R){const G=RT.G;const pts=[],ed=[];let u=b;if(!isFinite(R.dist[b]))return null;
+  while(u!==a){const ei=R.pe[u];const e=G.E[ei];const v=e[0]===u?e[1]:e[0];ed.push(ei);
+    const g=[];for(let j=4;j<e.length;j+=2)g.push([(e[j]+G.x0)/1e5,(e[j+1]+G.y0)/1e5]);const seq=[[G.X[e[0]],G.Y[e[0]]],...g,[G.X[e[1]],G.Y[e[1]]]];if(e[0]===u)seq.reverse();/* agora de v para u */
+    for(let k=seq.length-1;k>=1;k--)pts.push(seq[k]);u=v;}
+  pts.push([G.X[a],G.Y[a]]);pts.reverse();ed.reverse();let km=0,asf=0,t=0;for(const ei of ed){const e=G.E[ei];km+=e[2];if(e[3]<=2)asf+=e[2];t+=e[2]/(VEL[e[3]]/3.6);}
+  return {pts,km:km/1000,asf:asf/1000,h:t/3600};}
+function rtLugares(){const L=[["gps","📍 Minha posição (GPS)"]];CIDADES.forEach((c,i)=>L.push(["c"+i,"🏙 "+c[0]]));PEDR.forEach((p,i)=>L.push(["p"+i,"⛰ "+p.n.split(" (")[0]]));
+  if(REG.dados)REG.dados.faz.filter(f=>f.cod).forEach(f=>L.push(["f"+f.id,"🌳 "+f.n]));if(REG.dados&&RT.ate&&RT.ate[0]==="f"&&!L.some(x=>x[0]===RT.ate)){const f=REG.dados.faz[+RT.ate.slice(1)];if(f)L.push([RT.ate,"🌳 "+f.n]);}return L;}
+function rtNo(k){if(!k)return -1;if(k==="gps"){if(!(GPS.on&&GPS.fix))return -2;return rtPerto(GPS.fix.lon,GPS.fix.lat);}
+  const t=k[0],i=+k.slice(1);if(t==="c")return rtPerto(CIDADES[i][1],CIDADES[i][2]);if(t==="p")return rtPerto(PEDR[i].c[0],PEDR[i].c[1]);if(t==="f")return rtEntrada(REG.dados.faz[i]);return -1;}
+function rtNome(k){const L=rtLugares().find(x=>x[0]===k);return L?L[1].replace(/^\S+\s/,""):"";}
+function rtFolha(){const L=rtLugares();const op=(sel,vazio)=>(vazio?`<option value="">${vazio}</option>`:"")+L.map(([k,n])=>`<option value="${k}" ${k===sel?"selected":""}>${esc(n)}</option>`).join("");
+  abrirFolha("🛣 Rota pelas estradas",`<label class="box card"><b>Sair de</b><select id="rt-de" class="btn" style="width:100%">${op(RT.de)}</select></label>
+   <label class="box card"><b>Passar por (se quiser)</b><select id="rt-por" class="btn" style="width:100%">${op(RT.por,"— direto, sem parada —")}</select></label>
+   <label class="box card"><b>Chegar em</b><select id="rt-ate" class="btn" style="width:100%">${op(RT.ate,"Escolha o destino")}</select></label>
+   <button class="btn pri" id="rt-ok" style="min-height:52px;font-size:17px">Traçar rota</button>
+   <div class="muted">Funciona sem internet. A rota segue as estradas (rodovias, vicinais e estradas de terra). Dentro da fazenda, siga os trechos do mapa.</div>`);
+  $("#rt-ok").onclick=async()=>{RT.de=$("#rt-de").value;RT.por=$("#rt-por").value;RT.ate=$("#rt-ate").value;if(!RT.ate){aviso("Escolha o destino.");return;}
+    $("#rt-ok").textContent="Calculando…";$("#rt-ok").disabled=true;try{await rtCarregar();}catch(e){aviso("Abra o app uma vez com internet para baixar as estradas.");fecharFolha();return;}
+    if(RT.de==="gps"&&!(GPS.on&&GPS.fix)){if(!GPS.on)gpsLigar();aviso("Ligue o GPS e espere o ponto azul, ou escolha de onde sai.");$("#rt-ok").textContent="Traçar rota";$("#rt-ok").disabled=false;return;}
+    setTimeout(()=>{const seq=[RT.de,RT.por,RT.ate].filter(Boolean).map(rtNo);if(seq.some(n=>n<0)){aviso("Não achei estrada perto de um dos pontos.");fecharFolha();return;}
+      let pts=[],km=0,asf=0,h=0;for(let i=0;i+1<seq.length;i++){const R=rtDijkstra(seq[i],[seq[i+1]]);const c=rtCaminho(seq[i],seq[i+1],R);if(!c){aviso("Não achei caminho pelas estradas entre esses pontos.");fecharFolha();return;}
+        pts=pts.concat(i?c.pts.slice(1):c.pts);km+=c.km;asf+=c.asf;h+=c.h;}
+      RT.res={pts,km,asf,h,de:rtNome(RT.de),por:RT.por?rtNome(RT.por):"",ate:rtNome(RT.ate)};LISTA.forEach(m=>m._rt=null);fecharFolha();
+      if(!REG.on)irRegiao(false);const xs=pts.map(p=>RP(p[0],p[1]));{const b=[Math.min(...xs.map(p=>p[0])),Math.min(...xs.map(p=>p[1])),Math.max(...xs.map(p=>p[0])),Math.max(...xs.map(p=>p[1]))];b[3]+=(b[3]-b[1])*0.9;rIrPara(b,.08);}
+      REG.sel=null;REG.pd=null;rtDesenhar();rInfo();},30);};}
+function rtDesenhar(){const g=$("#r-rota");if(!g)return;if(!RT.res){g.innerHTML="";return;}g.innerHTML=`<polyline class="rota-b" points="${RT.res.pts.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(2)).join(",")).join(" ")}"/><polyline class="rota" points="${RT.res.pts.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(2)).join(",")).join(" ")}"/>`;}
+function rtFalta(){if(!RT.res||!(GPS.on&&GPS.fix))return null;const P=RT.res.pts;let bi=0,bd=1e18;for(let i=0;i<P.length;i++){const dx=(P[i][0]-GPS.fix.lon)*RK,dy=P[i][1]-GPS.fix.lat,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}
+  let m=0;for(let i=bi+1;i<P.length;i++)m+=dist([P[i-1][1],P[i-1][0]],[P[i][1],P[i][0]]);return {km:m/1000,fora:Math.sqrt(bd)*111.32>0.3};}
+function rtCard(){const r=RT.res;const f=rtFalta();
+  return `<b style="font-size:16px">🛣 ${esc(r.de)} → ${r.por?esc(r.por)+" → ":""}${esc(r.ate)}</b><br><b style="font-size:20px">${fmt(Math.round(r.km))} km</b> <span class="muted">· cerca de ${r.h<1?Math.round(r.h*60)+" min":fmt(Math.round(r.h*10)/10)+" h"} · rodovia ${fmt(Math.round(r.asf))} km · vicinal/terra ${fmt(Math.round(r.km-r.asf))} km</span>
+   ${f?`<div style="margin-top:4px"><b>Faltam ${fmt(Math.round(f.km*10)/10)} km</b>${f.fora?` <span style="color:var(--danger)">· você está fora da rota</span>`:""}</div>`:""}
+   <div class="row" style="margin-top:6px"><button class="btn pri" id="rt-seg">${GPS.on?"Centralizar em mim":"Ligar GPS e seguir"}</button><button class="btn" id="rt-mud">Mudar</button><button class="btn" id="rt-lim">Limpar rota</button></div>`;}
+/* DMT pela estrada de cada pedreira até a fazenda */
+async function rtDMT(f){const el=$("#r-dmt");if(!el)return;el.innerHTML=`<span class="muted">Calculando pelas estradas…</span>`;
+  try{await rtCarregar();}catch(e){el.innerHTML=`<span class="muted">Abra o app uma vez com internet para baixar as estradas.</span>`;return;}
+  setTimeout(()=>{const a=rtEntrada(f);const alvos=PEDR.map(p=>rtPerto(p.c[0],p.c[1]));const R=rtDijkstra(a,alvos);
+    const L=PEDR.map((p,i)=>{const c=rtCaminho(a,alvos[i],R);return {p,i,km:c?c.km:Infinity};}).sort((x,y)=>x.km-y.km);
+    el.innerHTML=L.map(({p,i,km})=>`<button class="fzb" data-rtp="${i}" style="min-height:46px"><span>⛰ ${esc(p.n.split(" (")[0])}</span><small style="display:inline">${isFinite(km)?fmt(Math.round(km))+" km pela estrada ›":"sem caminho"}</small></button>`).join("");
+    el.querySelectorAll("[data-rtp]").forEach(b=>b.onclick=()=>{RT.de="p"+b.dataset.rtp;RT.por="";RT.ate="f"+f.id;rtFolha();$("#rt-ok").click();});},30);}
 /* ficha */
-function rInfo(){const el=$("#info");if(REG.sel==null&&REG.pd==null){el.style.display="none";return;}
+function rInfo(){const el=$("#info");
+  if(RT.res&&REG.sel==null&&REG.pd==null){el.innerHTML=rtCard();el.style.display="block";
+    $("#rt-seg").onclick=()=>{if(!GPS.on){gpsLigar();GPS.seguir=false;}if(GPS.fix){const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);const w=Math.min(REG.VB.w,40),h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};rAplicar();}else aviso("Esperando o sinal do GPS…");};
+    $("#rt-mud").onclick=rtFolha;$("#rt-lim").onclick=()=>{RT.res=null;LISTA.forEach(m=>m._rt=null);rtDesenhar();rInfo();};return;}
+  if(REG.sel==null&&REG.pd==null){el.style.display="none";return;}
   if(REG.pd!=null){const p=PEDR[REG.pd];el.innerHTML=`<b style="font-size:16px">⛰ ${esc(p.n)}</b><br><span class="muted">${esc(p.l)}</span>
-    <div class="row" style="margin-top:6px"><a class="btn pri" style="display:inline-flex;align-items:center;text-decoration:none" href="https://www.google.com/maps/dir/?api=1&destination=${p.c[1]},${p.c[0]}&travelmode=driving" target="_blank" rel="noopener">🚗 Como chegar</a><button class="btn" id="r-x">✕</button></div>
-    <div class="muted" style="margin-top:4px">Toque numa fazenda para ver a rota dela até cada pedreira.</div>`;el.style.display="block";$("#r-x").onclick=()=>{REG.pd=null;rInfo();};return;}
-  const f=REG.dados.faz[REG.sel];const ps=PEDR.map(p=>({p,k:kmR(p.c,f.c)})).sort((a,b)=>a.k-b.k);
+    <div class="row" style="margin-top:6px"><button class="btn pri" id="r-ir">🛣 Rota até aqui</button><button class="btn" id="r-sai">Sair daqui para…</button><button class="btn" id="r-x">✕</button></div>`;el.style.display="block";
+    $("#r-ir").onclick=()=>{RT.ate="p"+REG.pd;rtFolha();};$("#r-sai").onclick=()=>{RT.de="p"+REG.pd;RT.ate="";rtFolha();};$("#r-x").onclick=()=>{REG.pd=null;rInfo();};return;}
+  const f=REG.dados.faz[REG.sel];
   el.innerHTML=`<b style="font-size:16px">${esc(f.n)}</b> · ${fmt(f.ha)} ha · ${f.t} talhões<br><span class="muted">${f.cod?"Está no painel":"Ainda não está no painel"}</span>
-   <div class="row" style="margin-top:6px">${f.cod?`<button class="btn pri" id="r-abrir">Abrir mapa das estradas</button>`:`<button class="btn pri" id="r-cad">Pedir cadastro no painel</button>`}<a class="btn" style="display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)" href="https://www.google.com/maps/dir/?api=1&destination=${f.c[1]},${f.c[0]}&travelmode=driving" target="_blank" rel="noopener">🚗 Como chegar</a><button class="btn" id="r-x">✕</button></div>
-   <div style="margin-top:8px"><b>Rota das pedreiras até aqui</b> <span class="muted">(os km da rota no Google = DMT)</span></div>
-   <div style="display:grid;gap:4px;margin-top:4px">${ps.map(({p,k})=>`<a style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--ln);border-radius:10px;text-decoration:none;color:var(--ink)" href="${gmRota(p.c,f.c)}" target="_blank" rel="noopener"><span>⛰ ${esc(p.n.split(" (")[0])}</span><span class="muted">🚗 rota ›</span></a>`).join("")}</div>
-   <div class="muted" style="margin-top:4px">A rota abre no Google Maps e precisa de internet. As pedreiras estão na ordem da mais perto para a mais longe.</div>`;
+   <div class="row" style="margin-top:6px">${f.cod?`<button class="btn pri" id="r-abrir">Abrir mapa das estradas</button>`:`<button class="btn pri" id="r-cad">Pedir cadastro no painel</button>`}<button class="btn" id="r-ir">🛣 Rota até aqui</button><button class="btn" id="r-x">✕</button></div>
+   <div style="margin-top:8px"><b>DMT das pedreiras até aqui</b> <span class="muted">(pela estrada, sem internet)</span></div>
+   <div id="r-dmt" style="display:grid;gap:4px;margin-top:4px"><button class="btn" id="r-calc">Calcular DMT pela estrada</button></div>`;
   el.style.display="block";
+  $("#r-ir").onclick=()=>{RT.ate="f"+f.id;rtFolha();};$("#r-calc").onclick=()=>rtDMT(f);
   const a=$("#r-abrir");if(a)a.onclick=()=>{rEntrar(f,false);};
-  const c=$("#r-cad");if(c)c.onclick=async()=>{const t=`*Cadastrar fazenda no Painel de Campo*\nFazenda: ${f.n}\nÁrea: ${fmt(f.ha)} ha · ${f.t} talhões\nLocal: https://maps.google.com/?q=${f.c[1].toFixed(5)},${f.c[0].toFixed(5)}\nPrecisa do pacote da Geoplant (mapas de trechos e estradas).`;
+  const c=$("#r-cad");if(c)c.onclick=async()=>{const t=`*Cadastrar fazenda no Painel de Campo*\nFazenda: ${f.n}\nÁrea: ${fmt(f.ha)} ha · ${f.t} talhões\nLocal: ${f.c[1].toFixed(5)}, ${f.c[0].toFixed(5)}\nPrecisa do pacote da Geoplant (mapas de trechos e estradas).`;
     try{if(navigator.share){await navigator.share({text:t});return;}}catch(e){if(e&&e.name==="AbortError")return;}try{await navigator.clipboard.writeText(t);aviso("Pedido copiado. Cole no WhatsApp.");}catch(e){aviso("Não consegui compartilhar.");}};
   $("#r-x").onclick=()=>{REG.sel=null;rRotulos();rInfo();};}
-document.addEventListener("click",e=>{const a=e.target.closest('a[href^="https://www.google.com/maps"]');if(!a)return;e.preventDefault();if(!navigator.onLine){aviso("A rota precisa de internet.");return;}
-  const w=window.open(a.href,"_blank");if(w){try{w.opener=null;}catch(x){}}else location.href=a.href;});
 /* gestos da região */
 (()=>{let P=new Map(),v0=null,ini=null,mv=false;const s=rsv();
   s.addEventListener("pointerdown",e=>{P.set(e.pointerId,[e.clientX,e.clientY]);v0={...REG.VB};ini=new Map([...P].map(([k,v])=>[k,[...v]]));if(P.size===1)mv=false;});
@@ -409,9 +481,10 @@ document.addEventListener("click",e=>{const a=e.target.closest('a[href^="https:/
     const [x,y]=RP(lon,lat);const f=REG.dados&&REG.dados.faz.find(f=>x>=f.bb[0]&&x<=f.bb[2]&&y>=f.bb[1]&&y<=f.bb[3]);
     NOVO={id:"p"+Date.now().toString(36),lat,lon,tipo:"",obs:"",foto:null,fazenda:f?f.n:"Fora das fazendas",mapa:"Região",em:new Date().toISOString()};folhaPonto(o);};
   $("#b-menu").onclick=()=>{if(!REG.on)return orig["b-menu"]();const D=REG.dados;if(!D)return;const c={colh:0,meio:0,novo:0,sem:0};D.faz.forEach(f=>c[f.cl]+=f.ha);
-    abrirFolha("Região · "+D.faz.length+" fazendas",`<div class="box card"><b>Fazendas no painel</b>${D.faz.filter(f=>f.cod).map(f=>`<button class="fzb" data-rf="${f.id}">${esc(f.n)}<small>${fmt(f.ha)} ha</small></button>`).join("")}</div>
+    abrirFolha("Região · "+D.faz.length+" fazendas",`<button class="btn pri" id="m-rota" style="min-height:52px;font-size:17px">🛣 Traçar rota pelas estradas</button><div class="box card"><b>Fazendas no painel</b>${D.faz.filter(f=>f.cod).map(f=>`<button class="fzb" data-rf="${f.id}">${esc(f.n)}<small>${fmt(f.ha)} ha</small></button>`).join("")}</div>
      <div class="box card"><b>Pedreiras</b>${PEDR.map((p,i)=>`<button class="fzb" data-pd="${i}">⛰ ${esc(p.n)}<small>${esc(p.l)}</small></button>`).join("")}</div><div class="muted">Fazendas da base de polígonos de ${esc(D.versao)}.</div>`);
     $("#sh-b").querySelectorAll("[data-pd]").forEach(b=>b.onclick=()=>{fecharFolha();const p=PEDR[+b.dataset.pd];const [x,y]=RP(p.c[0],p.c[1]);const w=Math.min(REG.VB.w,300),h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};REG.pd=+b.dataset.pd;REG.sel=null;rAplicar();rInfo();});
+    $("#m-rota").onclick=rtFolha;
     $("#sh-b").querySelectorAll("[data-rf]").forEach(b=>b.onclick=()=>{fecharFolha();const f=D.faz[+b.dataset.rf];rEntrar(f,false);});};})();
 
 /* ================= carregar, trocar fazenda, atualizar ================= */
