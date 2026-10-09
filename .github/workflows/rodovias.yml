@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Ferramentas
         run: sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
-      - name: Baixar OpenStreetMap Centro-Oeste e recortar a região das fazendas
+      - name: Baixar OpenStreetMap e recortar a região (Três Lagoas, Inocência, Paraíso, Cassilândia, Paranaíba)
         run: |
           mkdir -p /tmp/osm && cd /tmp/osm
           curl -sSL -o co.pbf https://download.geofabrik.de/south-america/brazil/centro-oeste-latest.osm.pbf
@@ -27,7 +27,7 @@ jobs:
             ln=ln.strip().lstrip('\x1e')
             if not ln: continue
             f=json.loads(ln);p=f['properties']
-            if p.get('access') in ('private','no') and p.get('highway') in ('service',): continue
+            if p.get('access') in ('private','no') and p.get('highway')=='service': continue
             c=[[round(x,5),round(y,5)] for x,y in f['geometry']['coordinates']]
             out.append([p.get('highway',''),p.get('ref',''),p.get('name',''),p.get('surface',''),p.get('oneway',''),c])
           json.dump(out,open('vias.json','w'),separators=(',',':'),ensure_ascii=False)
