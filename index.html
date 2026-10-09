@@ -12,9 +12,9 @@
 <link rel="icon" href="icones/icone-192.png">
 <link rel="apple-touch-icon" href="icones/icone-192.png">
 <style>
-:root[data-tema="claro"]{--r-colh:#C9A24E;--r-meio:#5E8A66;--r-novo:#A9C3A0;--r-sem:#D6CFC4;--r-cad:#5E4E44;--r-sel:#B86A4E;--r-ln:rgba(60,50,40,.35);--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--tal:#F1E6C4;--tall:#C9B98A;--np:#8E938B}
-:root[data-tema="sol"]{--r-colh:#C9A24E;--r-meio:#3F6B4A;--r-novo:#8FB08A;--r-sem:#CFC8BC;--r-cad:#000;--r-sel:#B0402A;--r-ln:rgba(0,0,0,.5);--bg:#FFFFFF;--sf:#FFFFFF;--ln:#3A3A3A;--ink:#000;--mut:#1F1F1F;--tal:#F4E9C8;--tall:#8A7A4A;--np:#6E726B;--zero:#D0453A;--ok:#00702A}
-:root{--r-colh:#B8954A;--r-meio:#4F7A5A;--r-novo:#7E9A78;--r-sem:#4A463F;--r-cad:#D8C3B0;--r-sel:#D08A70;--r-ln:rgba(0,0,0,.35);--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--tal:#3A3526;--tall:#6B6247;
+:root[data-tema="claro"]{--r-pd:#5E4E44;--r-colh:#C9A24E;--r-meio:#5E8A66;--r-novo:#A9C3A0;--r-sem:#D6CFC4;--r-cad:#5E4E44;--r-sel:#B86A4E;--r-ln:rgba(60,50,40,.35);--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--tal:#F1E6C4;--tall:#C9B98A;--np:#8E938B}
+:root[data-tema="sol"]{--r-pd:#3B2E25;--r-colh:#C9A24E;--r-meio:#3F6B4A;--r-novo:#8FB08A;--r-sem:#CFC8BC;--r-cad:#000;--r-sel:#B0402A;--r-ln:rgba(0,0,0,.5);--bg:#FFFFFF;--sf:#FFFFFF;--ln:#3A3A3A;--ink:#000;--mut:#1F1F1F;--tal:#F4E9C8;--tall:#8A7A4A;--np:#6E726B;--zero:#D0453A;--ok:#00702A}
+:root{--r-pd:#C9A97E;--r-colh:#B8954A;--r-meio:#4F7A5A;--r-novo:#7E9A78;--r-sem:#4A463F;--r-cad:#D8C3B0;--r-sel:#D08A70;--r-ln:rgba(0,0,0,.35);--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--tal:#3A3526;--tall:#6B6247;
   --ok:#2E8B57;--and:#E0A100;--prep:#3B7DD8;--zero:#E58B83;--np:#A9ADA6;--mk:#B07CE8;--gps:#1A73E8;--danger:#F08A80}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
@@ -37,7 +37,8 @@ svg#mapa{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-se
 svg#reg{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;background:var(--bg);display:none}
 body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 .rf{stroke:var(--r-ln);stroke-width:.6px;vector-effect:non-scaling-stroke;fill-opacity:.85;cursor:pointer}.rf.colh{fill:var(--r-colh)}.rf.meio{fill:var(--r-meio)}.rf.novo{fill:var(--r-novo)}.rf.sem{fill:var(--r-sem)}
-.rf.cad{stroke:var(--r-cad);stroke-width:2.2px}.rf.sel{stroke:var(--r-sel);stroke-width:3px}
+.rf{fill:var(--r-sem)}.rf.cad{fill:var(--r-meio);stroke:var(--r-cad);stroke-width:1.6px}
+.pd rect{fill:var(--r-pd);stroke:var(--bg);stroke-width:2px}.pd text{font:700 11.5px system-ui,sans-serif;fill:var(--r-pd);dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px}.pd{cursor:pointer}.rf.sel{stroke:var(--r-sel);stroke-width:3px}
 .rt{fill:none;stroke:var(--r-ln);stroke-width:.7px;vector-effect:non-scaling-stroke;pointer-events:none}
 .rtl text{font:600 10px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
 .rlab{font:600 11.5px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px;pointer-events:none}.rlab.cad{font-weight:800;fill:var(--r-cad)}
@@ -53,7 +54,7 @@ body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 #esc i{display:block;height:5px;border:2px solid var(--ink);border-top:0}
 #leg{position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2;background:var(--sf);opacity:.92;border-radius:8px;padding:5px 8px;font-size:11px;display:flex;gap:4px 9px;flex-wrap:wrap;justify-content:flex-end;max-width:62%}
 #leg i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}
-#info{position:fixed;left:8px;right:8px;bottom:calc(44px + env(safe-area-inset-bottom));z-index:3;padding:10px 12px;line-height:1.5;display:none}
+#info{position:fixed;left:8px;right:8px;bottom:calc(44px + env(safe-area-inset-bottom));z-index:3;max-height:46vh;overflow:auto;padding:10px 12px;line-height:1.5;display:none}
 #info hr{border:0;border-top:1px solid var(--ln);margin:6px 0}
 .pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12.5px;font-weight:700;background:var(--ln)}
 .p-pronto,.p-g-ok{background:var(--ok)}.p-agulhado,.p-g-and{background:var(--and);color:#1F2420}.p-preparo{background:var(--prep)}.p-falta,.p-g-zero{background:var(--zero);color:#1F2420}
@@ -308,6 +309,11 @@ async function enviarPontos(){const txt=PONTOS.map(p=>`• ${p.tipo} – ${p.faz
    Afastado: região inteira. Aproximando numa fazenda do painel, entra sozinho no mapa detalhado dos trechos.
    Afastando o mapa detalhado, volta para a região. */
 const REG={on:false,dados:null,tal:null,VB:null,sel:null,carregandoTal:false};
+const PEDR=[{n:"Coplan (Construtora Planalto)",l:"MS-377, Inocência/Água Clara",c:[-52.14954,-19.97624]},{n:"Concreluz",l:"MS-112, Inocência",c:[-51.91670,-19.76751]},
+  {n:"Mineradora Britasul",l:"MS-306 km 148, Indaiá do Sul (Cassilândia)",c:[-52.36217,-18.91016]},{n:"Pedreira Três Barras",l:"BR-158, Aparecida do Taboado",c:[-51.11501,-19.82021]},
+  {n:"Mineração Fortaleza (Pedreira Cassilândia)",l:"BR-158 km 6, Cassilândia",c:[-51.69640,-19.12608]}];
+const gmRota=(o,d)=>`https://www.google.com/maps/dir/?api=1&origin=${o[1]},${o[0]}&destination=${d[1]},${d[0]}&travelmode=driving`;
+const kmR=(a,b)=>dist([a[1],a[0]],[b[1],b[0]])/1000;
 const RK=Math.cos(19.5*Math.PI/180),RU=111.32;/* 1 unidade = 111,32 m */
 const RP=(lon,lat)=>[lon*RK*1000,-lat*1000];const RG=(x,y)=>[-y/1000,x/(RK*1000)];/* -> [lat,lon] */
 const rsv=()=>$("#reg");
@@ -321,8 +327,8 @@ function rTal(){if(REG.tal||REG.carregandoTal)return;REG.carregandoTal=true;fetc
 const rPath=rs=>rs.map(r=>"M"+r.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join("L")+"Z").join("");
 function rDesenhar(){const D=REG.dados;const s=rsv();if(!D){s.innerHTML="";return;}
   let h=`<g id="r-rod">${ROD?ROD.rod.map(([c,n,t,pts])=>`<polyline class="rod ${c}${t?" t":""}" points="${pts.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join(" ")}"/>`).join(""):""}</g><g id="r-fz">`;
-  D.faz.forEach((f,i)=>{h+=`<path class="rf ${f.cl}${f.cod?" cad":""}" data-f="${i}" d="${rPath(f.r)}"/>`;});
-  h+=`</g><g id="r-det"></g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=h;REG.detK="";rAplicar();}
+  D.faz.forEach((f,i)=>{h+=`<path class="rf${f.cod?" cad":""}" data-f="${i}" d="${rPath(f.r)}"/>`;});
+  h+=`</g><g id="r-det"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=h;REG.detK="";rAplicar();}
 function rTudo(){const D=REG.dados;const fs=D.faz.filter(f=>f.cod);const L=fs.length?fs:D.faz;
   return [Math.min(...L.map(f=>f.bb[0])),Math.min(...L.map(f=>f.bb[1])),Math.max(...L.map(f=>f.bb[2])),Math.max(...L.map(f=>f.bb[3]))];}
 function rIrPara(b,m=.25){const w=Math.max(b[2]-b[0],(b[3]-b[1])/raz())*(1+2*m)+2;const h=w*raz();REG.VB={x:(b[0]+b[2])/2-w/2,y:(b[1]+b[3])/2-h/2,w,h};rAplicar();}
@@ -330,7 +336,7 @@ function rAplicar(){const s=rsv();const r=s.getBoundingClientRect();if(!r.width|
   const V=REG.VB;const h=V.w*raz();V.y+=(V.h-h)/2;V.h=h;s.setAttribute("viewBox",`${V.x} ${V.y} ${V.w} ${V.h}`);
   cancelAnimationFrame(REG.raf);REG.raf=requestAnimationFrame(()=>{rDetalhe();rRotulos();rGps();rEscala();});}
 /* talhões das fazendas que ainda não estão no painel, quando aproxima */
-function rDetalhe(){const V=REG.VB,g=$("#r-det");if(!g)return;if(V.w>160){if(REG.detK){g.innerHTML="";REG.detK="";}return;}
+function rDetalhe(){return;const V=REG.VB,g=$("#r-det");if(!g)return;if(V.w>160){if(REG.detK){g.innerHTML="";REG.detK="";}return;}
   if(!REG.tal){rTal();return;}const vis=REG.dados.faz.filter(f=>f.bb[2]>V.x&&f.bb[0]<V.x+V.w&&f.bb[3]>V.y&&f.bb[1]<V.y+V.h);const k=vis.map(f=>f.id).join(",");if(k===REG.detK)return;REG.detK=k;
   g.innerHTML=vis.map(f=>(REG.tal[f.id]||[]).map(t=>{const P=RP(t[4][0],t[4][1]);return `<path class="rt" d="${rPath([t[3]])}"/><g class="rtl" style="display:none" data-x="${P[0]}" data-y="${P[1]}" data-w="${t[1]}"><text x="${P[0]}" y="${P[1]}">${esc(t[0])}</text></g>`;}).join("")).join("");}
 function rRotulos(){const s=rsv(),r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.width;const oc=[];const livre=(x,y,w,h)=>{const b=[x-w/2,y-h/2,x+w/2,y+h/2];if(oc.some(c=>b[0]<c[2]&&b[2]>c[0]&&b[1]<c[3]&&b[3]>c[1]))return false;oc.push(b);return true;};
@@ -341,11 +347,12 @@ function rRotulos(){const s=rsv(),r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.w
     const w=f.n.length*6.6+8;if(!livre(x,y,w,16))continue;h+=`<text class="rlab${f.cod?" cad":""}" transform="translate(${f.P[0]} ${f.P[1]}) scale(${u})">${esc(f.n)}</text>`;}
   $("#r-lab").innerHTML=h;
   s.querySelectorAll(".rtl").forEach(g=>{const [x,y]=tela(+g.dataset.x,+g.dataset.y);const t=g.firstChild;const ok=dentro(x,y)&&livre(x,y,t.textContent.length*6.5+6,14);g.style.display=ok?"":"none";if(ok)g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y}) scale(${u}) translate(${-g.dataset.x} ${-g.dataset.y})`);});
+  s.querySelectorAll(".pd").forEach(g=>{const [x,y]=tela(+g.dataset.x,+g.dataset.y);livre(x+50,y,110,16);g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y}) scale(${u})`);});
   s.querySelectorAll(".rf").forEach(p=>p.classList.toggle("sel",+p.dataset.f===REG.sel));}
 function rGps(){const g=$("#r-gps");if(!g)return;g.innerHTML="";if(!(GPS.on&&GPS.fix))return;const r=rsv().getBoundingClientRect(),u=REG.VB.w/r.width;const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);
   g.innerHTML=`<circle cx="${x}" cy="${y}" r="${12*u}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${8*u}" fill="#1A73E8"/>`;}
 function rEscala(){const r=rsv().getBoundingClientRect();const mp=REG.VB.w/r.width*RU,alvo=mp*100,p=Math.pow(10,Math.floor(Math.log10(alvo))),n=[1,2,5,10].map(k=>k*p).filter(k=>k<=alvo).pop()||p;$("#esc").innerHTML=`<i style="width:${Math.round(n/mp)}px"></i>${fM(n)}`;}
-function rLegenda(){$("#leg").innerHTML=`<span><i style="background:var(--r-colh)"></i>Colheita próxima</span><span><i style="background:var(--r-meio)"></i>Meio do ciclo</span><span><i style="background:var(--r-novo)"></i>Plantio novo</span><span><i style="background:transparent;outline:2px solid var(--r-cad)"></i>No painel</span>`;}
+function rLegenda(){$("#leg").innerHTML=`<span><i style="background:var(--r-meio)"></i>Fazenda no painel</span><span><i style="background:var(--r-sem)"></i>Outras fazendas</span><span><i style="background:var(--r-pd);height:8px;width:8px"></i>Pedreira</span><span><i style="background:#8A7E73"></i>Rodovia</span>`;}
 /* entrar e sair do mapa detalhado */
 function rMapaDe(f){return LISTA.findIndex(m=>m.cod===f.cod&&!m.acesso)>=0?LISTA.findIndex(m=>m.cod===f.cod&&!m.acesso):LISTA.findIndex(m=>m.cod===f.cod);}
 function rEntrar(f,manterVista){const i=rMapaDe(f);if(i<0)return;const V=REG.VB;REG.on=false;document.body.classList.remove("regiao");I=i;desenhar();
@@ -359,12 +366,16 @@ function rChecarEntrada(){const V=REG.VB;const cx=V.x+V.w/2,cy=V.y+V.h/2;const f
   if(f&&V.w<(f.bb[2]-f.bb[0])*1.4)rEntrar(f,true);}
 function rZoom(k,x,y){const V=REG.VB;if(x==null){x=V.x+V.w/2;y=V.y+V.h/2;}const w=Math.min(Math.max(V.w*k,3),9000),h=w*raz();const kx=(x-V.x)/V.w,ky=(y-V.y)/V.h;REG.VB={x:x-kx*w,y:y-ky*h,w,h};rAplicar();if(k<1)rChecarEntrada();}
 /* ficha */
-function rInfo(){const el=$("#info");if(REG.sel==null){el.style.display="none";return;}const f=REG.dados.faz[REG.sel];const anos=Object.entries(f.anos);const mx=Math.max(1,...anos.map(([,v])=>v));
-  const gm=`https://www.google.com/maps/dir/?api=1&destination=${f.c[1]},${f.c[0]}&travelmode=driving`;
-  el.innerHTML=`<b style="font-size:16px">${esc(f.n)}</b> · ${fmt(f.ha)} ha · ${f.t} talhões<br><span class="muted">${CLN[f.cl]}${f.colh?` · ${fmt(f.colh)} ha plantados até 2019`:""}</span>
-   ${anos.length?`<div style="display:grid;gap:2px;margin:6px 0">${anos.map(([y,v])=>`<div style="display:grid;grid-template-columns:38px 1fr 64px;gap:6px;align-items:center;font-size:12px"><span class="muted">${y}</span><i style="display:block;height:7px;border-radius:2px;width:${Math.max(3,100*v/mx)}%;background:var(${+y<=2019?"--r-colh":+y>=2023?"--r-novo":"--r-meio"})"></i><span class="muted" style="text-align:right">${fmt(v)} ha</span></div>`).join("")}</div>`:""}
-   <div class="row" style="margin-top:6px">${f.cod?`<button class="btn pri" id="r-abrir">Abrir mapa das estradas</button>`:`<button class="btn pri" id="r-cad">Pedir cadastro no painel</button>`}<a class="btn" style="display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)" href="${gm}" target="_blank" rel="noopener">🚗 Como chegar</a><button class="btn" id="r-x">✕</button></div>
-   ${f.cod?"":`<div class="muted" style="margin-top:4px">Ainda não está no painel. Aproxime para ver os talhões desta base. Os trechos entram com o pacote da Geoplant.</div>`}`;
+function rInfo(){const el=$("#info");if(REG.sel==null&&REG.pd==null){el.style.display="none";return;}
+  if(REG.pd!=null){const p=PEDR[REG.pd];el.innerHTML=`<b style="font-size:16px">⛰ ${esc(p.n)}</b><br><span class="muted">${esc(p.l)}</span>
+    <div class="row" style="margin-top:6px"><a class="btn pri" style="display:inline-flex;align-items:center;text-decoration:none" href="https://www.google.com/maps/dir/?api=1&destination=${p.c[1]},${p.c[0]}&travelmode=driving" target="_blank" rel="noopener">🚗 Como chegar</a><button class="btn" id="r-x">✕</button></div>
+    <div class="muted" style="margin-top:4px">Toque numa fazenda para ver a rota dela até cada pedreira.</div>`;el.style.display="block";$("#r-x").onclick=()=>{REG.pd=null;rInfo();};return;}
+  const f=REG.dados.faz[REG.sel];const ps=PEDR.map(p=>({p,k:kmR(p.c,f.c)})).sort((a,b)=>a.k-b.k);
+  el.innerHTML=`<b style="font-size:16px">${esc(f.n)}</b> · ${fmt(f.ha)} ha · ${f.t} talhões<br><span class="muted">${f.cod?"Está no painel":"Ainda não está no painel"}</span>
+   <div class="row" style="margin-top:6px">${f.cod?`<button class="btn pri" id="r-abrir">Abrir mapa das estradas</button>`:`<button class="btn pri" id="r-cad">Pedir cadastro no painel</button>`}<a class="btn" style="display:inline-flex;align-items:center;text-decoration:none;color:var(--ink)" href="https://www.google.com/maps/dir/?api=1&destination=${f.c[1]},${f.c[0]}&travelmode=driving" target="_blank" rel="noopener">🚗 Como chegar</a><button class="btn" id="r-x">✕</button></div>
+   <div style="margin-top:8px"><b>Rota das pedreiras até aqui</b> <span class="muted">(os km da rota no Google = DMT)</span></div>
+   <div style="display:grid;gap:4px;margin-top:4px">${ps.map(({p,k})=>`<a style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--ln);border-radius:10px;text-decoration:none;color:var(--ink)" href="${gmRota(p.c,f.c)}" target="_blank" rel="noopener"><span>⛰ ${esc(p.n.split(" (")[0])}</span><span class="muted">🚗 rota ›</span></a>`).join("")}</div>
+   <div class="muted" style="margin-top:4px">A rota abre no Google Maps e precisa de internet. As pedreiras estão na ordem da mais perto para a mais longe.</div>`;
   el.style.display="block";
   const a=$("#r-abrir");if(a)a.onclick=()=>{rEntrar(f,false);};
   const c=$("#r-cad");if(c)c.onclick=async()=>{const t=`*Cadastrar fazenda no Painel de Campo*\nFazenda: ${f.n}\nÁrea: ${fmt(f.ha)} ha · ${f.t} talhões\nLocal: https://maps.google.com/?q=${f.c[1].toFixed(5)},${f.c[0].toFixed(5)}\nPrecisa do pacote da Geoplant (mapas de trechos e estradas).`;
@@ -381,7 +392,7 @@ function rInfo(){const el=$("#info");if(REG.sel==null){el.style.display="none";r
   const fimR=e=>{if(!P.has(e.pointerId))return;const pinça=P.size===2;P.delete(e.pointerId);if(P.size){v0={...REG.VB};ini=new Map([...P].map(([k,v])=>[k,[...v]]));}if(pinça&&REG.on)rChecarEntrada();};
   window.addEventListener("pointerup",fimR);window.addEventListener("pointercancel",fimR);
   s.addEventListener("wheel",e=>{e.preventDefault();const r=s.getBoundingClientRect(),V=REG.VB;rZoom(e.deltaY>0?1.2:1/1.2,V.x+(e.clientX-r.left)*V.w/r.width,V.y+(e.clientY-r.top)*V.h/r.height);},{passive:false});
-  s.addEventListener("click",e=>{if(mv){mv=false;return;}const t=e.target.closest(".rf");if(t){const i=+t.dataset.f;REG.sel=REG.sel===i?null:i;}else{
+  s.addEventListener("click",e=>{if(mv){mv=false;return;}const pd=e.target.closest(".pd");if(pd){REG.pd=+pd.dataset.p;REG.sel=null;rRotulos();rInfo();return;}REG.pd=null;const t=e.target.closest(".rf");if(t){const i=+t.dataset.f;REG.sel=REG.sel===i?null:i;}else{
       /* toque perto de uma fazenda pequena também vale */
       const r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.width,x=V.x+(e.clientX-r.left)*u,y=V.y+(e.clientY-r.top)*u;let best=null,bd=1e9;
       REG.dados.faz.forEach((f,i)=>{const d=Math.hypot(Math.max(f.bb[0]-x,0,x-f.bb[2]),Math.max(f.bb[1]-y,0,y-f.bb[3]))/u;if(d<bd){bd=d;best=i;}});REG.sel=bd<=24?best:null;}
@@ -397,7 +408,8 @@ function rInfo(){const el=$("#info");if(REG.sel==null){el.style.display="none";r
     NOVO={id:"p"+Date.now().toString(36),lat,lon,tipo:"",obs:"",foto:null,fazenda:f?f.n:"Fora das fazendas",mapa:"Região",em:new Date().toISOString()};folhaPonto(o);};
   $("#b-menu").onclick=()=>{if(!REG.on)return orig["b-menu"]();const D=REG.dados;if(!D)return;const c={colh:0,meio:0,novo:0,sem:0};D.faz.forEach(f=>c[f.cl]+=f.ha);
     abrirFolha("Região · "+D.faz.length+" fazendas",`<div class="box card"><b>Fazendas no painel</b>${D.faz.filter(f=>f.cod).map(f=>`<button class="fzb" data-rf="${f.id}">${esc(f.n)}<small>${fmt(f.ha)} ha</small></button>`).join("")}</div>
-     <div class="box card"><b>Área por fase do plantio</b>${Object.keys(c).map(k=>`<div class="row" style="justify-content:space-between"><span>${CLN[k]}</span><span>${fmt(Math.round(c[k]/1000))} mil ha</span></div>`).join("")}<div class="muted">Base de polígonos de ${esc(D.versao)}. Colheita próxima = 30% ou mais da área plantada até 2019.</div></div>`);
+     <div class="box card"><b>Pedreiras</b>${PEDR.map((p,i)=>`<button class="fzb" data-pd="${i}">⛰ ${esc(p.n)}<small>${esc(p.l)}</small></button>`).join("")}</div><div class="muted">Fazendas da base de polígonos de ${esc(D.versao)}.</div>`);
+    $("#sh-b").querySelectorAll("[data-pd]").forEach(b=>b.onclick=()=>{fecharFolha();const p=PEDR[+b.dataset.pd];const [x,y]=RP(p.c[0],p.c[1]);const w=Math.min(REG.VB.w,300),h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};REG.pd=+b.dataset.pd;REG.sel=null;rAplicar();rInfo();});
     $("#sh-b").querySelectorAll("[data-rf]").forEach(b=>b.onclick=()=>{fecharFolha();const f=D.faz[+b.dataset.rf];rEntrar(f,false);});};})();
 
 /* ================= carregar, trocar fazenda, atualizar ================= */
