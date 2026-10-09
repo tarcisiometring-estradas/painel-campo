@@ -86,7 +86,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 .choice .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:var(--bg)}
 .temas{display:flex;gap:6px;flex-wrap:wrap}.temas button{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--ln);background:var(--sf);font-weight:700;cursor:pointer}.temas button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
 .ctl button{position:relative}.ctl button .lb{display:none}
-@media (min-width:900px) and (hover:hover){.ctl{grid-template-columns:auto}.ctl button{width:auto;min-width:48px;padding:0 12px;grid-auto-flow:column;gap:8px;justify-content:start;font-size:19px}.ctl button .lb{display:inline;font-size:14px;font-weight:700}}
+
 .choice strong{display:block;font-size:18px}.choice small{color:var(--mut);font-size:13.5px}
 .choice .seta{color:var(--mut);font-size:22px}
 .fz{display:grid;gap:8px}
@@ -104,8 +104,8 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 <svg id="mapa" role="img" aria-label="Mapa da fazenda"></svg><svg id="reg" role="img" aria-label="Mapa da região"></svg>
 <div class="top"><div class="toprow"><button id="b-home" aria-label="Voltar ao início" title="Voltar ao início">← Início</button><select id="selm" aria-label="Fazenda"></select></div><div id="sub"></div></div>
 <div class="ctl">
-  <button id="b-in" aria-label="Aproximar" title="Aproximar">＋<span class="lb">Aproximar</span></button>
-  <button id="b-out" aria-label="Afastar" title="Afastar">－<span class="lb">Afastar</span></button>
+  <button id="b-in" aria-label="Zoom +" title="Zoom +">＋</button>
+  <button id="b-out" aria-label="Zoom −" title="Zoom −">－</button>
   <button id="b-fit" aria-label="Ver a fazenda inteira" title="Ver a fazenda inteira">⤢<span class="lb">Ver a fazenda inteira</span></button>
   <button id="b-gps" aria-label="Onde estou (GPS)" title="Onde estou (GPS)">◉<span class="lb">Onde estou (GPS)</span></button>
   <button id="b-pt" aria-label="Marcar ponto" title="Marcar ponto">📍<span class="lb">Marcar ponto</span></button>
@@ -328,7 +328,7 @@ const rPath=rs=>rs.map(r=>"M"+r.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join("
 function rDesenhar(){const D=REG.dados;const s=rsv();if(!D){s.innerHTML="";return;}
   let h=`<g id="r-rod">${ROD?ROD.rod.map(([c,n,t,pts])=>`<polyline class="rod ${c}${t?" t":""}" points="${pts.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join(" ")}"/>`).join(""):""}</g><g id="r-fz">`;
   D.faz.forEach((f,i)=>{h+=`<path class="rf${f.cod?" cad":""}" data-f="${i}" d="${rPath(f.r)}"/>`;});
-  h+=`</g><g id="r-det"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=h;REG.detK="";rAplicar();}
+  h+=`</g><g id="r-det"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=h;REG.detK="";rAplicar();}
 function rTudo(){const D=REG.dados;const fs=D.faz.filter(f=>f.cod);const L=fs.length?fs:D.faz;
   return [Math.min(...L.map(f=>f.bb[0])),Math.min(...L.map(f=>f.bb[1])),Math.max(...L.map(f=>f.bb[2])),Math.max(...L.map(f=>f.bb[3]))];}
 function rIrPara(b,m=.25){const w=Math.max(b[2]-b[0],(b[3]-b[1])/raz())*(1+2*m)+2;const h=w*raz();REG.VB={x:(b[0]+b[2])/2-w/2,y:(b[1]+b[3])/2-h/2,w,h};rAplicar();}
@@ -381,6 +381,8 @@ function rInfo(){const el=$("#info");if(REG.sel==null&&REG.pd==null){el.style.di
   const c=$("#r-cad");if(c)c.onclick=async()=>{const t=`*Cadastrar fazenda no Painel de Campo*\nFazenda: ${f.n}\nÁrea: ${fmt(f.ha)} ha · ${f.t} talhões\nLocal: https://maps.google.com/?q=${f.c[1].toFixed(5)},${f.c[0].toFixed(5)}\nPrecisa do pacote da Geoplant (mapas de trechos e estradas).`;
     try{if(navigator.share){await navigator.share({text:t});return;}}catch(e){if(e&&e.name==="AbortError")return;}try{await navigator.clipboard.writeText(t);aviso("Pedido copiado. Cole no WhatsApp.");}catch(e){aviso("Não consegui compartilhar.");}};
   $("#r-x").onclick=()=>{REG.sel=null;rRotulos();rInfo();};}
+document.addEventListener("click",e=>{const a=e.target.closest('a[href^="https://www.google.com/maps"]');if(!a)return;e.preventDefault();if(!navigator.onLine){aviso("A rota precisa de internet.");return;}
+  const w=window.open(a.href,"_blank");if(w){try{w.opener=null;}catch(x){}}else location.href=a.href;});
 /* gestos da região */
 (()=>{let P=new Map(),v0=null,ini=null,mv=false;const s=rsv();
   s.addEventListener("pointerdown",e=>{P.set(e.pointerId,[e.clientX,e.clientY]);v0={...REG.VB};ini=new Map([...P].map(([k,v])=>[k,[...v]]));if(P.size===1)mv=false;});
