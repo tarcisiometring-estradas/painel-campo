@@ -1,4 +1,4 @@
-name: Baixar rodovias
+name: Baixar estradas para rota
 on:
   push:
     branches: [dados-rodovias]
@@ -6,53 +6,35 @@ on:
 permissions:
   contents: write
 jobs:
-  rodovias:
+  estradas:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Ferramentas
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool gdal-bin
-      - name: Baixar OpenStreetMap (Centro-Oeste, Sudeste, Sul)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+      - name: Baixar OpenStreetMap Centro-Oeste e recortar a região das fazendas
         run: |
           mkdir -p /tmp/osm && cd /tmp/osm
-          for r in centro-oeste sudeste sul; do curl -sSL -o $r.pbf https://download.geofabrik.de/south-america/brazil/$r-latest.osm.pbf; done
-          ls -la
-      - name: Filtrar rodovias com número (BR, MS, MT, GO, PR, SP)
-        run: |
-          cd /tmp/osm
-          for r in centro-oeste sudeste sul; do
-            osmium tags-filter -o $r-h.pbf $r.pbf w/highway=motorway,trunk,primary,secondary,tertiary,motorway_link,trunk_link,primary_link --overwrite
-            osmium export $r-h.pbf -o $r.geojsonseq -f geojsonseq --geometry-types=linestring --overwrite
-          done
+          curl -sSL -o co.pbf https://download.geofabrik.de/south-america/brazil/centro-oeste-latest.osm.pbf
+          osmium extract -b -54.8,-21.9,-50.6,-16.9 co.pbf -o reg.pbf --overwrite
+          osmium tags-filter -o vias.pbf reg.pbf w/highway=motorway,trunk,primary,secondary,tertiary,unclassified,residential,service,track,road,motorway_link,trunk_link,primary_link,secondary_link,tertiary_link,living_street --overwrite
+          osmium export vias.pbf -o vias.geojsonseq -f geojsonseq --geometry-types=linestring --overwrite
           python3 - <<'PY'
-          import json,re
-          R=re.compile(r'\b(BR|MS|MT|GO|PR|SP)[- ]?(\d{3})\b')
+          import json
           out=[]
-          for r in ['centro-oeste','sudeste','sul']:
-            for ln in open(f'{r}.geojsonseq'):
-              ln=ln.strip().lstrip('\x1e')
-              if not ln: continue
-              f=json.loads(ln);p=f['properties'];ref=(p.get('ref') or '')+';'+(p.get('official_ref') or '')
-              refs=sorted(set(a+'-'+b for a,b in R.findall(ref.upper())))
-              if not refs: continue
-              c=[[round(x,5),round(y,5)] for x,y in f['geometry']['coordinates']]
-              out.append({'type':'Feature','properties':{'ref':';'.join(refs),'nome':p.get('name',''),'tipo':p.get('highway',''),'piso':p.get('surface','')},'geometry':{'type':'LineString','coordinates':c}})
-          json.dump({'type':'FeatureCollection','features':out},open('rod.geojson','w'),ensure_ascii=False,separators=(',',':'))
+          for ln in open('vias.geojsonseq'):
+            ln=ln.strip().lstrip('\x1e')
+            if not ln: continue
+            f=json.loads(ln);p=f['properties']
+            if p.get('access') in ('private','no') and p.get('highway') in ('service',): continue
+            c=[[round(x,5),round(y,5)] for x,y in f['geometry']['coordinates']]
+            out.append([p.get('highway',''),p.get('ref',''),p.get('name',''),p.get('surface',''),p.get('oneway',''),c])
+          json.dump(out,open('vias.json','w'),separators=(',',':'),ensure_ascii=False)
           print(len(out))
           PY
-          mkdir -p $GITHUB_WORKSPACE/fontes
-          ogr2ogr -f GeoJSON -simplify 0.0002 -lco COORDINATE_PRECISION=5 $GITHUB_WORKSPACE/fontes/rodovias_osm.geojson rod.geojson
-          ls -la $GITHUB_WORKSPACE/fontes
-      - name: Tentar também o SNV do DNIT (oficial federal)
-        continue-on-error: true
-        run: |
-          cd /tmp && mkdir -p snv && cd snv
-          curl -sSL -m 120 -o pagina.html "https://www.gov.br/dnit/pt-br/assuntos/atlas-e-mapas/pnv-e-snv" || true
-          grep -oiE 'https?://[^"]+\.(zip|shp)[^"]*' pagina.html | head -20 > links.txt || true
-          cat links.txt
-          cp links.txt $GITHUB_WORKSPACE/fontes/dnit_links.txt || true
+          mkdir -p $GITHUB_WORKSPACE/fontes && gzip -9 -c vias.json > $GITHUB_WORKSPACE/fontes/vias_regiao.json.gz && ls -la $GITHUB_WORKSPACE/fontes
       - name: Guardar no ramo
         run: |
           git config user.name "rodovias-bot"; git config user.email "rodovias-bot@users.noreply.github.com"
-          git add fontes && git commit -m "Rodovias (OpenStreetMap) BR/MS/MT/GO/PR/SP" && git push
+          git add fontes && git commit -m "Estradas da região (OpenStreetMap) para rota" && git push
