@@ -22,9 +22,9 @@ button,select,input,textarea{font:inherit;color:inherit}
 svg#mapa{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;background:var(--bg)}
 .tal{fill:var(--tal);stroke:var(--tall);stroke-width:1;vector-effect:non-scaling-stroke}
 .tr{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:var(--tw,3px);vector-effect:non-scaling-stroke}
-.s-pronto,.s-g-ok{stroke:var(--ok)}.s-agulhado,.s-g-and{stroke:var(--and)}.s-preparo{stroke:var(--prep)}.s-falta,.s-g-zero{stroke:var(--zero)}
+.s-pronto,.s-g-ok{stroke:var(--ok)}.s-agulhado,.s-g-and{stroke:var(--and)}.s-preparo{stroke:var(--and)}.s-falta,.s-g-zero{stroke:var(--zero)}
 .s-nc,.s-g-np,.s-g-fora{stroke:var(--np);stroke-width:calc(var(--tw,3px)*.55);stroke-dasharray:6 5}
-.alt.s-pronto,.alt.s-g-ok{stroke:#1F6E43}.alt.s-agulhado,.alt.s-g-and{stroke:#B98400}.alt.s-preparo{stroke:#2A62B0}.alt.s-falta,.alt.s-g-zero{stroke:#C9655C}
+.alt.s-pronto,.alt.s-g-ok{stroke:#1F6E43}.alt.s-agulhado,.alt.s-g-and{stroke:#B98400}.alt.s-preparo{stroke:#B98400}.alt.s-falta,.alt.s-g-zero{stroke:#C9655C}
 .tr.sel{stroke-width:calc(var(--tw,3px)*1.9)}
 .rod{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.rod.F{stroke:#7A6A5E;stroke-width:2.6px}.rod.E{stroke:#9C948A;stroke-width:1.6px}.rod.E.t{stroke-dasharray:5 4}
 .rodl{font:600 11px system-ui,sans-serif;fill:var(--mut);paint-order:stroke;stroke:var(--bg);stroke-width:3px;text-anchor:middle}
@@ -58,7 +58,7 @@ body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 #info{position:fixed;left:8px;right:8px;bottom:calc(44px + env(safe-area-inset-bottom));z-index:3;max-height:46vh;overflow:auto;padding:10px 12px;line-height:1.5;display:none}
 #info hr{border:0;border-top:1px solid var(--ln);margin:6px 0}
 .pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12.5px;font-weight:700;background:var(--ln)}
-.p-pronto,.p-g-ok{background:var(--ok)}.p-agulhado,.p-g-and{background:var(--and);color:#1F2420}.p-preparo{background:var(--prep)}.p-falta,.p-g-zero{background:var(--zero);color:#1F2420}
+.p-pronto,.p-g-ok{background:var(--ok)}.p-agulhado,.p-g-and{background:var(--and);color:#1F2420}.p-preparo{background:var(--and);color:#1F2420}.p-falta,.p-g-zero{background:var(--zero);color:#1F2420}
 .btn{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);font-weight:700;cursor:pointer}
 .btn.pri{background:var(--ok);border-color:var(--ok);color:#fff}.btn.dan{color:var(--danger);background:transparent}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -140,7 +140,7 @@ const $=s=>document.querySelector(s);
 const fmt=v=>(isFinite(v)?v:0).toLocaleString("pt-BR",{maximumFractionDigits:2});
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fM=m=>m>=1000?fmt(Math.round(m/10)/100)+" km":fmt(Math.round(m))+" m";
-const ST_N={pronto:"Trecho pronto",agulhado:"Agulhado",preparo:"Preparo feito",falta:"Falta preparo",nc:"Não conferido","g-zero":"Não iniciado","g-and":"Em andamento","g-ok":"Concluído","g-np":"Não previsto","g-fora":"Não previsto"};
+const ST_N={pronto:"Trecho pronto",agulhado:"Agulhado",preparo:"Preparo de leito feito",falta:"Falta",nc:"Não conferido","g-zero":"Não iniciado","g-and":"Em andamento","g-ok":"Concluído","g-np":"Não previsto","g-fora":"Não previsto"};
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
 function aviso(t){const a=$("#aviso");a.textContent=t;a.style.display="block";clearTimeout(aviso.t);aviso.t=setTimeout(()=>a.style.display="none",2800);}
 
@@ -193,7 +193,7 @@ function desenhar(){const m=M();sel=null;VB=null;
     m.talhoes.filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fx tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${Math.max(...xs)-Math.min(...xs)}" data-h="${Math.max(...ys)-Math.min(...ys)}" data-n="${String(t.id).length}"><text class="tt" x="${t.lab[0]}" y="${t.lab[1]}">${esc(t.id)}</text>${t.ha?`<text class="ts" x="${t.lab[0]}" y="${t.lab[1]+12}">${fmt(Math.round(t.ha*10)/10)} ha</text>`:""}</g>`;}).join("")+
     m.trechos.filter(t=>t.mid).map(t=>`<g class="fx nb" data-n="${t.n}" data-cx="${t.mid[0]}" data-cy="${t.mid[1]}"><circle cx="${t.mid[0]}" cy="${t.mid[1]}" r="10"/><text x="${t.mid[0]}" y="${t.mid[1]}">${t.n}</text></g>`).join("")+
     `<g id="pins"></g><g id="gps"></g>`;
-  $("#leg").innerHTML=m.trechos.some(t=>!String(t.st).startsWith("g-"))||true?`<span><i style="background:var(--ok)"></i>Pronto</span><span><i style="background:var(--and)"></i>Agulhado / andamento</span><span><i style="background:var(--prep)"></i>Preparo</span><span><i style="background:var(--zero)"></i>Falta</span><span><i style="background:var(--np)"></i>Sem previsão</span>${ROD?`<span><i style="background:#8A7E73"></i>Rodovia BR/MS</span>`:""}`:"";
+  $("#leg").innerHTML=m.trechos.some(t=>!String(t.st).startsWith("g-"))||true?`<span><i style="background:var(--zero)"></i>Falta</span><span><i style="background:var(--and)"></i>Em andamento</span><span><i style="background:var(--ok)"></i>Pronto</span><span><i style="background:var(--np)"></i>Sem previsão</span>${ROD?`<span><i style="background:#8A7E73"></i>Rodovia BR/MS</span>`:""}`:"";
   info();aplicar();LS.set("mapa",m.id);}
 let raf=0;
 function aplicar(){const s=sv();const rr=s.getBoundingClientRect();if(!rr.width||!rr.height){requestAnimationFrame(aplicar);return;}if(!VB)VB=inteiro();const nh=VB.w*raz();VB.y+=(VB.h-nh)/2;VB.h=nh;s.setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);
