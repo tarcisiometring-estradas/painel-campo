@@ -1,7 +1,7 @@
 /* Estradas Sucuriú – funciona sem internet.
    Com internet: busca sempre a versão mais nova (app e mapas) e guarda no celular.
    Sem internet: abre o que está guardado. */
-const VERSAO="v1-2026-10-10a";
+const VERSAO="v1-2026-10-10b";
 const ARQS=["./","index.html","manifest.webmanifest","dados/mapas.json","dados/situacao.json","dados/rodovias/MS.json","dados/regiao.json","dados/estradas.json","icones/icone-192.png","icones/icone-512.png"];
 self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(VERSAO).then(c=>c.addAll(ARQS.map(u=>new Request(u,{cache:"reload"})))));});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSAO).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
