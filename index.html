@@ -123,6 +123,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <div><div class="eyebrow">Estradas · Projeto Sucuriú</div><h1>O que você deseja fazer?</h1></div>
   <div><span class="ok-chip">✓ Funciona sem internet</span> <span class="muted" id="h-ver"></span></div>
   <div class="temas" id="h-tema"><span class="muted" style="align-self:center">Tela:</span><button data-tema="escuro">Escuro</button><button data-tema="claro">Claro</button><button data-tema="sol">Sol (forte)</button></div>
+  <button class="choice" id="h-inst" style="display:none;border:2px solid var(--ok)"><span class="ic">📲</span><span><strong>Instalar o app</strong><small>Fica na tela inicial e abre sem internet.</small></span><span class="seta">›</span></button>
   <button class="choice" id="h-mapa"><span class="ic">🗺️</span><span><strong>Mapa das estradas</strong><small>Todas as fazendas da região. Aproxime numa fazenda para ver os trechos.</small></span><span class="seta">›</span></button>
   <button class="choice" id="h-pontos"><span class="ic">📍</span><span><strong>Pontos marcados</strong><small id="h-np">Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.</small></span><span class="seta">›</span></button>
   <a class="choice" id="h-painel" href="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8" target="_blank" rel="noopener"><span class="ic">📋</span><span><strong>Painel de Campo</strong><small>Microplanejamento, acompanhamento e lançamentos. Precisa de internet.</small></span><span class="seta">›</span></a>
@@ -509,6 +510,18 @@ if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(
   ver(reg.installing);reg.addEventListener("updatefound",()=>ver(reg.installing));
   setInterval(()=>{if(navigator.onLine)reg.update().catch(()=>{});},30*60*1000);}).catch(()=>{});
   let recarregou=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(recarregou)return;recarregou=true;location.reload();});}
+/* botão Instalar o app: Chrome/Edge usam o aviso do navegador; iPhone e navegador do WhatsApp recebem o passo a passo */
+let instEv=null;const jaApp=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const UA=navigator.userAgent,iOS=/iPhone|iPad|iPod/i.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1),
+  noZap=/WhatsApp|Instagram|FBAN|FBAV|; wv\)/i.test(UA),celular=iOS||/Android/i.test(UA);
+if(!jaApp&&(celular||noZap))$("#h-inst").style.display="grid";
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();instEv=e;if(!jaApp)$("#h-inst").style.display="grid";});
+window.addEventListener("appinstalled",()=>{instEv=null;$("#h-inst").style.display="none";aviso("App instalado. Procure o ícone Estradas na tela inicial.");});
+$("#h-inst").onclick=async()=>{if(instEv){instEv.prompt();try{await instEv.userChoice;}catch(e){}instEv=null;return;}
+  const L=location.href.split("#")[0];
+  abrirFolha("Instalar o app",noZap?`<div>Você abriu o link dentro do WhatsApp. Ele não instala por aqui.</div><ol style="padding-left:20px;display:grid;gap:6px;margin:0"><li>Toque nos <b>três pontinhos ⋮</b> (ou no ícone do navigador) no canto da tela.</li><li>Escolha <b>Abrir no Chrome</b>${iOS?" / <b>Abrir no Safari</b>":""}.</li><li>Lá, toque de novo em <b>Instalar o app</b>.</li></ol><div class="muted">Ou copie o link e cole no ${iOS?"Safari":"Chrome"}: <b style="word-break:break-all">${esc(L)}</b></div>`
+  :iOS?`<ol style="padding-left:20px;display:grid;gap:6px;margin:0"><li>Abra este link no <b>Safari</b>.</li><li>Toque no botão <b>Compartilhar</b> (quadrado com seta para cima).</li><li>Escolha <b>Adicionar à Tela de Início</b> e toque em <b>Adicionar</b>.</li></ol>`
+  :`<ol style="padding-left:20px;display:grid;gap:6px;margin:0"><li>No Chrome, toque nos <b>três pontinhos ⋮</b> no canto de cima.</li><li>Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</li><li>Confirme em <b>Instalar</b>.</li></ol><div class="muted">No computador: ícone de instalar na barra de endereço do Chrome/Edge.</div>`);};
 $("#b-upd").onclick=()=>{if(swNovo)swNovo.postMessage("ativar");else location.reload();};
 window.addEventListener("online",()=>buscarDados(true));
 
