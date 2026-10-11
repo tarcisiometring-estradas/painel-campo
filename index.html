@@ -93,7 +93,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 .fz{display:grid;gap:8px}
 .fzb{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:54px;padding:8px 14px;border-radius:12px;border:1px solid var(--ln);background:var(--sf);font-weight:700;text-align:left;cursor:pointer}
 .fzb small{display:block;font-weight:500;color:var(--mut);font-size:12.5px}
-.bar{display:flex;gap:6px;width:100%}.bar .bt{white-space:nowrap}.bar .bt{flex:1;min-height:40px;border-radius:10px;border:1px solid var(--ln);background:var(--bg);font-weight:700;font-size:13px;cursor:pointer}
+.bar{display:flex;gap:6px;width:100%}#h-et .bt[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}.bar .bt{white-space:nowrap}.bar .bt{flex:1;min-height:40px;border-radius:10px;border:1px solid var(--ln);background:var(--bg);font-weight:700;font-size:13px;cursor:pointer}
 #b-home{min-width:48px;padding:0 12px;white-space:nowrap;min-height:46px;border-radius:12px;background:var(--sf);border:1px solid var(--ln);font-weight:700;cursor:pointer}
 .toprow{display:flex;gap:6px}
 #pin{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;place-items:center;padding:24px}
@@ -127,6 +127,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <button class="choice" id="h-pontos"><span class="ic">📍</span><span><strong>Pontos marcados</strong><small id="h-np">Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.</small></span><span class="seta">›</span></button>
   <a class="choice" id="h-painel" href="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8" target="_blank" rel="noopener"><span class="ic">📋</span><span><strong>Painel de Campo</strong><small>Microplanejamento, acompanhamento e lançamentos. Precisa de internet.</small></span><span class="seta">›</span></a>
   <div class="eyebrow" style="margin-top:6px">Fazendas</div>
+  <div class="bar" id="h-et" role="group" aria-label="Etapa"><button class="bt" data-et="implantacao">Implantação</button><button class="bt" data-et="abastecimento">Abastecimento</button></div>
   <div class="fz" id="h-fz"></div>
 </div></div>
 <div id="pin"><div class="box"><b style="font-size:19px">Estradas Sucuriú</b><div class="muted">Digite o código de acesso da equipe.</div><input id="pin-i" inputmode="numeric" autocomplete="off" maxlength="8"><button class="btn pri" id="pin-ok">Entrar</button></div></div>
@@ -490,13 +491,15 @@ function rInfo(){const el=$("#info");
 /* ================= carregar, trocar fazenda, atualizar ================= */
 /* situação dos trechos: vem do painel toda madrugada (dados/situacao.json) */
 let SIT=null;
-function aplicarSit(){if(!DADOS||!SIT||!SIT.mapas)return;DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{const s=SIT.mapas[f.cod]&&SIT.mapas[f.cod][m.acesso?"A":"I"];if(!s)return;
+function aplicarSit(){if(!DADOS||!SIT||!SIT.mapas)return;DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{const S=SIT.mapas[f.cod]||{};const k=(m.acesso?"A":"I");const s=m.fin==="implantacao"?(S[k+"i"]||S[k]):S[k];if(!s)return;
   m.trechos.forEach(t=>{const v=s[t.n];if(v){t.st=v[0];t.partes=v[1]||[];}});}));}
 async function buscarSit(forcar){try{const r=await fetch("dados/situacao.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)return false;const d=await r.json();
   const mudou=!SIT||d.em!==SIT.em;SIT=d;if(mudou)aplicarSit();return mudou;}catch(e){return false;}}
 function dataSit(){if(!SIT||!SIT.em)return "";const d=new Date(SIT.em);return isNaN(d)?"":d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
-function montarLista(){LISTA=[];DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{m.cod=f.cod;m.id=f.cod+(m.acesso?"-acesso":"");LISTA.push(m);}));
-  $("#selm").innerHTML=`<option value="R">🌎 Região – todas as fazendas</option>`+DADOS.fazendas.map(f=>`<optgroup label="${esc(f.mapas[0].nome)}">${f.mapas.map(m=>`<option value="${LISTA.indexOf(m)}">${esc(m.nome)} · ${m.acesso?"Acesso":"Estradas internas"}</option>`).join("")}</optgroup>`).join("");}
+const finA=m=>m.fin||"abastecimento";let ETAPA=LS.get("etapa","");
+function fazEt(){return DADOS.fazendas.map(f=>({f,ms:f.mapas.filter(m=>!ETAPA||finA(m)===ETAPA)})).filter(x=>x.ms.length);}
+function montarLista(){LISTA=[];DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{m.cod=f.cod;m.id=f.cod+(m.acesso?"-acesso":"")+(finA(m)==="implantacao"?"-imp":"");LISTA.push(m);}));
+  $("#selm").innerHTML=`<option value="R">🌎 Região – todas as fazendas</option>`+fazEt().map(({f,ms})=>`<optgroup label="${esc(f.mapas[0].nome)}${ETAPA?"":" · "+(finA(ms[0])==="implantacao"?"Implantação":"Abastecimento")}">${ms.map(m=>`<option value="${LISTA.indexOf(m)}">${esc(m.nome)} · ${m.acesso?"Acesso":"Estradas internas"}</option>`).join("")}</optgroup>`).join("");}
 $("#selm").onchange=e=>{if(e.target.value==="R"){irRegiao(false);return;}I=+e.target.value;if(REG.on){REG.on=false;document.body.classList.remove("regiao");LS.set("modo","fazenda");}desenhar();};
 async function buscarDados(forcar){try{const r=await fetch("dados/mapas.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)throw 0;const d=await r.json();
     const mudou=!DADOS||d.versao!==DADOS.versao;if(mudou){const id=LISTA[I]&&LISTA[I].id;DADOS=d;aplicarSit();montarLista();const k=LISTA.findIndex(m=>m.id===(id||LS.get("mapa","")));I=k>=0?k:0;desenhar();}const ms=await buscarSit(forcar);if(ms&&!mudou)desenhar();if($("#home").classList.contains("on"))home();return (mudou||ms)&&forcar;}catch(e){return false;}}
@@ -522,8 +525,9 @@ document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.onclick=()=>tema(b
 function home(){$("#home").classList.add("on");fecharFolha();if(!DADOS)return;
   $("#h-ver").textContent="· mapas de "+DADOS.versao+(dataSit()?" · situação de "+dataSit():"");
   $("#h-np").textContent=PONTOS.length?`${PONTOS.length} ponto(s) marcados neste celular. Toque para ver e enviar.`:"Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.";
-  $("#h-fz").innerHTML=DADOS.fazendas.map(f=>`<div class="fzb" style="display:grid;gap:8px"><div><b>${esc(f.mapas[0].nome)}</b> <small style="display:inline">· ${esc(f.cod)}</small></div>
-    <div class="bar">${f.mapas.map(m=>`<button class="bt" data-abre="${LISTA.indexOf(m)}">${m.acesso?"Acesso":"Estradas internas"}</button>`).join("")}</div></div>`).join("");
+  $("#h-et").querySelectorAll("[data-et]").forEach(b=>{b.setAttribute("aria-pressed",String(b.dataset.et===ETAPA));b.onclick=()=>{ETAPA=b.dataset.et;LS.set("etapa",ETAPA);montarLista();if(LISTA[I])$("#selm").value=String(I);home();};});
+  const FE=fazEt();$("#h-fz").innerHTML=!ETAPA?`<div class="muted" style="padding:6px 2px">Escolha a etapa acima para ver as fazendas.</div>`:!FE.length?`<div class="muted" style="padding:6px 2px">Nenhuma fazenda dessa etapa ainda.</div>`:FE.map(({f,ms})=>`<div class="fzb" style="display:grid;gap:8px"><div><b>${esc(f.mapas[0].nome)}</b> <small style="display:inline">· ${esc(f.cod)}</small></div>
+    <div class="bar">${ms.map(m=>`<button class="bt" data-abre="${LISTA.indexOf(m)}">${m.acesso?"Acesso":"Estradas internas"}</button>`).join("")}</div></div>`).join("");
   $("#h-fz").querySelectorAll("[data-abre]").forEach(b=>b.onclick=()=>abrirMapa(+b.dataset.abre));}
 function abrirMapa(i){$("#home").classList.remove("on");if(i==null){REG.VB=null;irRegiao(false);return;}if(REG.on){REG.on=false;document.body.classList.remove("regiao");}if(i!==I){I=i;desenhar();}else $("#selm").value=String(I);requestAnimationFrame(()=>{VB=null;aplicar();});}
 $("#h-mapa").onclick=()=>abrirMapa(null);
