@@ -2966,7 +2966,13 @@ async function onClick(ev){
       g.filter(l=>!l._so).forEach((l,i)=>{const x=limpo(Object.assign({},l,{ord:agora+gi*1000+i}));["apData","apFaz","apEnc","apEps","apFr","sug"].forEach(k=>delete x[k]);linhas[x.id]=x;});
       docs.push({id,data:g0.apData||r.data,fazenda:nomeFazenda(g0.apFaz||r.fazenda||""),fin:finDaFazenda(g0.apFaz||r.fazenda)||r.fin||"",eps:g0.apEps||nomeEPS(r.eps)||"",encarregado:g0.apEnc||r.encarregado||"",frente:paFrente((ap&&ap.frente)||(g.find(l=>l.apFr)||{}).apFr||r.frente||frenteUlt(nomeFazenda(g0.apFaz||r.fazenda||""),g0.apEps||nomeEPS(r.eps)),g0.apEps||nomeEPS(r.eps)||""),ha:ap&&ap.ha&&ap.ha.dia!==""?{dia:ap.ha.dia}:null,imp:ap?{tipo:ap.tipo,supervisor:ap.supervisor,tecnico:ap.tecnico,km:ap.km,inicio:ap.inicio,entrega:ap.entrega,finalizada:ap.finalizada}:null,obsAp:ap?ap.obs:"",chuva:(v=>isFinite(v)&&v>=0?v:null)(pn(r.chuva)),texto:r.texto||"",linhas,val:{},por:quem(),criadoEm:new Date().toISOString(),ord:agora+gi});
     });
-    for(const doc of docs){if(await escrever(()=>DB.doc("lanc/"+doc.id).set(clone(doc)),null)){DATA.lanc[doc.id]=doc;nG++;nL+=Object.keys(doc.linhas).length;}else{ok=false;break;}}
+    for(const doc of docs){let foi=false;
+      for(let t=0;t<3&&!foi;t++){try{await DB.doc("lanc/"+doc.id).set(clone(doc));foi=true;}
+        catch(e){ /* às vezes grava mas a resposta não volta: confere antes de tentar de novo */
+          try{const g=await DB.doc("lanc/"+doc.id).get();if(g&&g.exists){foi=true;break;}}catch(x){}
+          if(e&&(e.code==="invalid_argument"||e.code==="quota_exceeded")){await escrever(()=>{throw e;},null);break;}
+          if(t<2)await new Promise(ok=>setTimeout(ok,1200*(t+1)));else toast("Não salvou ("+String((e&&(e.code||e.message))||"erro").slice(0,40)+"). Verifique a internet e toque em Salvar de novo.");}}
+      if(foi){DATA.lanc[doc.id]=doc;nG++;nL+=Object.keys(doc.linhas).length;}else{ok=false;break;}}
     if(nG){const rr=REV;aprender(rr,rr.linhas.filter(l=>!l._so));lembrarEPS(docs.map(d=>d.eps));}
     if(nG)toast(`Salvo: ${nL} linhas em ${nG} lançamento(s)${docs.some(d=>d.ha&&d.ha.dia)?", com hectares do dia":""}.`);
     if(ok){REV=null;guardarRev();ST.ac="validar";}else{const salvos=new Set(docs.slice(0,nG).flatMap(d=>Object.keys(d.linhas)));REV.linhas=REV.linhas.filter(l=>!salvos.has(l.id));guardarRev();}
