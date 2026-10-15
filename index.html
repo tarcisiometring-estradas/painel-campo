@@ -26,6 +26,9 @@ svg#mapa{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-se
 .s-nc,.s-g-np,.s-g-fora{stroke:var(--np);stroke-width:calc(var(--tw,3px)*.55);stroke-dasharray:6 5}
 .alt.s-pronto,.alt.s-g-ok{stroke:#1F6E43}.alt.s-agulhado,.alt.s-g-and{stroke:#B98400}.alt.s-preparo{stroke:#B98400}.alt.s-falta,.alt.s-g-zero{stroke:#C9655C}
 .tr.sel{stroke-width:calc(var(--tw,3px)*1.9)}
+.rede{fill:none;stroke:#B9AE9C;stroke-width:1.1px;vector-effect:non-scaling-stroke;stroke-linecap:round;opacity:.85}
+.racs{fill:none;stroke-width:3.2px;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;stroke:#8E938B}
+.racs.s-pronto,.racs.s-g-ok{stroke:#3F7A4E}.racs.s-preparo,.racs.s-agulhado,.racs.s-g-and{stroke:#C08A2E}.racs.s-falta,.racs.s-g-zero{stroke:#B5574A}
 .rod{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.rod.F{stroke:#7A6A5E;stroke-width:2.6px}.rod.E{stroke:#9C948A;stroke-width:1.6px}.rod.E.t{stroke-dasharray:5 4}
 .rodl{font:600 11px system-ui,sans-serif;fill:var(--mut);paint-order:stroke;stroke:var(--bg);stroke-width:3px;text-anchor:middle}
 .viz{fill:none;stroke-width:1.6px;stroke-opacity:.8;stroke-linecap:round;vector-effect:non-scaling-stroke}
@@ -340,13 +343,25 @@ const rPath=rs=>rs.map(r=>"M"+r.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join("
 function rDesenhar(){const D=REG.dados;const s=rsv();if(!D){s.innerHTML="";return;}
   let h=`<g id="r-rod">${ROD?ROD.rod.map(([c,n,t,pts])=>`<polyline class="rod ${c}${t?" t":""}" points="${pts.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join(" ")}"/>`).join(""):""}</g><g id="r-fz">`;
   D.faz.forEach((f,i)=>{h+=`<path class="rf${f.cod?" cad":""}" data-f="${i}" d="${rPath(f.r)}"/>`;});
-  h+=`</g><g id="r-det"></g><g id="r-rota"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=h;REG.detK="";rtDesenhar();rAplicar();}
+  h+=`</g><g id="r-rede"></g><g id="r-ac"></g><g id="r-det"></g><g id="r-rota"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=h;REG.detK="";rtDesenhar();rAplicar();}
 function rTudo(){const D=REG.dados;const fs=D.faz.filter(f=>f.cod);const L=fs.length?fs:D.faz;
   return [Math.min(...L.map(f=>f.bb[0])),Math.min(...L.map(f=>f.bb[1])),Math.max(...L.map(f=>f.bb[2])),Math.max(...L.map(f=>f.bb[3]))];}
 function rIrPara(b,m=.25){const w=Math.max(b[2]-b[0],(b[3]-b[1])/raz())*(1+2*m)+2;const h=w*raz();REG.VB={x:(b[0]+b[2])/2-w/2,y:(b[1]+b[3])/2-h/2,w,h};rAplicar();}
 function rAplicar(){const s=rsv();const r=s.getBoundingClientRect();if(!r.width||!REG.dados)return;if(!REG.VB){rIrPara(rTudo());return;}
   const V=REG.VB;const h=V.w*raz();V.y+=(V.h-h)/2;V.h=h;s.setAttribute("viewBox",`${V.x} ${V.y} ${V.w} ${V.h}`);
-  cancelAnimationFrame(REG.raf);REG.raf=requestAnimationFrame(()=>{rDetalhe();rRotulos();rGps();rEscala();});}
+  cancelAnimationFrame(REG.raf);REG.raf=requestAnimationFrame(()=>{rRede();rAcessos();rDetalhe();rRotulos();rGps();rEscala();});}
+/* estradas de terra e vicinais (as mesmas da rota) aparecem quando aproxima: a fazenda não fica "voando" */
+function rRede(){const g=$("#r-rede");if(!g)return;const V=REG.VB;if(V.w>140){if(REG.redeK){g.innerHTML="";REG.redeK="";}return;}
+  if(!RT.G){rtCarregar().then(()=>{REG.redeK="";rRede();}).catch(()=>{});return;}
+  const G=RT.G;const [la0,lo0]=RG(V.x,V.y),[la1,lo1]=RG(V.x+V.w,V.y+V.h);const x0=Math.floor(Math.min(lo0,lo1)*20)-1,x1=Math.floor(Math.max(lo0,lo1)*20)+1,y0=Math.floor(Math.min(la0,la1)*20)-1,y1=Math.floor(Math.max(la0,la1)*20)+1;
+  const k=[x0,x1,y0,y1].join(",");if(k===REG.redeK)return;REG.redeK=k;const vis=new Set();
+  for(let cx=x0;cx<=x1;cx++)for(let cy=y0;cy<=y1;cy++){const a=G.grade.get(cx+":"+cy);if(a)a.forEach(i=>vis.add(i));}
+  let d="";const visto=new Set();vis.forEach(i=>{for(let j=G.off[i];j<G.off[i+1];j++){const ei=G.aE[j];if(visto.has(ei))continue;visto.add(ei);const e=G.E[ei];if(e[3]<2)continue;
+    const a=RP(G.X[e[0]],G.Y[e[0]]),b=RP(G.X[e[1]],G.Y[e[1]]);d+=`M${a[0].toFixed(2)},${a[1].toFixed(2)}L${b[0].toFixed(2)},${b[1].toFixed(2)}`;}});
+  g.innerHTML=d?`<path class="rede" d="${d}"/>`:"";}
+/* acessos das fazendas do painel, com a cor da situação, no mapa da região */
+function rAcessos(){const g=$("#r-ac");if(!g||REG.acK===(DADOS&&DADOS.versao)+(SIT&&SIT.em))return;REG.acK=(DADOS&&DADOS.versao)+(SIT&&SIT.em);
+  g.innerHTML=LISTA.filter(m=>m.acesso&&(!ETAPA||finA(m)===ETAPA)).map(m=>m.trechos.map(t=>`<polyline class="racs s-${t.st||"nc"}" points="${t.pts.map(p=>{const [la,lo]=n2g(m,p[0],p[1]);return RP(lo,la).map(v=>v.toFixed(2)).join(",");}).join(" ")}"/>`).join("")).join("");}
 /* talhões das fazendas que ainda não estão no painel, quando aproxima */
 function rDetalhe(){return;const V=REG.VB,g=$("#r-det");if(!g)return;if(V.w>160){if(REG.detK){g.innerHTML="";REG.detK="";}return;}
   if(!REG.tal){rTal();return;}const vis=REG.dados.faz.filter(f=>f.bb[2]>V.x&&f.bb[0]<V.x+V.w&&f.bb[3]>V.y&&f.bb[1]<V.y+V.h);const k=vis.map(f=>f.id).join(",");if(k===REG.detK)return;REG.detK=k;
@@ -367,7 +382,7 @@ function rGps(){const g=$("#r-gps");if(!g)return;g.innerHTML="";if(!(GPS.on&&GPS
 function cursorGps(x,y,u){if(GPS.hd==null)return `<circle cx="${x}" cy="${y}" r="${12*u}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${8*u}" fill="#1A73E8"/>`;
   const a=GPS.hd,k=u*1.25;return `<g transform="translate(${x} ${y}) rotate(${a.toFixed(1)}) scale(${k})"><path d="M0,-15 L11,12 L0,6 L-11,12 Z" fill="#1A73E8" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></g>`;}
 function rEscala(){const r=rsv().getBoundingClientRect();const mp=REG.VB.w/r.width*RU,alvo=mp*100,p=Math.pow(10,Math.floor(Math.log10(alvo))),n=[1,2,5,10].map(k=>k*p).filter(k=>k<=alvo).pop()||p;$("#esc").innerHTML=`<i style="width:${Math.round(n/mp)}px"></i>${fM(n)}`;}
-function rLegenda(){$("#leg").innerHTML=`<span><i style="background:var(--r-meio)"></i>Fazenda no painel</span><span><i style="background:var(--r-sem)"></i>Outras fazendas</span><span><i style="background:var(--r-pd);height:8px;width:8px"></i>Pedreira</span><span><i style="background:#8A7E73"></i>Rodovia</span>`;}
+function rLegenda(){$("#leg").innerHTML=`<span><i style="background:#C08A2E"></i>Acesso da fazenda</span><span><i style="background:#B9AE9C"></i>Estrada de terra</span><span><i style="background:var(--r-meio)"></i>Fazenda no painel</span><span><i style="background:var(--r-sem)"></i>Outras fazendas</span><span><i style="background:var(--r-pd);height:8px;width:8px"></i>Pedreira</span><span><i style="background:#8A7E73"></i>Rodovia</span>`;}
 /* entrar e sair do mapa detalhado */
 function rMapaDe(f){return LISTA.findIndex(m=>m.cod===f.cod&&!m.acesso)>=0?LISTA.findIndex(m=>m.cod===f.cod&&!m.acesso):LISTA.findIndex(m=>m.cod===f.cod);}
 function rEntrar(f,manterVista){const i=rMapaDe(f);if(i<0)return;const V=REG.VB;REG.on=false;document.body.classList.remove("regiao");I=i;desenhar();
