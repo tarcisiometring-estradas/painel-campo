@@ -3217,13 +3217,15 @@ if(APPMODO){window.addEventListener("popstate",()=>{if(SHS.length){fechar();try{
 try{ME.nome=localStorage.getItem("painel_meu_nome")||"";}catch(e){}
 try{Object.assign(ST.tc,JSON.parse(localStorage.getItem("painel_tc_v1")||"{}"));}catch(e){}
 render();
+DB=DBF; /* grava no aparelho na hora; a nuvem recebe quando conectar */
 (async function iniciar(){
   if(APPMODO){render();await carregarBase();}
   ["os","lanc","rdo","config","mapas","marcas","trechos","novas"].forEach(col=>{const m={};snapCol(col).docs.forEach(x=>{m[x.id]=Object.assign({},x.data(),{id:x.id});});DATA[col]=m;});render();
   const cl=!APPMODO&&window.claude&&typeof window.claude.use==="function"?window.claude:null;
-  const use=n=>cl?cl.use(n).catch(()=>null):Promise.resolve(null);
+  const use=n=>cl?Promise.race([cl.use(n).catch(()=>null),new Promise(ok=>setTimeout(()=>ok(null),20000))]):Promise.resolve(null);
   const [db,sample,down,assets,user]=await Promise.all([use("db"),use("sample"),use("downloads"),use("assets"),use("user")]);
   DB=DBF;if(db){NUVEMDB=db;NUVEM=true;}
+  else if(cl){cl.use("db").then(d=>{if(d&&!NUVEMDB){NUVEMDB=d;NUVEM=true;chipFila();enviarFila();}}).catch(()=>{});}
   SAMPLE=sample;DOWN=down;ASSETS=assets;USER=user;
   if(USER){try{ME.id=await USER.id();}catch(e){}try{ADM=!!(await USER.isOwner())||!!(await USER.canEdit());}catch(e){}}
   else{try{ADM=localStorage.getItem("painel_adm_local")==="1";}catch(e){}}
