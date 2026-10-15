@@ -66,8 +66,8 @@ body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 .btn{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--ln);background:var(--sf);font-weight:700;cursor:pointer}
 .btn.pri{background:var(--ok);border-color:var(--ok);color:#fff}.btn.dan{color:var(--danger);background:transparent}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10;display:none}
-.sheet{position:fixed;left:0;right:0;bottom:0;max-height:88%;z-index:11;background:var(--bg);border-radius:16px 16px 0 0;border-top:1px solid var(--ln);display:none;flex-direction:column}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:39;display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:88%;z-index:40;background:var(--bg);border-radius:16px 16px 0 0;border-top:1px solid var(--ln);display:none;flex-direction:column}
 .sheet.on,.scrim.on{display:flex}.scrim.on{display:block}
 .sh-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--ln)}.sh-h b{flex:1;font-size:17px}
 .sh-b{overflow:auto;padding:14px;padding-bottom:calc(24px + env(safe-area-inset-bottom));display:grid;gap:12px}
@@ -129,7 +129,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <div><span class="ok-chip">✓ Funciona sem internet</span> <span class="muted" id="h-ver"></span></div>
   <div class="temas" id="h-tema"><span class="muted" style="align-self:center">Tela:</span><button data-tema="escuro">Escuro</button><button data-tema="claro">Claro</button><button data-tema="sol">Sol (forte)</button></div>
   <button class="choice" id="h-inst" style="display:none;border:2px solid var(--ok)"><span class="ic">📲</span><span><strong>Instalar o app</strong><small>Fica na tela inicial e abre sem internet.</small></span><span class="seta">›</span></button>
-  <button class="choice" id="h-mapa"><span class="ic">🗺️</span><span><strong>Mapa das estradas</strong><small>Todas as fazendas da região. Aproxime numa fazenda para ver os trechos.</small></span><span class="seta">›</span></button>
+  <button class="choice" id="h-mapa"><span class="ic">🗺️</span><span><strong>Mapa das estradas</strong><small>Toque e escolha a fazenda. ⚙ para filtrar.</small></span><span class="seta">›</span></button>
   <button class="choice" id="h-pontos"><span class="ic">📍</span><span><strong>Pontos marcados</strong><small id="h-np">Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.</small></span><span class="seta">›</span></button>
   <a class="choice" id="h-painel" href="painel.html"><span class="ic">📋</span><span><strong>Painel de Campo</strong><small>Conferir, marcar trechos e ver o mapa, mesmo sem internet. O que lançar fica no celular até enviar ao painel.</small></span><span class="seta">›</span></a>
   <a class="choice" href="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8" target="_blank" rel="noopener"><span class="ic">🌐</span><span><strong>Painel online</strong><small>Ler mensagem do WhatsApp, receber pacotes e parte do supervisor. Precisa de internet.</small></span><span class="seta">›</span></a>
@@ -570,7 +570,7 @@ function montarLista(){LISTA=[];DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{m.
   $("#selm").innerHTML=`<option value="R">🌎 Região – todas as fazendas</option>`+fazEt().map(({f,ms})=>`<optgroup label="${esc(f.mapas[0].nome)}${ETAPA?"":" · "+(finA(ms[0])==="implantacao"?"Implantação":"Abastecimento")}">${ms.map(m=>`<option value="${LISTA.indexOf(m)}">${esc(m.nome)} · ${m.acesso?"Acesso":"Estradas internas"}</option>`).join("")}</optgroup>`).join("");}
 $("#selm").onchange=e=>{if(e.target.value==="R"){irRegiao(false);return;}I=+e.target.value;if(REG.on){REG.on=false;document.body.classList.remove("regiao");LS.set("modo","fazenda");}desenhar();};
 async function buscarDados(forcar){try{const r=await fetch("dados/mapas.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)throw 0;const d=await r.json();
-    const mudou=!DADOS||d.versao!==DADOS.versao;if(mudou){const id=LISTA[I]&&LISTA[I].id;DADOS=d;aplicarSit();montarLista();const k=LISTA.findIndex(m=>m.id===(id||LS.get("mapa","")));I=k>=0?k:0;desenhar();}const ms=await buscarSit(forcar);if(ms&&!mudou)desenhar();if($("#home").classList.contains("on"))home();return (mudou||ms)&&forcar;}catch(e){return false;}}
+    const mudou=!DADOS||d.versao!==DADOS.versao;if(mudou){const id=LISTA[I]&&LISTA[I].id;DADOS=d;aplicarSit();montarLista();const k=LISTA.findIndex(m=>m.id===(id||LS.get("mapa","")));I=k>=0?k:0;desenhar();}const ms=await buscarSit(forcar);if(ms&&!mudou)desenhar();if($("#home").classList.contains("on")&&!$("#sheet").classList.contains("on"))home();return (mudou||ms)&&forcar;}catch(e){return false;}}
 let swNovo=null;
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(reg=>{
   const ver=w=>{if(!w)return;w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller){swNovo=w;$("#upd").style.display="flex";}});};
@@ -610,7 +610,23 @@ function home(){$("#home").classList.add("on");fecharFolha();if(!DADOS)return;
     <div class="bar">${ms.map(m=>`<button class="bt" data-abre="${LISTA.indexOf(m)}">${m.acesso?"Acesso":"Estradas internas"}</button>`).join("")}</div></div>`).join("");
   $("#h-fz").querySelectorAll("[data-abre]").forEach(b=>b.onclick=()=>abrirMapa(+b.dataset.abre));}
 function abrirMapa(i){$("#home").classList.remove("on");if(i==null){REG.VB=null;irRegiao(false);return;}if(REG.on){REG.on=false;document.body.classList.remove("regiao");}if(i!==I){I=i;desenhar();}else $("#selm").value=String(I);requestAnimationFrame(()=>{VB=null;aplicar();});}
-$("#h-mapa").onclick=()=>abrirMapa(null);
+/* menu rápido de mapas: toca e escolhe; ⚙ abre o filtro quando precisar */
+let MF={et:LS.get("menu_et",""),q:"",ver:false};
+function menuMapas(){if(!DADOS){abrirMapa(null);return;}
+  const fz=DADOS.fazendas.map(f=>({f,ms:f.mapas.filter(m=>!MF.et||finA(m)===MF.et)})).filter(x=>x.ms.length&&(!MF.q||norm2(x.f.mapas[0].nome+" "+x.f.cod).includes(norm2(MF.q))));
+  const etTxt={"":"Todas",implantacao:"Implantação",abastecimento:"Abastecimento"};
+  abrirFolha("🗺️ Qual mapa?",`<div style="display:flex;gap:8px;flex-shrink:0"><button class="fzb" data-mreg style="flex:1;flex-shrink:0"><span><b>🌎 Região – todas as fazendas</b></span></button><button class="btn" id="mf-eng" aria-label="Filtrar" title="Filtrar" style="min-width:52px;font-size:20px;${MF.ver||MF.et?"border:2px solid var(--ok)":""}">⚙</button></div>
+   ${MF.ver?`<div class="card" style="display:grid;gap:8px"><b>Filtrar</b><div class="bar">${Object.keys(etTxt).map(k=>`<button class="bt" data-mfet="${k}" aria-pressed="${MF.et===k}" style="${MF.et===k?"background:var(--ok);color:#fff;border-color:var(--ok)":""}">${etTxt[k]}</button>`).join("")}</div><input id="mf-q" class="btn" placeholder="Buscar fazenda (nome ou código)" value="${esc(MF.q)}" style="width:100%;text-align:left"></div>`:MF.et?`<div class="muted">Mostrando só ${etTxt[MF.et]}. Toque em ⚙ para mudar.</div>`:""}
+   ${fz.length?fz.map(({f,ms})=>`<div class="fzb" style="display:grid;gap:8px;flex-shrink:0"><div><b>${esc(f.mapas[0].nome)}</b> <small style="display:inline">· ${esc(f.cod)}</small></div>
+    <div class="bar">${ms.map(m=>`<button class="bt" data-mab="${LISTA.indexOf(m)}">${m.acesso?"Acesso":"Internas"}${MF.et?"":" · "+(finA(m)==="implantacao"?"Impl.":"Abast.")}</button>`).join("")}</div></div>`).join(""):`<div class="muted">Nenhuma fazenda com esse filtro.</div>`}`);
+  const B=$("#sh-b");
+  B.querySelector("[data-mreg]").onclick=()=>{fecharFolha();abrirMapa(null);};
+  $("#mf-eng").onclick=()=>{MF.ver=!MF.ver;menuMapas();};
+  B.querySelectorAll("[data-mfet]").forEach(b=>b.onclick=()=>{MF.et=b.dataset.mfet;LS.set("menu_et",MF.et);menuMapas();});
+  const q=$("#mf-q");if(q)q.oninput=()=>{MF.q=q.value;const pos=q.selectionStart;menuMapas();const q2=$("#mf-q");if(q2){q2.focus();q2.setSelectionRange(pos,pos);}};
+  B.querySelectorAll("[data-mab]").forEach(b=>b.onclick=()=>{fecharFolha();abrirMapa(+b.dataset.mab);});}
+function norm2(t){return String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
+$("#h-mapa").onclick=menuMapas;
 $("#h-pontos").onclick=()=>{abrirMapa(I);$("#b-menu").onclick();};
 $("#b-home").onclick=home;
 const PAINEL="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8";
