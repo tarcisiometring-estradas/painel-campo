@@ -1433,20 +1433,23 @@ const TIPO_MK={linha:"Linha",area:"Área",ponto:"Ponto"};
 
 /* gestos: arrastar, pinçar e roda do mouse; toque curto marca ponto quando está medindo */
 function ligarMapa(){const sv=svgMapa(),M=mapaAtual();if(!sv||!M)return;aplicarVB();
-  sv.addEventListener("pointerdown",e=>{if(e.button>0)return;const P=GEST&&GEST.svg===sv?GEST.P:new Map();P.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    GEST={svg:sv,P,vb0:Object.assign({},vbDe(M)),r0:rotDe(M),ini:new Map([...P].map(([k,v])=>[k,Object.assign({},v)])),moved:false,multi:P.size>1};arrastou=false;});
-  sv.addEventListener("wheel",e=>{e.preventDefault();const [x,y]=pxN(sv,vbDe(M),e.clientX,e.clientY);GPS.seguir=false;zoom(M,e.deltaY>0?1.2:1/1.2,x,y);},{passive:false});
+  sv.addEventListener("contextmenu",e=>e.preventDefault());
+  sv.addEventListener("pointerdown",e=>{if(e.button>0&&e.button!==2)return;const P=GEST&&GEST.svg===sv?GEST.P:new Map();P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    GEST={svg:sv,P,vb0:Object.assign({},vbDe(M)),r0:rotDe(M),ini:new Map([...P].map(([k,v])=>[k,Object.assign({},v)])),moved:false,multi:P.size>1,rotar:e.pointerType==="mouse"&&(e.button===2||e.shiftKey)};arrastou=false;});
+  sv.addEventListener("wheel",e=>{e.preventDefault();const [x,y]=pxN(sv,vbDe(M),e.clientX,e.clientY);GPS.seguir=false;zoom(M,(e=>{let d=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?400:1);d=Math.max(-120,Math.min(120,d));return Math.exp(d*(e.ctrlKey?0.012:0.0022));})(e),x,y);},{passive:false});
   sv.addEventListener("click",e=>{if(arrastou){e.stopPropagation();e.preventDefault();arrastou=false;}},true);}
 window.addEventListener("pointermove",e=>{if(!GEST)return;const sv=svgMapa(),M=mapaAtual();if(!sv||!M||GEST.svg!==sv){GEST=null;return;}
   if(!GEST.P.has(e.pointerId))return;GEST.P.set(e.pointerId,{x:e.clientX,y:e.clientY});const v=vbDe(M),r=sv.getBoundingClientRect(),v0=GEST.vb0;
   const ps=[...GEST.P.values()],is=[...GEST.P.keys()].map(k=>GEST.ini.get(k));
-  if(ps.length===1){const dx=ps[0].x-is[0].x,dy=ps[0].y-is[0].y;if(!GEST.moved&&Math.hypot(dx,dy)<7)return;GEST.moved=true;GPS.seguir=false;
+  if(ps.length===1&&GEST.rotar){const cx=r.left+r.width/2,cy=r.top+r.height/2;const da=(Math.atan2(ps[0].y-cy,ps[0].x-cx)-Math.atan2(is[0].y-cy,is[0].x-cx))*180/Math.PI;
+    if(!GEST.moved&&Math.abs(((da+540)%360)-180)<2)return;GEST.moved=true;let a=GEST.r0+da;a=((a+540)%360)-180;if(Math.abs(a)<3)a=0;ROT[M.id]=a;aplicarVB();}
+  else if(ps.length===1){const dx=ps[0].x-is[0].x,dy=ps[0].y-is[0].y;if(!GEST.moved&&Math.hypot(dx,dy)<7)return;GEST.moved=true;GPS.seguir=false;
     const u=girar(dx*v0.w/r.width,dy*v0.h/r.height,-rotDe(M));v.x=v0.x-u[0];v.y=v0.y-u[1];aplicarVB();}
   else if(ps.length>=2&&is[1]){GEST.moved=true;GEST.multi=true;GPS.seguir=false;const d0=Math.hypot(is[0].x-is[1].x,is[0].y-is[1].y)||1,d1=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y)||1;
     const m0={x:(is[0].x+is[1].x)/2,y:(is[0].y+is[1].y)/2},m1={x:(ps[0].x+ps[1].x)/2,y:(ps[0].y+ps[1].y)/2};
     const n0p=pxN(sv,v0,m0.x,m0.y,GEST.r0);
     const da=(Math.atan2(ps[1].y-ps[0].y,ps[1].x-ps[0].x)-Math.atan2(is[1].y-is[0].y,is[1].x-is[0].x))*180/Math.PI;const dn=((da+540)%360)-180;
-    if(!GEST.girando&&Math.abs(dn)>12)GEST.girando=true;let a=GEST.r0+(GEST.girando?dn:0);a=((a+540)%360)-180;if(Math.abs(a)<3)a=0;ROT[M.id]=a;
+    if(!GEST.girando&&Math.abs(dn)>6){GEST.girando=true;GEST.da0=dn;}let a=GEST.r0+(GEST.girando?dn-GEST.da0:0);a=((a+540)%360)-180;if(Math.abs(a)<3)a=0;ROT[M.id]=a;
     const w=Math.min(Math.max(v0.w*d0/d1,M.w/60),M.w*2.5),h=w*razao();
     const sx=(m1.x-r.left)*w/r.width-w/2,sy=(m1.y-r.top)*h/r.height-h/2;const q=girar(sx,sy,-a);const cx=n0p[0]-q[0],cy=n0p[1]-q[1];
     Object.assign(v,{w,h,x:cx-w/2,y:cy-h/2});aplicarVB();}
@@ -1529,7 +1532,7 @@ function OFF_VIEWER(){
     e.preventDefault();},{passive:false});
   const fim=e=>{if(!G||!G.P.has(e.pointerId))return;G.P.delete(e.pointerId);if(G.P.size){G.v0={...VB};G.ini=new Map([...G.P].map(([k,v])=>[k,{...v}]));}else G=null;};
   window.addEventListener("pointerup",fim);window.addEventListener("pointercancel",fim);
-  document.addEventListener("wheel",e=>{if(!e.target.closest("svg"))return;e.preventDefault();const [x,y]=toN(e.clientX,e.clientY);zoom(e.deltaY>0?1.2:1/1.2,x,y);},{passive:false});
+  document.addEventListener("wheel",e=>{if(!e.target.closest("svg"))return;e.preventDefault();const [x,y]=toN(e.clientX,e.clientY);zoom((e=>{let d=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?400:1);d=Math.max(-120,Math.min(120,d));return Math.exp(d*(e.ctrlKey?0.012:0.0022));})(e),x,y);},{passive:false});
   document.addEventListener("click",e=>{const b=e.target.closest("[data-i],[data-z],#gpsb,#tabb");
     if(b){if(b.dataset.i!=null){I=+b.dataset.i;desenhar();}else if(b.dataset.z==="in")zoom(1/1.6);else if(b.dataset.z==="out")zoom(1.6);else if(b.dataset.z==="fit"){VB=null;aplicar();}
       else if(b.id==="tabb"){const t=$("#tab");t.style.display=t.style.display==="block"?"none":"block";}

@@ -244,7 +244,7 @@ window.addEventListener("pointermove",e=>{if(!G||!G.P.has(e.pointerId))return;G.
   e.preventDefault();},{passive:false});
 const fim=e=>{if(!G||!G.P.has(e.pointerId))return;G.P.delete(e.pointerId);if(G.P.size){G.v0={...VB};G.ini=new Map([...G.P].map(([k,v])=>[k,{...v}]));}else G=null;};
 window.addEventListener("pointerup",fim);window.addEventListener("pointercancel",fim);
-sv().addEventListener("wheel",e=>{e.preventDefault();const [x,y]=toN(e.clientX,e.clientY);zoom(e.deltaY>0?1.2:1/1.2,x,y);},{passive:false});
+sv().addEventListener("wheel",e=>{e.preventDefault();const [x,y]=toN(e.clientX,e.clientY);zoom((e=>{let d=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?400:1);d=Math.max(-120,Math.min(120,d));return Math.exp(d*(e.ctrlKey?0.012:0.0022));})(e),x,y);},{passive:false});
 sv().addEventListener("click",e=>{if(moveu){moveu=false;return;}
   const p=e.target.closest("[data-pt]");if(p){abrirPonto(p.dataset.pt);return;}
   const h=e.target.closest(".hit,.nb");if(h){const n=+h.dataset.n;sel=sel===n?null:n;}else sel=null;info();aplicar();});
@@ -534,7 +534,7 @@ function rInfo(){const el=$("#info");
     e.preventDefault();},{passive:false});
   const fimR=e=>{if(!P.has(e.pointerId))return;const pinça=P.size===2;P.delete(e.pointerId);if(P.size){v0={...REG.VB};ini=new Map([...P].map(([k,v])=>[k,[...v]]));}if(pinça&&REG.on)rChecarEntrada();};
   window.addEventListener("pointerup",fimR);window.addEventListener("pointercancel",fimR);
-  s.addEventListener("wheel",e=>{e.preventDefault();const r=s.getBoundingClientRect(),V=REG.VB;rZoom(e.deltaY>0?1.2:1/1.2,V.x+(e.clientX-r.left)*V.w/r.width,V.y+(e.clientY-r.top)*V.h/r.height);},{passive:false});
+  s.addEventListener("wheel",e=>{e.preventDefault();const r=s.getBoundingClientRect(),V=REG.VB;rZoom((e=>{let d=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?400:1);d=Math.max(-120,Math.min(120,d));return Math.exp(d*(e.ctrlKey?0.012:0.0022));})(e),V.x+(e.clientX-r.left)*V.w/r.width,V.y+(e.clientY-r.top)*V.h/r.height);},{passive:false});
   s.addEventListener("click",e=>{if(mv){mv=false;return;}const pd=e.target.closest(".pd");if(pd){REG.pd=+pd.dataset.p;REG.sel=null;rRotulos();rInfo();return;}REG.pd=null;const t=e.target.closest(".rf");if(t){const i=+t.dataset.f;REG.sel=REG.sel===i?null:i;}else{
       /* toque perto de uma fazenda pequena também vale */
       const r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.width,x=V.x+(e.clientX-r.left)*u,y=V.y+(e.clientY-r.top)*u;let best=null,bd=1e9;
