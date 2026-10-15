@@ -208,6 +208,8 @@ html.mapa-cheio,html.mapa-cheio body{overflow:hidden;overscroll-behavior:none}
 .gpsinfo{margin-top:8px;padding:10px 12px;border-radius:12px;background:#E8F0FE;color:#0B3D91;font-size:14px}
 .gpsinfo .bad{color:var(--none);font-weight:700}
 .mtools{display:flex;gap:6px;flex-wrap:nowrap;margin-bottom:10px}
+.mapa.comcamada .tal{fill:transparent;stroke:transparent}.mapa.comcamada .tal-t,.mapa.comcamada .tal-s{opacity:.0}
+.mapa .tr.zero{stroke-dasharray:8 6}
 .mtopo{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-bottom:10px}.mtopo .mcor{flex:1 1 180px;min-width:0;margin:0}.mtopo .mtools{margin:0}
 .etbar{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}.etbar button{min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font:inherit;font-weight:700;color:var(--ink);cursor:pointer}.etbar button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
 details.dobra>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}details.dobra>summary::-webkit-details-marker{display:none}details.dobra>summary h3{margin:0;flex:1}details.dobra>summary::after{content:"▾";color:var(--muted)}details.dobra[open]>summary::after{content:"▴"}details.dobra[open]>summary{margin-bottom:8px}
@@ -1239,7 +1241,7 @@ function renderPxR(){
 /* ================= MAPA DAS ESTRADAS ================= */
 /* Mapas cadastrados pelo Claude a partir dos PDFs da Geoplant (coleção "mapas"). O andamento sai das linhas conferidas em campo. */
 /* O mapa acompanha só o revestimento com brita: preparo de leito com brita (35) e agulhamento (21 = material lançado). */
-const SERV={preparo:{t:"Preparo de leito",fam:"PLS",cods:[36]},agulhada:{t:"Agulhamento (material lançado)",cods:[21]},cascalho:{t:"Preparo de leito com brita",cods:[35]}};
+const SERV={preparo:{t:"Preparo de leito",fam:"PLS",cods:[36]},agulhada:{t:"Agulhamento (material lançado)",cods:[21]},cascalho:{t:"Preparo de leito com brita",cods:[35]},abertura:{t:"Abertura de estrada",cods:[17]}};
 const SERV_PRINC=["preparo","agulhada","cascalho"];
 function servDe(l){const c=+(codDe(l)||l.cod||0);for(const k in SERV){const s=SERV[k];if(s.fam&&l.fam===s.fam)return k;if(c&&s.cods.includes(c))return k;}return null;}
 function metrosDe(l,v){const src=v&&v.med?Object.assign({},l,{c:v.c,l:v.l,e:v.e,direto:v.direto}):l;const c=n0(src.c);if(c>0)return c;
@@ -1267,7 +1269,7 @@ function estadoTrecho(r,k){const prev=prevServ(r.t,k);const S=r.s[k];const feito
   if(!prev)return {c:feito>0?"fora":"np",prev,feito,p:0};const p=feito/prev;return {c:p>=0.99?"ok":p>0?"and":"zero",prev,feito,p};}
 function resumoServ(M,R,k){let prev=0,feito=0,pend=0,n=0,ok=0;for(const r of Object.values(R)){const e=estadoTrecho(r,k);if(e.prev){prev+=e.prev;feito+=Math.min(e.feito,e.prev);n++;if(e.c==="ok")ok++;}pend+=(r.s[k]?r.s[k].pend:0);}return {prev,feito,falta:Math.max(prev-feito,0),pend,n,ok};}
 const ST_MAPA={zero:"Não iniciado",and:"Em andamento",ok:"Concluído",np:"Não previsto",fora:"Feito fora do previsto"};
-function servsDoMapa(M){return SERV_PRINC.slice();}
+function servsDoMapa(M){const l=SERV_PRINC.slice();if((M.trechos||[]).some(t=>n0(t.plan&&t.plan.abertura)))l.unshift("abertura");return l;}
 const prevServ=(t,k)=>n0(t.plan&&t.plan[k])||(k==="agulhada"?n0(t.plan&&t.plan.cascalho):0);
 /* Régua de entrega: o trecho fica pronto quando o SERVIÇO FINAL dele está conferido.
    Final = preparo com brita onde há brita prevista; preparo de leito onde só vai preparo. Agulhado nunca é entrega. Pode ser trocado por trecho na Tabela. */
@@ -1578,7 +1580,8 @@ function renderMapa(){
   const SV=servsDoMapa(M);const k=ST.serv==="tudo"||ST.serv==="conf"||SV.includes(ST.serv)?ST.serv:"conf";
   const R=progressoMapa(M);const rs=resumoK(M,R,k);const sel=ST.mpSel!=null&&R[ST.mpSel]?R[ST.mpSel]:null;const G=temGeo(M);
   const lab=(x,y,t,cl)=>`<text x="${x}" y="${y}" class="${cl}">${esc(t)}</text>`;
-  const svg=`<svg class="mapa" viewBox="0 0 ${M.w} ${M.h}" style="aspect-ratio:${M.w}/${M.h}" role="img" aria-label="Mapa de ${esc(M.nome)} ${esc(M.mapa||"")}">
+  const svg=`<svg class="mapa${camAtiva(M)?" comcamada":""}" viewBox="0 0 ${M.w} ${M.h}" style="aspect-ratio:${M.w}/${M.h}" role="img" aria-label="Mapa de ${esc(M.nome)} ${esc(M.mapa||"")}">
+    ${camadaSVG(M)}
     ${(M.talhoes||[]).map(t=>`<polygon class="tal" points="${t.pts.map(p=>p.join(",")).join(" ")}"/>`).join("")}
     ${camadaVizinha(M)}
     ${(M.talhoes||[]).filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fix tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${(Math.max(...xs)-Math.min(...xs)).toFixed(1)}" data-h="${(Math.max(...ys)-Math.min(...ys)).toFixed(1)}" data-n="${String(t.id).length}" data-ns="${t.ha?(fmt(Math.round(n0(t.ha)*10)/10)+" ha").length:0}">${lab(t.lab[0],t.lab[1],t.id,"tal-t")+(t.ha?lab(t.lab[0],t.lab[1]+12,fmt(Math.round(n0(t.ha)*10)/10)+" ha","tal-s"):"")}</g>`;}).join("")}
@@ -1618,7 +1621,7 @@ function renderMapa(){
   app.innerHTML=`${barra("Mapa das estradas")}
   ${etapaHTML()}
   <div class="stack tight" style="margin-bottom:10px">${selFazMapa("fazmapa",false)}${segMapasDa(M.codigo,"mp-mapa",M.id)}</div>
-  <div class="mtopo"><label class="f mcor">Cor do mapa<select class="inp" data-a2="mp-serv">${[["conf","Situação dos trechos"],["tudo","Tudo conferido"],...SV.map(x=>[x,SERV[x].t])].map(([v,t])=>`<option value="${v}" ${v===k?"selected":""}>${esc(t)}</option>`).join("")}</select></label>${ST.mapCheio?"":ferr}</div>
+  <div class="mtopo"><label class="f mcor">Cor do mapa<select class="inp" data-a2="mp-serv">${[["conf","Situação dos trechos"],["tudo","Tudo conferido"],...SV.map(x=>[x,SERV[x].t])].map(([v,t])=>`<option value="${v}" ${v===k?"selected":""}>${esc(t)}</option>`).join("")}</select></label>${(M.camadas||[]).length?`<button class="btn sm${camAtiva(M)?" on":""}" data-a="cam-abrir" title="Mapas oficiais da Geoplant">🗂 Camadas${camAtiva(M)?" · "+esc(camAtiva(M).nome):""}</button>`:""}${ST.mapCheio?"":ferr}</div>
   ${ST.mapCheio?"":painelMk}
   <div class="mapwrap${MK.modo?" medindo":""}${ST.mapCheio?" cheio":""}">${svg}${ST.mapCheio?`<div class="mhead"><button class="mb" data-a="mp-cheio" aria-label="Sair da tela cheia" title="Sair da tela cheia">✕</button><div class="mtit"><b>${esc(M.nome)}</b>${M.mapa?" · "+esc(M.mapa):""}</div></div><div class="mfoot">${ferr}${painelMk}${GPS.on?`<div class="gpsinfo" id="gps-info">${gpsInfo(M)}</div>`:""}${det}</div>`:""}
     <div class="mctl">${ST.mapCheio?"":`<button class="mb" data-a="mp-cheio" aria-label="Tela cheia" title="Tela cheia">⛶</button>`}${G?`<button class="mb${GPS.on?" on":""}" data-a="gps" aria-label="Onde estou" title="Onde estou (GPS)">◉</button>`:""}<button class="mb" data-a="mz" data-v="in" aria-label="Aproximar">＋</button><button class="mb" data-a="mz" data-v="out" aria-label="Afastar">－</button><button class="mb" data-a="mz" data-v="fit" aria-label="Mapa inteiro" title="Mapa inteiro">⤢</button><span hidden></span></div>
@@ -1810,6 +1813,28 @@ async function salvarTrecho(M,t,patch,msg,semRender){const d=tcDe(M,t.n);const i
   const doc=Object.assign({mapa:M.id,codigo:M.codigo||"",n:t.n,km:d&&d.km!=null?d.km:"",tipo:d&&d.tipo||"",obs:d&&d.obs||"",partes:[]},d?clone(d):{},patch,{data:ST.tc.data||hoje(),eps:nomeEPS(ST.tc.eps)||"",frente:ST.tc.frente||"",por:quem(),em:new Date().toISOString(),hist});
   delete doc.id;
   if(await escrever(()=>DB.doc("trechos/"+id).set(clone(doc)),msg)){DATA.trechos[id]=Object.assign({id},doc);if(!semRender)render();return true;}return false;}
+/* ---- camadas: mapas oficiais (PDF da Geoplant) por baixo do nosso mapa ---- */
+let CAMST={};try{CAMST=JSON.parse(localStorage.getItem("painel_camadas")||"{}")||{};}catch(e){CAMST={};}
+const CAMB={};let CAMKEY={};
+function salvarCam(){try{localStorage.setItem("painel_camadas",JSON.stringify(CAMST));}catch(e){}}
+function camAtiva(M){const k=CAMST[M.id];return k?(M.camadas||[]).find(c=>c.k===k)||null:null;}
+async function camCarregar(c){if(CAMB[c.arq]!==undefined)return;CAMB[c.arq]=null;
+  try{let senha="";try{senha=localStorage.getItem("painel_senha")||"";}catch(e){}
+    const j=await (await fetch(c.arq)).json();const k0=await crypto.subtle.importKey("raw",new TextEncoder().encode(senha),"PBKDF2",false,["deriveKey"]);
+    const k=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64u8(j.salt),iterations:j.it||150000,hash:"SHA-256"},k0,{name:"AES-GCM",length:256},false,["decrypt"]);
+    const buf=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64u8(j.iv)},k,b64u8(j.ct));CAMB[c.arq]=URL.createObjectURL(new Blob([buf],{type:"image/jpeg"}));render();}
+  catch(e){CAMB[c.arq]="erro";toast("Não consegui abrir a camada. Abra o app uma vez com internet.");}}
+function camHref(c){if(!APPMODO)return c.asset;const u=CAMB[c.arq];if(u===undefined){camCarregar(c);return "";}return u&&u!=="erro"?u:"";}
+function camadaSVG(M){const c=camAtiva(M);if(!c)return "";const h=camHref(c);if(!h)return "";const op=CAMST._op!=null?CAMST._op:0.9;
+  return `<image href="${esc(h)}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(${c.m.join(" ")})" opacity="${op}" style="pointer-events:none"/>`;}
+function camadasHTML(s){const M=DATA.mapas[ST.mapa];if(!M)return "";const at=CAMST[M.id]||"";const op=CAMST._op!=null?CAMST._op:0.9;const SV=servsDoMapa(M);
+  const op1=(v,nome,sub)=>`<button class="fop" role="radio" aria-checked="${at===v}" data-a="cam-esc" data-v="${esc(v)}"><span class="ck">${at===v?"✓":""}</span><span class="fn">${esc(nome)}${sub?`<br><span class="fu">${esc(sub)}</span>`:""}</span></button>`;
+  return `<div class="howto">Liga um mapa oficial da Geoplant por baixo dos trechos. Os trechos continuam por cima, com as cores. Funciona sem internet depois de abrir uma vez.</div>
+  <div role="radiogroup" aria-label="Camada">${op1("","Nenhuma (só o nosso mapa)","Andamento: falta, em andamento, pronto")}${(M.camadas||[]).map(c=>op1(c.k,c.nome,c.fonte||"")).join("")}</div>
+  <label class="f" style="margin-top:10px">Transparência do mapa oficial<input type="range" min="0.3" max="1" step="0.1" value="${op}" data-camop="1"></label>
+  <div class="fgr">Previsto × feito</div>
+  <div class="muted small" style="margin-bottom:6px">Escolha o serviço: tracejado vermelho = previsto e ainda não feito; amarelo = começado; verde = feito; azul pontilhado = feito sem estar previsto.</div>
+  <div class="row">${SV.map(x=>`<button class="btn sm${ST.serv===x?" on":""}" data-a="cam-serv" data-v="${x}">${esc(SERV[x].t)}</button>`).join("")}<button class="btn sm${ST.serv==="conf"?" on":""}" data-a="cam-serv" data-v="conf">Voltar à situação</button></div>`;}
 function finalHTML(s){const M=DATA.mapas[ST.mapa];const t=M&&(M.trechos||[]).find(x=>x.n===s.n);if(!t)return "";const at=finalDe(M,t);const d=tcDe(M,t.n);
   const op=(v,nome,un,extra)=>`<button class="fop" role="radio" aria-checked="${at===v}" data-a="fin-esc" data-n="${t.n}" data-v="${v}"><span class="ck">${at===v?"✓":""}</span><span class="fn">${esc(nome)}${extra?`<br><span class="fu">${extra}</span>`:""}</span>${un?`<span class="fu">${esc(un)}</span>`:""}</button>`;
   const mapaV=finalDe(M,Object.assign({},t,{n:-1}));
@@ -2047,6 +2072,7 @@ function renderLayer(reset){
   else if(s.kind==="revlinha"){s.d=REV&&REV.linhas[s.i];if(!s.d){SHS.pop();renderLayer(true);return;}head=`<div class="grow"><div class="eyebrow">Linha ${s.i+1} da mensagem</div><h3 id="sh-tit">${esc(nomeDe(s.d))}</h3></div><button class="btn sm" data-a="rev-trocar" data-i="${s.i}">Trocar atividade</button><button class="btn sm primary" data-a="revlinha-ok">Pronto</button>`;body=(s.d.txt?`<div class="quote">“${esc(s.d.txt)}”</div>`:"")+itemHTML(s);}
   else if(s.kind==="copia"){head=`<div class="grow"><h3>${esc(s.titulo)}</h3><div class="muted small">Copie e cole no Excel (célula A1)</div></div><button class="btn sm" data-a="sh-fechar">Fechar</button>`;body=`<div class="howto">1. Toque em <b>Copiar</b>. 2. Abra o Excel e clique na célula A1. 3. Cole (Ctrl+V ou segurar e Colar).</div><button class="btn primary" data-a="copia-copiar">Copiar</button><textarea class="inp" id="copia-txt" rows="12" readonly>${esc(s.txt)}</textarea>`;}
   else if(s.kind==="valg"){const g=grupoPorChave(s.k);head=`<div class="grow"><div class="eyebrow">Conferência do acumulado</div><h3>${esc(g?g.nome:"")}${g?" · "+locAc(g):""}</h3></div><button class="btn sm ghost" data-a="sh-fechar">Cancelar</button>${g&&g.nPend?`<button class="btn sm primary" data-a="vg-salvar">Salvar</button>`:""}`;body=valgHTML(s);}
+  else if(s.kind==="camadas"){head=`<div class="grow"><div class="eyebrow">${esc((DATA.mapas[ST.mapa]||{}).nome||"")}</div><h3 id="sh-tit">Camadas do mapa</h3></div><button class="btn sm primary" data-a="sh-fechar">Pronto</button>`;body=camadasHTML(s);}
   else if(s.kind==="pacoteok"){head=`<div class="grow"><h3 id="sh-tit">Pacote pronto</h3></div><button class="btn sm ghost" data-a="sh-fechar">Fechar</button>`;body=`<div class="howto">O pacote com <b>${s.n} registro(s)</b> foi gerado. Mande pelo WhatsApp para você mesmo ou para o supervisor e, no painel online, toque em <b>📥 Receber pacote do app de campo</b>.</div>
     <div class="confirm"><b>Já mandou o pacote?</b><div class="muted small">Só limpe depois de mandar. Se limpar antes, os registros se perdem.</div><div class="row"><button class="btn primary" data-a="app-limpar">Já mandei, limpar este celular</button><button class="btn" data-a="app-enviar">Gerar de novo</button></div></div>`;}
   else if(s.kind==="final"){head=`<div class="grow"><div class="eyebrow">Trecho ${s.n}</div><h3 id="sh-tit">Atividade final</h3></div><button class="btn sm ghost" data-a="sh-fechar">Fechar</button>`;body=finalHTML(s);}
@@ -2062,7 +2088,7 @@ function renderLayer(reset){
   if(reset&&s.kind==="busca")setTimeout(()=>{const i=document.getElementById("busca");if(i)i.focus();},60);
 }
 function refazCorpo(){const b=document.getElementById("sh-body");const s=topo();if(!b||!s)return;const y=b.scrollTop;
-  b.innerHTML=s.kind==="pacoteok"?"":s.kind==="final"?finalHTML(s):s.kind==="novafaz"?novaFazHTML(s):s.kind==="papps"?pappsHTML(s):s.kind==="pafr"?paFrentesHTML(s):s.kind==="valg"?valgHTML(s):s.kind==="tcdiv"?tcdivHTML(s):s.kind==="atalho"?atalhoHTML():s.kind==="metas"?metasHTML(s):s.kind==="fotozip"?fotosZipHTML(s):s.kind==="tela"?telaHTML():s.kind==="item"||s.kind==="linha"||s.kind==="revlinha"?itemHTML(s):s.kind==="pk"?pkHTML(s):s.kind==="val"?valHTML(s):s.kind==="oscab"?osCabHTML(s):s.kind==="lanc"?lancHTML(s,DATA.lanc[s.id]):buscaHTML(s);
+  b.innerHTML=s.kind==="camadas"?camadasHTML(s):s.kind==="pacoteok"?"":s.kind==="final"?finalHTML(s):s.kind==="novafaz"?novaFazHTML(s):s.kind==="papps"?pappsHTML(s):s.kind==="pafr"?paFrentesHTML(s):s.kind==="valg"?valgHTML(s):s.kind==="tcdiv"?tcdivHTML(s):s.kind==="atalho"?atalhoHTML():s.kind==="metas"?metasHTML(s):s.kind==="fotozip"?fotosZipHTML(s):s.kind==="tela"?telaHTML():s.kind==="item"||s.kind==="linha"||s.kind==="revlinha"?itemHTML(s):s.kind==="pk"?pkHTML(s):s.kind==="val"?valHTML(s):s.kind==="oscab"?osCabHTML(s):s.kind==="lanc"?lancHTML(s,DATA.lanc[s.id]):buscaHTML(s);
   b.scrollTop=y;hidratarFotos(b);}
 
 /* ---------- busca de atividade ---------- */
@@ -3049,6 +3075,9 @@ async function onClick(ev){
   case "app-senha": {const v=(document.getElementById("app-senha")||{}).value||"";if(!v.trim()){toast("Digite a senha.");return;}BASE.carregando=true;render();carregarBase(v.trim()).then(()=>{COLS_BASE.forEach(c=>avisarCol(c));render();});return;}
   case "app-enviar": fecharTudo();enviarPacote();return;
   case "app-limpar": FILA=[];salvarFila();chipFila();fecharTudo();toast("Celular limpo. Os dados continuam no painel quando o pacote for recebido.");render();return;
+  case "cam-abrir": abrir({kind:"camadas"});return;
+  case "cam-esc": {const M=DATA.mapas[ST.mapa];if(!M)return;if(d.v)CAMST[M.id]=d.v;else delete CAMST[M.id];salvarCam();render();refazCorpo();return;}
+  case "cam-serv": ST.serv=d.v;render();refazCorpo();return;
   case "etapa": ST.etapa=d.v;ST.fazAnd="";ST.gfaz="";try{localStorage.setItem("painel_etapa",d.v);}catch(e){}etapaOk();GRADE=null;ST.mpSel=null;render();break;
   case "fin-abrir": abrir({kind:"final",n:+d.n});return;
   case "fin-outra": {const s=topo();if(s&&s.kind==="final"){s.outra=!s.outra;refazCorpo();}return;}
@@ -3151,6 +3180,7 @@ layer.addEventListener("input",ev=>{
   if((d.td||d.tp)&&s.d){if(d.td)s.d[d.td]=el.value;else s.d.partes[+d.tp].km=el.value;const sm=document.getElementById("td-soma");if(sm){const soma=s.d.partes.reduce((a,p)=>a+n0(p.km),0);sm.innerHTML=`Soma das partes: <span class="num">${kmF(soma)}</span> de ${kmF(n0(s.d.km))} km${Math.abs(soma-n0(s.d.km))>0.005?` <span class="st warn">não fecha</span>`:""}`;}return;}
   if(d.va&&s.d){s.d[d.va]=el.value;const qc=document.getElementById("va-qc");if(qc&&s.l)qc.textContent=fmt(valMedida(s));return;}
 });
+layer.addEventListener("input",ev=>{const el=ev.target;if(el.dataset&&el.dataset.camop){CAMST._op=+el.value;salvarCam();const im=document.querySelector("svg.mapa image");if(im)im.setAttribute("opacity",el.value);}});
 layer.addEventListener("change",ev=>{
   const el=ev.target,d=el.dataset,s=topo();if(!s)return;
   if(d.td==="tipo"&&s.d){s.d.tipo=el.value;return;}
