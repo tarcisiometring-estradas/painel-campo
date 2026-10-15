@@ -175,6 +175,10 @@ svg.mapa{display:block;width:100%;height:clamp(340px,60vh,72vh);aspect-ratio:aut
 }
 /* Mapa em tela cheia */
 html.mapa-cheio,html.mapa-cheio body{overflow:hidden;overscroll-behavior:none}
+.cammenu{position:absolute;top:10px;left:10px;z-index:70;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:6px;min-width:240px;max-width:min(320px,calc(100% - 90px));max-height:70%;overflow:auto}
+.mapwrap.cheio .cammenu{top:calc(60px + env(safe-area-inset-top,0px))}
+.cmh{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 6px}.cmg{border:1px solid var(--line);background:var(--bg);border-radius:10px;min-width:42px;min-height:38px;font-size:19px;cursor:pointer}
+.cmi{display:flex;gap:8px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:11px 8px;border-radius:8px;font:inherit;font-size:15px;cursor:pointer;color:inherit}.cmi:hover{background:var(--bg)}.cmi.on{font-weight:700}.cmi .ck{width:16px;color:var(--ok,#2F5D3A)}
 .mapwrap.cheio{position:fixed;inset:0;z-index:60;border:0;border-radius:0;background:var(--surface)}
 .mapwrap.cheio svg.mapa{width:100%;height:100%;max-height:none!important;aspect-ratio:auto!important}
 .mapwrap.cheio .mctl{top:calc(10px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px))}
@@ -297,8 +301,8 @@ svg.mini{display:block;width:100%;height:auto;max-height:260px}
 .vcard.vsel{border-color:var(--ok)}
 .vbar{position:sticky;bottom:10px;z-index:6;display:grid;gap:8px;padding:12px;border-radius:14px;background:var(--surface);border:2px solid var(--ok);box-shadow:0 4px 16px rgba(0,0,0,.2);margin-top:12px}
 /* sheet */
-.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20}
-.sheet{position:fixed;left:0;right:0;bottom:0;top:calc(20px + env(safe-area-inset-top,0px));z-index:21;background:var(--bg);border-radius:16px 16px 0 0;display:flex;flex-direction:column;max-width:860px;margin:0 auto}
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:80}
+.sheet{position:fixed;left:0;right:0;bottom:0;top:calc(20px + env(safe-area-inset-top,0px));z-index:81;background:var(--bg);border-radius:16px 16px 0 0;display:flex;flex-direction:column;max-width:860px;margin:0 auto}
 .sheet-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
 .sheet-head .grow{flex:1;min-width:0}
 .sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));display:grid;gap:14px;align-content:start}
@@ -334,7 +338,7 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb button{position:absolute;top:4px;right:4px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-weight:700;cursor:pointer}
 .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:62px;height:62px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:34px;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer;z-index:5}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:40;max-width:calc(100% - 32px)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:90;max-width:calc(100% - 32px)}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-3px}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -1636,7 +1640,7 @@ function renderMapa(){
   <div class="stack tight" style="margin-bottom:10px">${selFazMapa("fazmapa",false)}${segMapasDa(M.codigo,"mp-mapa",M.id)}</div>
   <div class="mtopo"><label class="f mcor">Cor do mapa<select class="inp" data-a2="mp-serv">${[["conf","Situação dos trechos"],["tudo","Tudo conferido"],...SV.map(x=>[x,SERV[x].t])].map(([v,t])=>`<option value="${v}" ${v===k?"selected":""}>${esc(t)}</option>`).join("")}</select></label>${(M.camadas||[]).length?`<button class="btn sm${camAtiva(M)?" on":""}" data-a="cam-abrir" title="Mapas oficiais da Geoplant">🗂 Camadas${camAtiva(M)?" · "+esc(camAtiva(M).nome):""}</button>`:""}${ST.mapCheio?"":ferr}</div>
   ${ST.mapCheio?"":painelMk}
-  <div class="mapwrap${MK.modo?" medindo":""}${ST.mapCheio?" cheio":""}">${svg}${ST.mapCheio?`<div class="mhead"><button class="mb" data-a="mp-cheio" aria-label="Sair da tela cheia" title="Sair da tela cheia">✕</button><div class="mtit"><b>${esc(M.nome)}</b>${M.mapa?" · "+esc(M.mapa):""}</div>${(M.camadas||[]).length?`<button class="mb mcam${camAtiva(M)?" on":""}" data-a="cam-abrir" aria-label="Camadas: mapas oficiais" title="Camadas">🗂</button>`:""}</div><div class="mfoot">${ferr}${painelMk}${GPS.on?`<div class="gpsinfo" id="gps-info">${gpsInfo(M)}</div>`:""}${det}</div>`:""}
+  <div class="mapwrap${MK.modo?" medindo":""}${ST.mapCheio?" cheio":""}">${svg}${ST.camMenu?camMenuHTML(M):""}${ST.mapCheio?`<div class="mhead"><button class="mb" data-a="mp-cheio" aria-label="Sair da tela cheia" title="Sair da tela cheia">✕</button><div class="mtit"><b>${esc(M.nome)}</b>${M.mapa?" · "+esc(M.mapa):""}</div>${(M.camadas||[]).length?`<button class="mb mcam${camAtiva(M)?" on":""}" data-a="cam-abrir" aria-label="Camadas: mapas oficiais" title="Camadas">🗂</button>`:""}</div><div class="mfoot">${ferr}${painelMk}${GPS.on?`<div class="gpsinfo" id="gps-info">${gpsInfo(M)}</div>`:""}${det}</div>`:""}
     <button class="mb norte" id="norte" data-a="mp-norte" aria-label="Voltar o norte para cima" title="Norte para cima" ${rotDe(M)?"":"hidden"}><i>N</i></button>
     <div class="mctl">${ST.mapCheio?"":`<button class="mb" data-a="mp-cheio" aria-label="Tela cheia" title="Tela cheia">⛶</button>`}${G?`<button class="mb${GPS.on?" on":""}" data-a="gps" aria-label="Onde estou" title="Onde estou (GPS)">◉</button>`:""}<button class="mb" data-a="mz" data-v="in" aria-label="Aproximar">＋</button><button class="mb" data-a="mz" data-v="out" aria-label="Afastar">－</button><button class="mb" data-a="mz" data-v="fit" aria-label="Mapa inteiro" title="Mapa inteiro">⤢</button><span hidden></span></div>
     ${G?`<div class="escala" id="escala"></div>`:""}
@@ -1841,6 +1845,9 @@ async function camCarregar(c){if(CAMB[c.arq]!==undefined)return;CAMB[c.arq]=null
 function camHref(c){if(!APPMODO)return c.asset;const u=CAMB[c.arq];if(u===undefined){camCarregar(c);return "";}return u&&u!=="erro"?u:"";}
 function camadaSVG(M){const c=camAtiva(M);if(!c)return "";const h=camHref(c);if(!h)return "";const op=CAMST._op!=null?CAMST._op:0.9;
   return `<image href="${esc(h)}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(${c.m.join(" ")})" opacity="${op}" style="pointer-events:none"/>`;}
+function camMenuHTML(M){const at=CAMST[M.id]||"";
+  const it=(v,nome)=>`<button class="cmi${at===v?" on":""}" data-a="cam-pick" data-v="${esc(v)}"><span class="ck">${at===v?"✓":""}</span>${esc(nome)}</button>`;
+  return `<div class="cammenu" role="menu"><div class="cmh"><b>Mapa</b><button class="cmg" data-a="cam-cfg" title="Filtrar: previsto × feito e transparência" aria-label="Filtros">⚙</button></div>${it("","Só o nosso mapa (situação)")}${(M.camadas||[]).map(c=>it(c.k,c.nome)).join("")}</div>`;}
 function camadasHTML(s){const M=DATA.mapas[ST.mapa];if(!M)return "";const at=CAMST[M.id]||"";const op=CAMST._op!=null?CAMST._op:0.9;const SV=servsDoMapa(M);
   const op1=(v,nome,sub)=>`<button class="fop" role="radio" aria-checked="${at===v}" data-a="cam-esc" data-v="${esc(v)}"><span class="ck">${at===v?"✓":""}</span><span class="fn">${esc(nome)}${sub?`<br><span class="fu">${esc(sub)}</span>`:""}</span></button>`;
   return `<div class="howto">Liga um mapa oficial da Geoplant por baixo dos trechos. Os trechos continuam por cima, com as cores. Funciona sem internet depois de abrir uma vez.</div>
@@ -3096,7 +3103,10 @@ async function onClick(ev){
   case "app-senha": {const v=(document.getElementById("app-senha")||{}).value||"";if(!v.trim()){toast("Digite a senha.");return;}BASE.carregando=true;render();carregarBase(v.trim()).then(()=>{COLS_BASE.forEach(c=>avisarCol(c));render();});return;}
   case "app-enviar": fecharTudo();enviarPacote();return;
   case "app-limpar": FILA=[];salvarFila();chipFila();fecharTudo();toast("Celular limpo. Os dados continuam no painel quando o pacote for recebido.");render();return;
-  case "cam-abrir": abrir({kind:"camadas"});return;
+  case "cam-abrir": ST.camMenu=!ST.camMenu;render();return;
+  case "cam-cfg": ST.camMenu=false;render();abrir({kind:"camadas"});return;
+  case "cam-pick": {const M=DATA.mapas[ST.mapa];ST.camMenu=false;if(!M){render();return;}if(d.v)CAMST[M.id]=d.v;else delete CAMST[M.id];salvarCam();
+    if(!ST.mapCheio){ST.mapCheio=true;delete VB[M.id];render();VB[M.id]=vbInteiro(M);aplicarVB();}else render();return;}
   case "cam-esc": {const M=DATA.mapas[ST.mapa];if(!M)return;if(d.v)CAMST[M.id]=d.v;else delete CAMST[M.id];salvarCam();render();refazCorpo();return;}
   case "cam-serv": ST.serv=d.v;render();refazCorpo();return;
   case "etapa": ST.etapa=d.v;ST.fazAnd="";ST.gfaz="";try{localStorage.setItem("painel_etapa",d.v);}catch(e){}etapaOk();GRADE=null;ST.mpSel=null;render();break;
