@@ -280,7 +280,7 @@ async function camAbrir(c,senha){const j=await (await fetch(c.arq)).json();const
   return URL.createObjectURL(new Blob([await crypto.subtle.decrypt({name:"AES-GCM",iv:b64u8(j.iv)},k,b64u8(j.ct))],{type:"image/jpeg"}));}
 function senhaEquipe(){try{return localStorage.getItem("painel_senha")||"";}catch(e){return "";}}
 function camImg(m){const c=camAt(m);if(!c)return "";const u=CAMB[c.arq];
-  if(u===undefined){CAMB[c.arq]=null;camAbrir(c,senhaEquipe()).then(x=>{CAMB[c.arq]=x;desenharMantendo();}).catch(()=>{CAMB[c.arq]=undefined;delete CAMS[m.id];LS.set("camadas",CAMS);aviso(navigator.onLine?"Senha da equipe errada ou faltando. Toque em 🗂 de novo.":"Ligue essa camada uma vez com internet.");desenharMantendo();});return "";}
+  if(u===undefined){CAMB[c.arq]=null;camAbrir(c,senhaEquipe()).then(x=>{CAMB[c.arq]=x;desenharMantendo();}).catch(()=>{CAMB[c.arq]=undefined;delete CAMS[m.id];if(navigator.onLine)try{localStorage.removeItem("painel_senha");}catch(e){}LS.set("camadas",CAMS);aviso(navigator.onLine?"Senha da equipe errada ou faltando. Toque em 🗂 de novo.":"Ligue essa camada uma vez com internet.");desenharMantendo();});return "";}
   if(!u)return "";const op=CAMS._op!=null?CAMS._op:0.9;return `<image href="${u}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(${c.m.join(" ")})" opacity="${op}" style="pointer-events:none"/>`;}
 function desenharMantendo(){const v=VB;desenhar();if(v){VB=v;aplicar();}}
 function camFolha(){const m=M();if(!m)return;const at=CAMS[m.id]||"";
