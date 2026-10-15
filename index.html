@@ -20,6 +20,7 @@
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
 button,select,input,textarea{font:inherit;color:inherit}
 svg#mapa{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;background:var(--bg)}
+.comcam .tal{fill:transparent!important;stroke:transparent!important}.comcam .tt,.comcam .ts{opacity:0}#b-cam.on{background:var(--ok);color:#fff}
 .tal{fill:var(--tal);stroke:var(--tall);stroke-width:1;vector-effect:non-scaling-stroke}
 .tr{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:var(--tw,3px);vector-effect:non-scaling-stroke}
 .s-pronto,.s-g-ok{stroke:var(--ok)}.s-agulhado,.s-g-and{stroke:var(--and)}.s-preparo{stroke:var(--and)}.s-falta,.s-g-zero{stroke:var(--zero)}
@@ -111,6 +112,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <button id="b-in" aria-label="Zoom +" title="Zoom +">＋</button>
   <button id="b-out" aria-label="Zoom −" title="Zoom −">－</button>
   <button id="b-fit" aria-label="Ver a fazenda inteira" title="Ver a fazenda inteira">⤢<span class="lb">Ver a fazenda inteira</span></button>
+  <button id="b-cam" aria-label="Mapas oficiais (camadas)" title="Mapas oficiais (camadas)" hidden>🗂<span class="lb">Mapas oficiais</span></button>
   <button id="b-gps" aria-label="Onde estou (GPS)" title="Onde estou (GPS)">◉<span class="lb">Onde estou (GPS)</span></button>
   <button id="b-pt" aria-label="Marcar ponto" title="Marcar ponto">📍<span class="lb">Marcar ponto</span></button>
   <button id="b-menu" aria-label="Talhões, pontos e mais" title="Talhões, pontos e mais">☰<span class="lb">Talhões, pontos e mais</span></button>
@@ -194,7 +196,8 @@ function rtMapa(m){if(!RT.res)return "";if(m._rt!=null)return m._rt;const P=RT.r
 function desenhar(){const m=M();sel=null;VB=null;
   if(!REG.on)$("#selm").value=String(I);
   $("#sub").textContent=`${m.mapa} · mapas de ${DADOS.versao}`;
-  sv().innerHTML=rodMapa(m)+rtMapa(m)+m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
+  const cA=camAt(m);sv().classList.toggle("comcam",!!cA);$("#b-cam").hidden=!(m.camadas||[]).length;$("#b-cam").classList.toggle("on",!!cA);
+  sv().innerHTML=camImg(m)+rodMapa(m)+rtMapa(m)+m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
     m.trechos.map(t=>`<polyline class="tr s-${t.st}${t.n%2?"":" alt"}" data-n="${t.n}" points="${t.pts.join(" ")}"/><polyline class="hit" data-n="${t.n}" points="${t.pts.join(" ")}"/>`).join("")+
     m.talhoes.filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fx tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${Math.max(...xs)-Math.min(...xs)}" data-h="${Math.max(...ys)-Math.min(...ys)}" data-n="${String(t.id).length}"><text class="tt" x="${t.lab[0]}" y="${t.lab[1]}">${esc(t.id)}</text>${t.ha?`<text class="ts" x="${t.lab[0]}" y="${t.lab[1]+12}">${fmt(Math.round(t.ha*10)/10)} ha</text>`:""}</g>`;}).join("")+
     m.trechos.filter(t=>t.mid).map(t=>`<g class="fx nb" data-n="${t.n}" data-cx="${t.mid[0]}" data-cy="${t.mid[1]}"><circle cx="${t.mid[0]}" cy="${t.mid[1]}" r="10"/><text x="${t.mid[0]}" y="${t.mid[1]}">${t.n}</text></g>`).join("")+
@@ -268,6 +271,29 @@ $("#b-gps").onclick=()=>{if(GPS.on&&GPS.fix&&!GPS.seguir){GPS.seguir=true;if(REG
 $("#b-in").onclick=()=>zoom(1/1.6);$("#b-out").onclick=()=>zoom(1.6);$("#b-fit").onclick=()=>{VB=null;aplicar();};
 
 document.addEventListener("click",e=>{if(e.target.closest("[data-copia]")){e.stopPropagation();copiarCoord();}},true);
+/* ================= camadas: mapas oficiais da Geoplant por baixo dos trechos ================= */
+const CAMB={};let CAMS=LS.get("camadas",{});
+function camAt(m){const k=CAMS[m.id];return k?(m.camadas||[]).find(c=>c.k===k)||null:null;}
+const b64u8=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+async function camAbrir(c,senha){const j=await (await fetch(c.arq)).json();const k0=await crypto.subtle.importKey("raw",new TextEncoder().encode(senha),"PBKDF2",false,["deriveKey"]);
+  const k=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64u8(j.salt),iterations:j.it||150000,hash:"SHA-256"},k0,{name:"AES-GCM",length:256},false,["decrypt"]);
+  return URL.createObjectURL(new Blob([await crypto.subtle.decrypt({name:"AES-GCM",iv:b64u8(j.iv)},k,b64u8(j.ct))],{type:"image/jpeg"}));}
+function senhaEquipe(){try{return localStorage.getItem("painel_senha")||"";}catch(e){return "";}}
+function camImg(m){const c=camAt(m);if(!c)return "";const u=CAMB[c.arq];
+  if(u===undefined){CAMB[c.arq]=null;camAbrir(c,senhaEquipe()).then(x=>{CAMB[c.arq]=x;desenharMantendo();}).catch(()=>{CAMB[c.arq]=undefined;delete CAMS[m.id];LS.set("camadas",CAMS);aviso(navigator.onLine?"Senha da equipe errada ou faltando. Toque em 🗂 de novo.":"Ligue essa camada uma vez com internet.");desenharMantendo();});return "";}
+  if(!u)return "";const op=CAMS._op!=null?CAMS._op:0.9;return `<image href="${u}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(${c.m.join(" ")})" opacity="${op}" style="pointer-events:none"/>`;}
+function desenharMantendo(){const v=VB;desenhar();if(v){VB=v;aplicar();}}
+function camFolha(){const m=M();if(!m)return;const at=CAMS[m.id]||"";
+  if(!senhaEquipe()){abrirFolha("🗂 Mapas oficiais",`<div class="muted">Digite a senha da equipe (só na primeira vez).</div><input id="cam-senha" class="btn" type="password" placeholder="Senha da equipe" style="width:100%;text-align:left"><button class="btn pri" id="cam-ok" style="min-height:50px">Entrar</button>`);
+    $("#cam-ok").onclick=()=>{const v=$("#cam-senha").value.trim();if(!v)return;try{localStorage.setItem("painel_senha",v);}catch(e){}camFolha();};return;}
+  const op=CAMS._op!=null?CAMS._op:0.9;
+  abrirFolha("🗂 Mapas oficiais · "+m.nome,`<div class="muted">Escolha o mapa da Geoplant para ver por baixo dos trechos.</div>
+   <button class="fzb" data-ck="" style="${!at?"border:2px solid var(--ok)":""}"><span>${!at?"✓ ":""}Nenhum (só o nosso mapa)</span></button>
+   ${(m.camadas||[]).map(c=>`<button class="fzb" data-ck="${esc(c.k)}" style="${at===c.k?"border:2px solid var(--ok)":""}"><span>${at===c.k?"✓ ":""}${esc(c.nome)}</span></button>`).join("")}
+   <label class="box card"><b>Transparência</b><input id="cam-op" type="range" min="0.3" max="1" step="0.1" value="${op}" style="width:100%"></label>`);
+  $("#sh-b").querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{if(b.dataset.ck)CAMS[m.id]=b.dataset.ck;else delete CAMS[m.id];LS.set("camadas",CAMS);fecharFolha();desenharMantendo();});
+  $("#cam-op").oninput=e=>{CAMS._op=+e.target.value;LS.set("camadas",CAMS);const im=sv().querySelector("image");if(im)im.setAttribute("opacity",e.target.value);};}
+$("#b-cam").onclick=camFolha;
 /* ================= folhas ================= */
 function abrirFolha(t,h){$("#sh-t").textContent=t;$("#sh-b").innerHTML=h;$("#sheet").classList.add("on");$("#scrim").classList.add("on");}
 function fecharFolha(){$("#sheet").classList.remove("on");$("#scrim").classList.remove("on");}
@@ -388,7 +414,7 @@ function rMapaDe(f){return LISTA.findIndex(m=>m.cod===f.cod&&!m.acesso)>=0?LISTA
 function rEntrar(f,manterVista){const i=rMapaDe(f);if(i<0)return;const V=REG.VB;REG.on=false;document.body.classList.remove("regiao");I=i;desenhar();
   if(manterVista&&V){const m=M();const c=RG(V.x+V.w/2,V.y+V.h/2);const [x,y]=g2n(m,c[0],c[1]);const w=V.w*RU/mpu(m);const h=w*raz();VB={x:x-w/2,y:y-h/2,w,h};aplicar();}
   aviso(f.n);LS.set("modo","fazenda");}
-function irRegiao(centro){REG.on=true;document.body.classList.add("regiao");$("#info").style.display="none";$("#selm").value="R";$("#sub").textContent="Região · "+(REG.dados?REG.dados.faz.length+" fazendas":"carregando…");
+function irRegiao(centro){REG.on=true;$("#b-cam").hidden=true;document.body.classList.add("regiao");$("#info").style.display="none";$("#selm").value="R";$("#sub").textContent="Região · "+(REG.dados?REG.dados.faz.length+" fazendas":"carregando…");
   if(!rsv().innerHTML)rDesenhar();
   if(centro){const m=M();const c=[VB.x+VB.w/2,VB.y+VB.h/2];const [lat,lon]=n2g(m,c[0],c[1]);const [x,y]=RP(lon,lat);const w=VB.w*mpu(m)/RU;const h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};}
   rLegenda();rAplicar();rInfo();LS.set("modo","regiao");}

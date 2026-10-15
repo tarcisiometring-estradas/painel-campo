@@ -1446,7 +1446,7 @@ window.addEventListener("resize",()=>{if(ST.tela==="mapa"||ST.tela==="geral")apl
 /* ================= MAPA OFFLINE (arquivo salvo no celular, abre sem internet) ================= */
 function dadosOffline(cod){const r1=v=>Math.round(v*10)/10;const pt=p=>[r1(p[0]),r1(p[1])];
   return Object.values(DATA.mapas).filter(m=>(m.codigo||m.id)===cod&&temGeo(m)).sort((a,b)=>(!!a.acesso)-(!!b.acesso)).map(M=>{const R=progressoMapa(M);return {
-    nome:M.nome||"",mapa:M.acesso?"Acesso":"Estradas internas",acesso:!!M.acesso,fin:finM(M),w:M.w,h:M.h,geo:M.geo,
+    nome:M.nome||"",mapa:M.acesso?"Acesso":"Estradas internas",acesso:!!M.acesso,fin:finM(M),camadas:(M.camadas||[]).map(c=>({k:c.k,nome:c.nome,arq:c.arq,m:c.m})),w:M.w,h:M.h,geo:M.geo,
     talhoes:(M.talhoes||[]).map(t=>({id:t.id||"",ha:n0(t.ha),vol:n0(t.vol),pts:t.pts.map(pt),lab:t.lab?pt(t.lab):null})),
     trechos:(M.trechos||[]).map(t=>{const ps=partesEf(M,t);const st=corSt(ps)||("g-"+estadoGeral(R[t.n]||{s:{}}).c);return {n:t.n,tipo:t.tipo||"",m:n0(t.m),pts:t.pts.map(pt),mid:t.mid?pt(t.mid):null,st,partes:ps.length>1?ps.map(p=>kmF(p.km)+" km "+nomeSt(p.st)):[]};})};});}
 function situacaoApp(){const out={};for(const M of Object.values(DATA.mapas)){if(!temGeo(M))continue;const cod=M.codigo||M.id;const R=progressoMapa(M);const o={};
