@@ -237,7 +237,7 @@ svg.mini{display:block;width:100%;height:auto;max-height:260px}
 .mapa .tal-s{font:500 9.5px "Barlow",system-ui,sans-serif;fill:var(--muted);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--m-tal);stroke-width:3px;stroke-linejoin:round}
 .mapa .tr{fill:none;stroke-linecap:round;stroke-linejoin:round}
 .mapa .tr.zero{stroke:var(--m-zero);stroke-width:var(--tw,3px)}.mapa .tr.and{stroke:var(--m-and);stroke-width:var(--tw,3px)}.mapa .tr.ok{stroke:var(--m-ok);stroke-width:var(--tw,3px)}
-.mapa .tr.np{stroke:var(--m-np);stroke-width:calc(var(--tw,3px)*.55);stroke-dasharray:6 5}.mapa .tr.fora{stroke:var(--focus);stroke-width:calc(var(--tw,3px)*.8);stroke-dasharray:3 5}
+.mapa .tr.np{stroke:var(--m-np);stroke-width:calc(var(--tw,3px)*.55);stroke-dasharray:6 5}.mapa .tr.fora{stroke:var(--m-np);stroke-width:calc(var(--tw,3px)*.55);stroke-dasharray:6 5}
 .mapa .tr.sel{stroke-width:calc(var(--tw,3px)*1.8)!important}
 .mapa .hit{fill:none;stroke:transparent;stroke-width:24;cursor:pointer}
 .mapa .nb{cursor:pointer}.mapa .nb circle{fill:transparent;stroke:none}.mapa .nb text{font:700 10.5px "Barlow",system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}
@@ -1266,9 +1266,9 @@ function progressoMapa(M){
     else if(x.st==="pend")S.pend+=mi;}
   return R;}
 function estadoTrecho(r,k){const prev=prevServ(r.t,k);const S=r.s[k];const feito=S?S.val:0;
-  if(!prev)return {c:feito>0?"fora":"np",prev,feito,p:0};const p=feito/prev;return {c:p>=0.99?"ok":p>0?"and":"zero",prev,feito,p};}
+  if(!prev)return {c:"np",prev,feito,p:0};const p=feito/prev;return {c:p>=0.99?"ok":p>0?"and":"zero",prev,feito,p};}
 function resumoServ(M,R,k){let prev=0,feito=0,pend=0,n=0,ok=0;for(const r of Object.values(R)){const e=estadoTrecho(r,k);if(e.prev){prev+=e.prev;feito+=Math.min(e.feito,e.prev);n++;if(e.c==="ok")ok++;}pend+=(r.s[k]?r.s[k].pend:0);}return {prev,feito,falta:Math.max(prev-feito,0),pend,n,ok};}
-const ST_MAPA={zero:"Não iniciado",and:"Em andamento",ok:"Concluído",np:"Não previsto",fora:"Feito fora do previsto"};
+const ST_MAPA={zero:"Não iniciado",and:"Em andamento",ok:"Concluído",np:"Não previsto",fora:"Não previsto"};
 function servsDoMapa(M){const l=SERV_PRINC.slice();if((M.trechos||[]).some(t=>n0(t.plan&&t.plan.abertura)))l.unshift("abertura");return l;}
 const prevServ=(t,k)=>n0(t.plan&&t.plan[k])||(k==="agulhada"?n0(t.plan&&t.plan.cascalho):0);
 /* Régua de entrega: o trecho fica pronto quando o SERVIÇO FINAL dele está conferido.
@@ -1309,7 +1309,7 @@ const fLL=p=>p[0].toFixed(6).replace(".",",")+" ; "+p[1].toFixed(6).replace(".",
 /* ---- "Tudo": todos os serviços previstos no trecho juntos ---- */
 const nomeServ=k=>k==="tudo"?"Todos os serviços":k==="conf"?"Situação dos trechos":SERV[k].t;
 function estadoGeral(r){const fin=finalDe(r.M,r.t);const d=r.M&&tcDe(r.M,r.t.n);
-  if(!prevServ(r.t,fin)&&!(d&&d.entrega)){const algum=Object.entries(r.s).some(([k,x])=>SERV[k]&&x.val>0);return {c:algum?"fora":"np",prev:0,feito:0,p:0,fin};}
+  if(!prevServ(r.t,fin)&&!(d&&d.entrega)){const algum=Object.entries(r.s).some(([k,x])=>SERV[k]&&x.val>0);return {c:"np",prev:0,feito:0,p:0,fin};}
   const prev=prevServ(r.t,fin)||n0(r.t.m);const S=r.s[fin];const feito=Math.min(S?S.val:0,prev);
   const algum=Object.entries(r.s).some(([k,x])=>(SERV[k]||k===fin)&&x.val>0);const p=prev?feito/prev:0;
   return {c:p>=0.99?"ok":algum?"and":"zero",prev,feito,p,fin};}
@@ -1833,7 +1833,7 @@ function camadasHTML(s){const M=DATA.mapas[ST.mapa];if(!M)return "";const at=CAM
   <div role="radiogroup" aria-label="Camada">${op1("","Nenhuma (só o nosso mapa)","Andamento: falta, em andamento, pronto")}${(M.camadas||[]).map(c=>op1(c.k,c.nome,c.fonte||"")).join("")}</div>
   <label class="f" style="margin-top:10px">Transparência do mapa oficial<input type="range" min="0.3" max="1" step="0.1" value="${op}" data-camop="1"></label>
   <div class="fgr">Previsto × feito</div>
-  <div class="muted small" style="margin-bottom:6px">Escolha o serviço: tracejado vermelho = previsto e ainda não feito; amarelo = começado; verde = feito; azul pontilhado = feito sem estar previsto.</div>
+  <div class="muted small" style="margin-bottom:6px">Escolha o serviço: tracejado vermelho = previsto e ainda não feito; amarelo = começado; verde = feito; cinza = sem serviço previsto.</div>
   <div class="row">${SV.map(x=>`<button class="btn sm${ST.serv===x?" on":""}" data-a="cam-serv" data-v="${x}">${esc(SERV[x].t)}</button>`).join("")}<button class="btn sm${ST.serv==="conf"?" on":""}" data-a="cam-serv" data-v="conf">Voltar à situação</button></div>`;}
 function finalHTML(s){const M=DATA.mapas[ST.mapa];const t=M&&(M.trechos||[]).find(x=>x.n===s.n);if(!t)return "";const at=finalDe(M,t);const d=tcDe(M,t.n);
   const op=(v,nome,un,extra)=>`<button class="fop" role="radio" aria-checked="${at===v}" data-a="fin-esc" data-n="${t.n}" data-v="${v}"><span class="ck">${at===v?"✓":""}</span><span class="fn">${esc(nome)}${extra?`<br><span class="fu">${extra}</span>`:""}</span>${un?`<span class="fu">${esc(un)}</span>`:""}</button>`;
