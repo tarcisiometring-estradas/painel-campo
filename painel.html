@@ -681,6 +681,17 @@ function render(){
 }
 function ir(t,extra){if(APPMODO&&t!=="home"&&ST.tela==="home"){try{history.pushState({p:1},"");}catch(e){}}if(ST.tela==="home"&&(t==="mapa"||t==="trechos"))ST.mapa="";if((t==="mapa"||t==="geral")&&ST.tela!==t)ST.mapCheio=true;Object.assign(ST,{tela:t},extra||{});render();window.scrollTo(0,0);}
 function nuvemChip(){return nuvemChip0().replace('<span class="cloud','<span role="button" tabindex="0" data-a="diag" title="Toque para ver o diagnóstico" style="cursor:pointer" class="cloud').replace('class="cloud" class="cloud','class="cloud');}
+/* painel zerado pelo Tarcisio: avisa quem ainda tem registros antigos guardados no aparelho */
+function zeradoDoc(){return (DATA.config||{}).zerado||(CACHE["config/zerado"])||null;}
+function antigosZerado(z){const t=Date.parse(z.em)||0;return FILA.filter(o=>colDe(o.path)!=="config"&&(o.t||0)<t);}
+function verificarZerado(){const z=zeradoDoc();if(!z||!z.em)return;let visto="";try{visto=localStorage.getItem("painel_zerado_visto")||"";}catch(e){}
+  if(visto===z.em)return;const A=antigosZerado(z);if(!A.length){try{localStorage.setItem("painel_zerado_visto",z.em);}catch(e){}return;}
+  if(topo())return;abrir({kind:"zerado"});}
+function zeradoHTML(){const z=zeradoDoc()||{};const A=antigosZerado(z);
+  return `<div class="stack"><div class="confirm" style="background:var(--warn-soft)"><b>O painel foi zerado em ${fDH(z.em)}${z.fazendas&&z.fazendas!=="todas"?" (fazendas: "+esc([].concat(z.fazendas).join(", "))+")":""}.</b>
+  <span>Este aparelho tem <b>${A.length}</b> registro(s) de antes disso que ainda não subiram. Se enviar, eles voltam para o painel.</span></div>
+  <div class="row"><button class="btn primary" data-a="zr-limpar">🧹 Limpar o que é de antes</button><button class="btn" data-a="zr-manter">Manter e enviar mesmo assim</button></div>
+  <div class="muted small">Na dúvida, toque em Diagnóstico › Baixar cópia antes de limpar.</div></div>`;}
 function diagHTML(){const rj=rejeitados();const n=FILA.length;const sim=v=>v?'<span class="st ok">Sim</span>':'<span class="st bad">Não</span>';
   return `<div class="stack"><div class="howto">Mostra se este aparelho está ligado à nuvem do painel e se há algo guardado que ainda não subiu.</div>
   <div class="card"><div class="row between"><b>Ligado à nuvem (banco de dados)</b>${sim(!!NUVEMDB)}</div>
@@ -2120,6 +2131,7 @@ function renderLayer(reset){
     <div class="confirm"><b>Já mandou o pacote?</b><div class="muted small">Só limpe depois de mandar. Se limpar antes, os registros se perdem.</div><div class="row"><button class="btn primary" data-a="app-limpar">Já mandei, limpar este celular</button><button class="btn" data-a="app-enviar">Gerar de novo</button></div></div>`;}
   else if(s.kind==="final"){head=`<div class="grow"><div class="eyebrow">Trecho ${s.n}</div><h3 id="sh-tit">Atividade final</h3></div><button class="btn sm ghost" data-a="sh-fechar">Fechar</button>`;body=finalHTML(s);}
   else if(s.kind==="tcdiv"){head=`<div class="grow"><div class="eyebrow">Situação do trecho</div><h3>Trecho ${s.n}</h3></div><button class="btn sm ghost" data-a="sh-fechar">Cancelar</button><button class="btn sm primary" data-a="td-salvar">Salvar</button>`;body=tcdivHTML(s);}
+  else if(s.kind==="zerado"){head=`<div class="grow"><h3>Painel zerado</h3><div class="muted small">Registros antigos neste aparelho</div></div>`;body=zeradoHTML();}
   else if(s.kind==="diag"){head=`<div class="grow"><h3>Diagnóstico</h3><div class="muted small">Nuvem, downloads e o que está guardado</div></div><button class="btn sm" data-a="sh-fechar">Fechar</button>`;body=diagHTML();}
   else if(s.kind==="papps"){head=`<div class="grow"><h3>Resumo do dia</h3><div class="muted small">Para lançar no Power Apps</div></div><button class="btn sm" data-a="sh-fechar">Fechar</button>`;body=pappsHTML(s);}
   else if(s.kind==="pafr"){head=`<div class="grow"><h3>Frentes e regionais</h3><div class="muted small">Usado no resumo do Power Apps</div></div><button class="btn sm" data-a="sh-fechar">Fechar</button>`;body=paFrentesHTML(s);}
@@ -2132,7 +2144,7 @@ function renderLayer(reset){
   if(reset&&s.kind==="busca")setTimeout(()=>{const i=document.getElementById("busca");if(i)i.focus();},60);
 }
 function refazCorpo(){const b=document.getElementById("sh-body");const s=topo();if(!b||!s)return;const y=b.scrollTop;
-  b.innerHTML=s.kind==="diag"?diagHTML():s.kind==="camadas"?camadasHTML(s):s.kind==="pacoteok"?"":s.kind==="final"?finalHTML(s):s.kind==="novafaz"?novaFazHTML(s):s.kind==="papps"?pappsHTML(s):s.kind==="pafr"?paFrentesHTML(s):s.kind==="valg"?valgHTML(s):s.kind==="tcdiv"?tcdivHTML(s):s.kind==="atalho"?atalhoHTML():s.kind==="metas"?metasHTML(s):s.kind==="fotozip"?fotosZipHTML(s):s.kind==="tela"?telaHTML():s.kind==="item"||s.kind==="linha"||s.kind==="revlinha"?itemHTML(s):s.kind==="pk"?pkHTML(s):s.kind==="val"?valHTML(s):s.kind==="oscab"?osCabHTML(s):s.kind==="lanc"?lancHTML(s,DATA.lanc[s.id]):buscaHTML(s);
+  b.innerHTML=s.kind==="zerado"?zeradoHTML():s.kind==="diag"?diagHTML():s.kind==="camadas"?camadasHTML(s):s.kind==="pacoteok"?"":s.kind==="final"?finalHTML(s):s.kind==="novafaz"?novaFazHTML(s):s.kind==="papps"?pappsHTML(s):s.kind==="pafr"?paFrentesHTML(s):s.kind==="valg"?valgHTML(s):s.kind==="tcdiv"?tcdivHTML(s):s.kind==="atalho"?atalhoHTML():s.kind==="metas"?metasHTML(s):s.kind==="fotozip"?fotosZipHTML(s):s.kind==="tela"?telaHTML():s.kind==="item"||s.kind==="linha"||s.kind==="revlinha"?itemHTML(s):s.kind==="pk"?pkHTML(s):s.kind==="val"?valHTML(s):s.kind==="oscab"?osCabHTML(s):s.kind==="lanc"?lancHTML(s,DATA.lanc[s.id]):buscaHTML(s);
   b.scrollTop=y;hidratarFotos(b);}
 
 /* ---------- busca de atividade ---------- */
@@ -3131,6 +3143,9 @@ async function onClick(ev){
   case "app-limpar": FILA=[];salvarFila();chipFila();fecharTudo();toast("Celular limpo. Os dados continuam no painel quando o pacote for recebido.");render();return;
   case "cam-abrir": ST.camMenu=!ST.camMenu;render();return;
   case "diag": abrir({kind:"diag"});return;
+  case "zr-limpar": {const z=zeradoDoc();if(!z)return;const A=new Set(antigosZerado(z));FILA=FILA.filter(o=>!A.has(o));salvarFila();A.forEach(o=>{if(o.path)delete CACHE[o.path];});salvarCache();
+    try{localStorage.setItem("painel_zerado_visto",z.em);localStorage.removeItem("painel_rejeitados_v1");}catch(e){}chipFila();fecharTudo();toast(`Limpo: ${A.size} registro(s) antigo(s).`);location.reload();return;}
+  case "zr-manter": {const z=zeradoDoc();try{if(z)localStorage.setItem("painel_zerado_visto",z.em);}catch(e){}fecharTudo();return;}
   case "diag-enviar": await enviarFila();refazCorpo();toast(FILA.length?"Ainda não subiu tudo. Veja o último erro.":"Tudo enviado para a nuvem.");return;
   case "diag-recarregar": location.reload();return;
   case "diag-copia": {const txt=JSON.stringify({tipo:"pacote-painel-campo",v:1,id:"pk"+Date.now().toString(36),em:new Date().toISOString(),quem:ME.nome||"",ops:FILA.concat(rejeitados().map(x=>x.op))});
@@ -3274,7 +3289,7 @@ DB=DBF; /* grava no aparelho na hora; a nuvem recebe quando conectar */
     baixarLocal(filename,data,tipos[ext]||"application/octet-stream");}};}
   if(USER){try{ME.id=await USER.id();}catch(e){}try{ADM=!!(await USER.isOwner())||!!(await USER.canEdit());}catch(e){}}
   else{try{ADM=localStorage.getItem("painel_adm_local")==="1";}catch(e){}}
-  pronto=true;
+  pronto=true;setTimeout(verificarZerado,2500);
   if(NUVEMDB){["os","lanc","rdo","config","mapas","marcas","trechos","novas"].forEach(col=>NUVEMDB.collection(col).onSnapshot(snap=>{
       if(snap.metadata&&snap.metadata.fromCache&&snap.empty)return;
       Object.keys(CACHE).forEach(k=>{if(colDe(k)===col)delete CACHE[k];});
