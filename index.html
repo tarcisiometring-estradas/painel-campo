@@ -52,6 +52,7 @@ body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 .box{background:var(--sf);border:1px solid var(--ln);border-radius:12px}
 #selm{width:100%;min-height:46px;padding:0 12px;font-weight:700;background:var(--sf);border:1px solid var(--ln);border-radius:12px}
 #sub{font-size:12px;color:var(--mut);padding:0 4px}
+#b-norte[hidden],.ctl button[hidden]{display:none!important}
 .ctl{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;display:grid;gap:8px;z-index:2}
 .ctl button{width:48px;height:48px;border-radius:12px;background:var(--sf);border:1px solid var(--ln);font-size:21px;font-weight:700;cursor:pointer;display:grid;place-items:center}
 .ctl button.on{background:var(--gps);border-color:var(--gps)}
@@ -109,6 +110,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 <svg id="mapa" role="img" aria-label="Mapa da fazenda"></svg><svg id="reg" role="img" aria-label="Mapa da região"></svg>
 <div class="top"><div class="toprow"><button id="b-home" aria-label="Voltar ao início" title="Voltar ao início">← Início</button><select id="selm" aria-label="Fazenda"></select></div><div id="sub"></div></div>
 <div class="ctl">
+  <button id="b-norte" aria-label="Voltar o norte para cima" title="Voltar o norte para cima" hidden><i style="display:block;font-style:normal;font-size:15px;line-height:1;color:#B5483B">▲<br><b style="font-size:11px;color:var(--ink)">N</b></i></button>
   <button id="b-in" aria-label="Zoom +" title="Zoom +">＋</button>
   <button id="b-out" aria-label="Zoom −" title="Zoom −">－</button>
   <button id="b-fit" aria-label="Ver a fazenda inteira" title="Ver a fazenda inteira">⤢<span class="lb">Ver a fazenda inteira</span></button>
@@ -143,7 +145,27 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 "use strict";
 /* ================= dados ================= */
 let DADOS=null,LISTA=[],I=0,VB=null,sel=null;
-const GPS={on:false,fix:null,watch:null,erro:"",seguir:false};
+const GPS={on:false,fix:null,watch:null,erro:"",seguir:false,auto:false,toque:0};
+/* rotação do mapa (dois dedos girando). ANG em graus, sentido horário; vale para a fazenda e para a região */
+let ANG=0;const RAD=Math.PI/180;
+const rot=(dx,dy,a)=>{const c=Math.cos(a*RAD),s=Math.sin(a*RAD);return [dx*c-dy*s,dx*s+dy*c];};
+const angN=a=>{a=((a%360)+360)%360;return a>180?a-360:a;};
+/* tela (clientX/Y) -> coordenada do mapa, e mapa -> tela (px relativos ao svg) */
+function s2m(V,r,sx,sy,a=ANG){const u=V.w/r.width;const [dx,dy]=rot((sx-r.left-r.width/2)*u,(sy-r.top-r.height/2)*u,-a);return [V.x+V.w/2+dx,V.y+V.h/2+dy];}
+function m2s(V,r,x,y,a=ANG){const u=V.w/r.width;const [dx,dy]=rot((x-V.x-V.w/2)/u,(y-V.y-V.h/2)/u,a);return [r.width/2+dx,r.height/2+dy];}
+/* gesto comum: 1 dedo arrasta, 2 dedos aproximam/afastam e giram (o giro só começa depois de ~12°, para não girar sem querer ao dar zoom) */
+function gestoVB(st,v0,is,ps,r,wMin,wMax){const u0=v0.w/r.width;
+  if(ps.length===1){const [dx,dy]=rot((ps[0][0]-is[0][0])*u0,(ps[0][1]-is[0][1])*u0,-ANG);return {...v0,x:v0.x-dx,y:v0.y-dy};}
+  const d0=Math.hypot(is[0][0]-is[1][0],is[0][1]-is[1][1])||1,d1=Math.hypot(ps[0][0]-ps[1][0],ps[0][1]-ps[1][1])||1;
+  const da=angN((Math.atan2(ps[1][1]-ps[0][1],ps[1][0]-ps[0][0])-Math.atan2(is[1][1]-is[0][1],is[1][0]-is[0][0]))/RAD);
+  if(!st.rotOn&&Math.abs(da)>12){st.rotOn=true;st.off=da>0?12:-12;}
+  ANG=st.rotOn?angN(st.a0+da-st.off):st.a0;
+  const m0=[(is[0][0]+is[1][0])/2,(is[0][1]+is[1][1])/2],m1=[(ps[0][0]+ps[1][0])/2,(ps[0][1]+ps[1][1])/2];
+  const n0=s2m(v0,r,m0[0],m0[1],st.a0);const w=Math.min(Math.max(v0.w*d0/d1,wMin),wMax),h=w*raz(),u1=w/r.width;
+  const [dx,dy]=rot((m1[0]-r.left-r.width/2)*u1,(m1[1]-r.top-r.height/2)*u1,-ANG);const cx=n0[0]-dx,cy=n0[1]-dy;return {x:cx-w/2,y:cy-h/2,w,h};}
+function gestoFim(){if(ANG&&Math.abs(ANG)<5){ANG=0;REG.on?rAplicar():aplicar();}}
+function rotAplicar(id,V){const g=document.getElementById(id);if(g){if(ANG)g.setAttribute("transform",`rotate(${ANG.toFixed(2)} ${V.x+V.w/2} ${V.y+V.h/2})`);else g.removeAttribute("transform");}
+  const b=document.getElementById("b-norte");if(b){b.hidden=!ANG;const n=b.querySelector("i");if(n)n.style.transform=`rotate(${ANG}deg)`;}}
 const $=s=>document.querySelector(s);
 const fmt=v=>(isFinite(v)?v:0).toLocaleString("pt-BR",{maximumFractionDigits:2});
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -197,21 +219,21 @@ function desenhar(){const m=M();sel=null;VB=null;
   if(!REG.on)$("#selm").value=String(I);
   $("#sub").textContent=`${m.mapa} · mapas de ${DADOS.versao}`;
   const cA=camAt(m);sv().classList.toggle("comcam",!!cA);$("#b-cam").hidden=!(m.camadas||[]).length;$("#b-cam").classList.toggle("on",!!cA);
-  sv().innerHTML=camImg(m)+rodMapa(m)+rtMapa(m)+m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
+  sv().innerHTML=`<g id="rotf">`+camImg(m)+rodMapa(m)+rtMapa(m)+m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
     m.trechos.map(t=>`<polyline class="tr s-${t.st}${t.n%2?"":" alt"}" data-n="${t.n}" points="${t.pts.join(" ")}"/><polyline class="hit" data-n="${t.n}" points="${t.pts.join(" ")}"/>`).join("")+
     m.talhoes.filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fx tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${Math.max(...xs)-Math.min(...xs)}" data-h="${Math.max(...ys)-Math.min(...ys)}" data-n="${String(t.id).length}"><text class="tt" x="${t.lab[0]}" y="${t.lab[1]}">${esc(t.id)}</text>${t.ha?`<text class="ts" x="${t.lab[0]}" y="${t.lab[1]+12}">${fmt(Math.round(t.ha*10)/10)} ha</text>`:""}</g>`;}).join("")+
     m.trechos.filter(t=>t.mid).map(t=>`<g class="fx nb" data-n="${t.n}" data-cx="${t.mid[0]}" data-cy="${t.mid[1]}"><circle cx="${t.mid[0]}" cy="${t.mid[1]}" r="10"/><text x="${t.mid[0]}" y="${t.mid[1]}">${t.n}</text></g>`).join("")+
-    `<g id="pins"></g><g id="gps"></g>`;
+    `<g id="pins"></g><g id="gps"></g></g>`;
   $("#leg").innerHTML=m.trechos.some(t=>!String(t.st).startsWith("g-"))||true?`<span><i style="background:var(--zero)"></i>Falta</span><span><i style="background:var(--and)"></i>Em andamento</span><span><i style="background:var(--ok)"></i>Pronto</span><span><i style="background:var(--np)"></i>Sem previsão</span>${ROD?`<span><i style="background:#8A7E73"></i>Rodovia BR/MS</span>`:""}`:"";
   info();aplicar();LS.set("mapa",m.id);}
 let raf=0;
-function aplicar(){const s=sv();const rr=s.getBoundingClientRect();if(!rr.width||!rr.height){requestAnimationFrame(aplicar);return;}if(!VB)VB=inteiro();const nh=VB.w*raz();VB.y+=(VB.h-nh)/2;VB.h=nh;s.setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);
+function aplicar(){const s=sv();const rr=s.getBoundingClientRect();if(!rr.width||!rr.height){requestAnimationFrame(aplicar);return;}if(!VB)VB=inteiro();const nh=VB.w*raz();VB.y+=(VB.h-nh)/2;VB.h=nh;s.setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);rotAplicar("rotf",VB);
   const z=inteiro().w/VB.w;s.style.setProperty("--tw",Math.max(1.6,Math.min(2+1.7*Math.sqrt(Math.max(z-1,0)),7)).toFixed(2)+"px");
   if(!raf)raf=requestAnimationFrame(()=>{raf=0;rotulos();});}
 function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)return;const uu=VB.w/r0.width;
-  const tf=(g,k)=>{const cx=+g.dataset.cx,cy=+g.dataset.cy;g.setAttribute("transform",`translate(${cx} ${cy}) scale(${k}) translate(${-cx} ${-cy})`);};
+  const tf=(g,k)=>{const cx=+g.dataset.cx,cy=+g.dataset.cy;g.setAttribute("transform",`translate(${cx} ${cy})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${k}) translate(${-cx} ${-cy})`);};
   const cx=[];const livre=(x,y,w,h)=>{const b=[x-w/2,y-h/2,x+w/2,y+h/2];if(cx.some(c=>b[0]<c[2]&&b[2]>c[0]&&b[1]<c[3]&&b[3]>c[1]))return false;cx.push(b);return true;};
-  const tela=g=>[(+g.dataset.cx-VB.x)/uu,(+g.dataset.cy-VB.y)/uu];const dentro=(x,y)=>x>-40&&y>-40&&x<r0.width+40&&y<r0.height+40;
+  const tela=g=>m2s(VB,r0,+g.dataset.cx,+g.dataset.cy);const dentro=(x,y)=>x>-40&&y>-40&&x<r0.width+40&&y<r0.height+40;
   const mids=m.trechos.map(t=>t.mid).filter(Boolean);let gm=60*uu;if(mids.length>1){const ds=[];for(let i=1;i<mids.length;i++)ds.push(Math.hypot(mids[i][0]-mids[i-1][0],mids[i][1]-mids[i-1][1]));ds.sort((a,b)=>a-b);gm=ds[ds.length>>1]||gm;}
   const ver=gm/uu>=34;
   [...s.querySelectorAll(".nb")].sort((a,b)=>(+b.dataset.n===sel)-(+a.dataset.n===sel)).forEach(g=>{tf(g,uu);const isSel=+g.dataset.n===sel;g.classList.toggle("sel",isSel);const [x,y]=tela(g);
@@ -232,17 +254,19 @@ function info(){if(REG.on)return;const m=M();const t=sel!=null?m.trechos.find(x=
     h=(h?h+"<hr>":"")+g;}
   $("#info").innerHTML=h;$("#info").style.display=h?"block":"none";}
 function zoom(f,x,y){const m=M();const b=bbCont(m);if(VB.w*f>b.w*2.2&&REG.dados){irRegiao(true);return;}const w=Math.min(Math.max(VB.w*f,b.w/80),b.w*3),h=w*raz();if(x==null){x=VB.x+VB.w/2;y=VB.y+VB.h/2;}const kx=(x-VB.x)/VB.w,ky=(y-VB.y)/VB.h;VB={x:x-kx*w,y:y-ky*h,w,h};aplicar();}
-const toN=(cx,cy)=>{const r=sv().getBoundingClientRect();return [VB.x+(cx-r.left)*VB.w/r.width,VB.y+(cy-r.top)*VB.h/r.height];};
+const toN=(cx,cy)=>s2m(VB,sv().getBoundingClientRect(),cx,cy);
 
 /* ================= gestos ================= */
 let G=null,moveu=false;
-sv().addEventListener("pointerdown",e=>{G=G||{P:new Map()};G.P.set(e.pointerId,{x:e.clientX,y:e.clientY});G.v0={...VB};G.ini=new Map([...G.P].map(([k,v])=>[k,{...v}]));if(G.P.size===1)moveu=false;});
-window.addEventListener("pointermove",e=>{if(!G||!G.P.has(e.pointerId))return;G.P.set(e.pointerId,{x:e.clientX,y:e.clientY});const r=sv().getBoundingClientRect(),v0=G.v0,ps=[...G.P.values()],is=[...G.P.keys()].map(k=>G.ini.get(k));
-  if(ps.length===1){const dx=ps[0].x-is[0].x,dy=ps[0].y-is[0].y;if(!moveu&&Math.hypot(dx,dy)<7)return;moveu=true;GPS.seguir=false;VB.x=v0.x-dx*v0.w/r.width;VB.y=v0.y-dy*v0.h/r.height;aplicar();}
-  else{moveu=true;GPS.seguir=false;const d0=Math.hypot(is[0].x-is[1].x,is[0].y-is[1].y)||1,d1=Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y)||1;const m0={x:(is[0].x+is[1].x)/2,y:(is[0].y+is[1].y)/2},m1={x:(ps[0].x+ps[1].x)/2,y:(ps[0].y+ps[1].y)/2};
-    const n0=[v0.x+(m0.x-r.left)*v0.w/r.width,v0.y+(m0.y-r.top)*v0.h/r.height];const b=bbCont(M());if(v0.w*d0/d1>b.w*2.4&&REG.dados){G=null;irRegiao(true);return;}const w=Math.min(Math.max(v0.w*d0/d1,b.w/80),b.w*3),h=w*raz();VB={w,h,x:n0[0]-(m1.x-r.left)*w/r.width,y:n0[1]-(m1.y-r.top)*h/r.height};aplicar();}
+const G0=()=>{G.v0={...VB};G.ini=new Map([...G.P].map(([k,v])=>[k,[...v]]));G.st.a0=ANG;if(G.st.rotOn)G.st.off=0;};
+sv().addEventListener("pointerdown",e=>{G=G||{P:new Map(),st:{rotOn:false,off:0}};G.P.set(e.pointerId,[e.clientX,e.clientY]);G0();if(G.P.size===1)moveu=false;GPS.toque=Date.now();});
+window.addEventListener("pointermove",e=>{if(!G||!G.P.has(e.pointerId))return;G.P.set(e.pointerId,[e.clientX,e.clientY]);const r=sv().getBoundingClientRect(),v0=G.v0,ps=[...G.P.values()],is=[...G.P.keys()].map(k=>G.ini.get(k));
+  if(ps.length===1&&!moveu&&Math.hypot(ps[0][0]-is[0][0],ps[0][1]-is[0][1])<7)return;
+  moveu=true;if(GPS.seguir){GPS.seguir=false;GPS.auto=true;}GPS.toque=Date.now();const b=bbCont(M());
+  if(ps.length>=2){const d0=Math.hypot(is[0][0]-is[1][0],is[0][1]-is[1][1])||1,d1=Math.hypot(ps[0][0]-ps[1][0],ps[0][1]-ps[1][1])||1;if(v0.w*d0/d1>b.w*2.4&&REG.dados){G=null;irRegiao(true);return;}}
+  VB=gestoVB(G.st,v0,is.slice(0,2),ps.slice(0,2),r,b.w/80,b.w*3);aplicar();
   e.preventDefault();},{passive:false});
-const fim=e=>{if(!G||!G.P.has(e.pointerId))return;G.P.delete(e.pointerId);if(G.P.size){G.v0={...VB};G.ini=new Map([...G.P].map(([k,v])=>[k,{...v}]));}else G=null;};
+const fim=e=>{if(!G||!G.P.has(e.pointerId))return;G.P.delete(e.pointerId);if(G.P.size)G0();else{G=null;gestoFim();}};
 window.addEventListener("pointerup",fim);window.addEventListener("pointercancel",fim);
 sv().addEventListener("wheel",e=>{e.preventDefault();const [x,y]=toN(e.clientX,e.clientY);zoom((e=>{let d=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?400:1);d=Math.max(-120,Math.min(120,d));return Math.exp(d*(e.ctrlKey?0.012:0.0022));})(e),x,y);},{passive:false});
 sv().addEventListener("click",e=>{if(moveu){moveu=false;return;}
@@ -259,16 +283,19 @@ function gpsLigar(){if(!navigator.geolocation){GPS.on=true;GPS.erro="Este aparel
     else if(ant&&dist([ant.lat,ant.lon],[nf.lat,nf.lon])>Math.max(4,nf.acc*0.5)){GPS.hd=(Math.atan2((nf.lon-ant.lon)*RK,nf.lat-ant.lat)*180/Math.PI+360)%360;}
     if(ant&&dist([ant.lat,ant.lon],[nf.lat,nf.lon])<2&&GPS.hd!=null)nf.lat=ant.lat,nf.lon=ant.lon;
     GPS.fix=nf;GPS.erro="";
+    /* parou de mexer no mapa há 12 s: volta a seguir sozinho */
+    if(!GPS.seguir&&GPS.auto&&Date.now()-GPS.toque>12000){GPS.seguir=true;GPS.auto=false;}
     if(GPS.seguir&&!REG.on){const m=M();const [x,y]=g2n(m,GPS.fix.lat,GPS.fix.lon);const b=bbCont(m);
-      if(x>=b.x&&y>=b.y&&x<=b.x+b.w&&y<=b.y+b.h){if(!GPS.primeiro){GPS.primeiro=1;const w=Math.min(VB.w,b.w/5);VB={x:x-w/2,y:y-w*raz()/2,w,h:w*raz()};}else VB={...VB,x:x-VB.w/2,y:y-VB.h/2};}else{const o=LISTA.findIndex(mm=>{const [a,c]=g2n(mm,GPS.fix.lat,GPS.fix.lon);const bb=bbCont(mm);return !mm.acesso&&a>=bb.x&&c>=bb.y&&a<=bb.x+bb.w&&c<=bb.y+bb.h;});if(o>=0&&o!==I){I=o;desenhar();aviso("Você está na "+M().nome);}}}
+      if(x>=b.x&&y>=b.y&&x<=b.x+b.w&&y<=b.y+b.h){if(!GPS.primeiro){GPS.primeiro=1;const w=Math.min(VB.w,b.w/5);VB={x:x-w/2,y:y-w*raz()/2,w,h:w*raz()};}else VB={...VB,x:x-VB.w/2,y:y-VB.h/2};}else{const o=LISTA.findIndex(mm=>{const [a,c]=g2n(mm,GPS.fix.lat,GPS.fix.lon);const bb=bbCont(mm);return !mm.acesso&&a>=bb.x&&c>=bb.y&&a<=bb.x+bb.w&&c<=bb.y+bb.h;});if(o>=0&&o!==I){I=o;desenhar();aviso("Você está na "+M().nome);}else VB={...VB,x:x-VB.w/2,y:y-VB.h/2};}}
     if(GPS.seguir&&REG.on&&REG.VB){const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);REG.VB={...REG.VB,x:x-REG.VB.w/2,y:y-REG.VB.h/2};rAplicar();}
     rtRecalc();
     if(REG.on){rGps();if(RT.res&&REG.sel==null&&REG.pd==null)rInfo();}else{aplicar();info();}},
     er=>{GPS.erro=er.code===1?"Localização bloqueada. Libere a localização para este app nas configurações do celular.":"Sem sinal de GPS ainda. Vá para céu aberto.";info();},
     {enableHighAccuracy:true,maximumAge:0,timeout:20000});info();}
 function gpsDesligar(){try{navigator.geolocation.clearWatch(GPS.watch);}catch(e){}Object.assign(GPS,{on:false,fix:null,watch:null,erro:""});$("#b-gps").classList.remove("on");aplicar();info();}
-$("#b-gps").onclick=()=>{if(GPS.on&&GPS.fix&&!GPS.seguir){GPS.seguir=true;if(REG.on){const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);REG.VB={...REG.VB,x:x-REG.VB.w/2,y:y-REG.VB.h/2};rAplicar();return;}const m=M();const [x,y]=g2n(m,GPS.fix.lat,GPS.fix.lon);VB={...VB,x:x-VB.w/2,y:y-VB.h/2};aplicar();aviso("Seguindo você. Arraste o mapa para parar.");return;}GPS.on?gpsDesligar():gpsLigar();};
-$("#b-in").onclick=()=>zoom(1/1.6);$("#b-out").onclick=()=>zoom(1.6);$("#b-fit").onclick=()=>{VB=null;aplicar();};
+$("#b-gps").onclick=()=>{if(GPS.on&&GPS.fix&&!GPS.seguir){GPS.seguir=true;GPS.auto=false;if(REG.on){const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);REG.VB={...REG.VB,x:x-REG.VB.w/2,y:y-REG.VB.h/2};rAplicar();return;}const m=M();const [x,y]=g2n(m,GPS.fix.lat,GPS.fix.lon);VB={...VB,x:x-VB.w/2,y:y-VB.h/2};aplicar();aviso("Seguindo você. Arraste o mapa para parar.");return;}GPS.on?gpsDesligar():gpsLigar();};
+$("#b-in").onclick=()=>zoom(1/1.6);$("#b-out").onclick=()=>zoom(1.6);$("#b-fit").onclick=()=>{ANG=0;VB=null;aplicar();};
+$("#b-norte").onclick=()=>{ANG=0;REG.on?rAplicar():aplicar();};
 
 document.addEventListener("click",e=>{if(e.target.closest("[data-copia]")){e.stopPropagation();copiarCoord();}},true);
 /* ================= camadas: mapas oficiais da Geoplant por baixo dos trechos ================= */
@@ -278,14 +305,15 @@ const b64u8=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
 async function camAbrir(c,senha){const j=await (await fetch(c.arq)).json();const k0=await crypto.subtle.importKey("raw",new TextEncoder().encode(senha),"PBKDF2",false,["deriveKey"]);
   const k=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64u8(j.salt),iterations:j.it||150000,hash:"SHA-256"},k0,{name:"AES-GCM",length:256},false,["decrypt"]);
   return URL.createObjectURL(new Blob([await crypto.subtle.decrypt({name:"AES-GCM",iv:b64u8(j.iv)},k,b64u8(j.ct))],{type:"image/jpeg"}));}
+const senhaLimpa=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"");
 function senhaEquipe(){try{return localStorage.getItem("painel_senha")||"";}catch(e){return "";}}
 function camImg(m){const c=camAt(m);if(!c)return "";const u=CAMB[c.arq];
   if(u===undefined){CAMB[c.arq]=null;camAbrir(c,senhaEquipe()).then(x=>{CAMB[c.arq]=x;desenharMantendo();}).catch(()=>{CAMB[c.arq]=undefined;delete CAMS[m.id];if(navigator.onLine)try{localStorage.removeItem("painel_senha");}catch(e){}LS.set("camadas",CAMS);aviso(navigator.onLine?"Senha da equipe errada ou faltando. Toque em 🗂 de novo.":"Ligue essa camada uma vez com internet.");desenharMantendo();});return "";}
   if(!u)return "";const op=CAMS._op!=null?CAMS._op:0.9;return `<image href="${u}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(${c.m.join(" ")})" opacity="${op}" style="pointer-events:none"/>`;}
 function desenharMantendo(){const v=VB;desenhar();if(v){VB=v;aplicar();}}
 function camFolha(){const m=M();if(!m)return;const at=CAMS[m.id]||"";
-  if(!senhaEquipe()){abrirFolha("🗂 Mapas oficiais",`<div class="muted">Digite a senha da equipe (só na primeira vez).</div><input id="cam-senha" class="btn" type="password" placeholder="Senha da equipe" style="width:100%;text-align:left"><button class="btn pri" id="cam-ok" style="min-height:50px">Entrar</button>`);
-    $("#cam-ok").onclick=()=>{const v=$("#cam-senha").value.trim();if(!v)return;try{localStorage.setItem("painel_senha",v);}catch(e){}camFolha();};return;}
+  if(!senhaEquipe()){abrirFolha("🗂 Mapas oficiais",`<div class="muted">Digite a senha da equipe (só na primeira vez).</div><div style="position:relative"><input id="cam-senha" class="btn" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Senha da equipe" style="width:100%;text-align:left;padding-right:56px"><button type="button" class="btn" aria-label="Mostrar ou esconder a senha" onclick="const i=this.previousElementSibling;i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);min-height:38px;padding:0 10px;border:0;background:transparent">👁</button></div><button class="btn pri" id="cam-ok" style="min-height:50px">Entrar</button>`);
+    $("#cam-ok").onclick=()=>{const v=senhaLimpa($("#cam-senha").value);if(!v)return;try{localStorage.setItem("painel_senha",v);}catch(e){}camFolha();};return;}
   const op=CAMS._op!=null?CAMS._op:0.9;
   abrirFolha("🗂 Mapas oficiais · "+m.nome,`<div class="muted">Escolha o mapa da Geoplant para ver por baixo dos trechos.</div>
    <button class="fzb" data-ck="" style="${!at?"border:2px solid var(--ok)":""}"><span>${!at?"✓ ":""}Nenhum (só o nosso mapa)</span></button>
@@ -369,17 +397,17 @@ const rPath=rs=>rs.map(r=>"M"+r.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join("
 function rDesenhar(){const D=REG.dados;const s=rsv();if(!D){s.innerHTML="";return;}
   let h=`<g id="r-rod">${ROD?ROD.rod.map(([c,n,t,pts])=>`<polyline class="rod ${c}${t?" t":""}" points="${pts.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join(" ")}"/>`).join(""):""}</g><g id="r-fz">`;
   D.faz.forEach((f,i)=>{h+=`<path class="rf${f.cod?" cad":""}" data-f="${i}" d="${rPath(f.r)}"/>`;});
-  h+=`</g><g id="r-rede"></g><g id="r-ac"></g><g id="r-det"></g><g id="r-rota"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=h;REG.detK="";rtDesenhar();rAplicar();}
+  h+=`</g><g id="r-rede"></g><g id="r-ac"></g><g id="r-det"></g><g id="r-rota"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=`<g id="rotr">`+h+`</g>`;REG.detK="";rtDesenhar();rAplicar();}
 function rTudo(){const D=REG.dados;const fs=D.faz.filter(f=>f.cod);const L=fs.length?fs:D.faz;
   return [Math.min(...L.map(f=>f.bb[0])),Math.min(...L.map(f=>f.bb[1])),Math.max(...L.map(f=>f.bb[2])),Math.max(...L.map(f=>f.bb[3]))];}
 function rIrPara(b,m=.25){const w=Math.max(b[2]-b[0],(b[3]-b[1])/raz())*(1+2*m)+2;const h=w*raz();REG.VB={x:(b[0]+b[2])/2-w/2,y:(b[1]+b[3])/2-h/2,w,h};rAplicar();}
 function rAplicar(){const s=rsv();const r=s.getBoundingClientRect();if(!r.width||!REG.dados)return;if(!REG.VB){rIrPara(rTudo());return;}
-  const V=REG.VB;const h=V.w*raz();V.y+=(V.h-h)/2;V.h=h;s.setAttribute("viewBox",`${V.x} ${V.y} ${V.w} ${V.h}`);
+  const V=REG.VB;const h=V.w*raz();V.y+=(V.h-h)/2;V.h=h;s.setAttribute("viewBox",`${V.x} ${V.y} ${V.w} ${V.h}`);rotAplicar("rotr",V);
   cancelAnimationFrame(REG.raf);REG.raf=requestAnimationFrame(()=>{rRede();rAcessos();rDetalhe();rRotulos();rGps();rEscala();});}
 /* estradas de terra e vicinais (as mesmas da rota) aparecem quando aproxima: a fazenda não fica "voando" */
 function rRede(){const g=$("#r-rede");if(!g)return;const V=REG.VB;if(V.w>140){if(REG.redeK){g.innerHTML="";REG.redeK="";}return;}
   if(!RT.G){rtCarregar().then(()=>{REG.redeK="";rRede();}).catch(()=>{});return;}
-  const G=RT.G;const [la0,lo0]=RG(V.x,V.y),[la1,lo1]=RG(V.x+V.w,V.y+V.h);const x0=Math.floor(Math.min(lo0,lo1)*20)-1,x1=Math.floor(Math.max(lo0,lo1)*20)+1,y0=Math.floor(Math.min(la0,la1)*20)-1,y1=Math.floor(Math.max(la0,la1)*20)+1;
+  const G=RT.G;const E=ANG?Math.max(V.w,V.h)*0.72:0,ccx=V.x+V.w/2,ccy=V.y+V.h/2;const [la0,lo0]=E?RG(ccx-E,ccy-E):RG(V.x,V.y),[la1,lo1]=E?RG(ccx+E,ccy+E):RG(V.x+V.w,V.y+V.h);const x0=Math.floor(Math.min(lo0,lo1)*20)-1,x1=Math.floor(Math.max(lo0,lo1)*20)+1,y0=Math.floor(Math.min(la0,la1)*20)-1,y1=Math.floor(Math.max(la0,la1)*20)+1;
   const k=[x0,x1,y0,y1].join(",");if(k===REG.redeK)return;REG.redeK=k;const vis=new Set();
   for(let cx=x0;cx<=x1;cx++)for(let cy=y0;cy<=y1;cy++){const a=G.grade.get(cx+":"+cy);if(a)a.forEach(i=>vis.add(i));}
   let d="";const visto=new Set();vis.forEach(i=>{for(let j=G.off[i];j<G.off[i+1];j++){const ei=G.aE[j];if(visto.has(ei))continue;visto.add(ei);const e=G.E[ei];if(e[3]<2)continue;
@@ -393,14 +421,14 @@ function rDetalhe(){return;const V=REG.VB,g=$("#r-det");if(!g)return;if(V.w>160)
   if(!REG.tal){rTal();return;}const vis=REG.dados.faz.filter(f=>f.bb[2]>V.x&&f.bb[0]<V.x+V.w&&f.bb[3]>V.y&&f.bb[1]<V.y+V.h);const k=vis.map(f=>f.id).join(",");if(k===REG.detK)return;REG.detK=k;
   g.innerHTML=vis.map(f=>(REG.tal[f.id]||[]).map(t=>{const P=RP(t[4][0],t[4][1]);return `<path class="rt" d="${rPath([t[3]])}"/><g class="rtl" style="display:none" data-x="${P[0]}" data-y="${P[1]}" data-w="${t[1]}"><text x="${P[0]}" y="${P[1]}">${esc(t[0])}</text></g>`;}).join("")).join("");}
 function rRotulos(){const s=rsv(),r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.width;const oc=[];const livre=(x,y,w,h)=>{const b=[x-w/2,y-h/2,x+w/2,y+h/2];if(oc.some(c=>b[0]<c[2]&&b[2]>c[0]&&b[1]<c[3]&&b[3]>c[1]))return false;oc.push(b);return true;};
-  const tela=(x,y)=>[(x-V.x)/u,(y-V.y)/u];const dentro=(x,y)=>x>-30&&y>-20&&x<r.width+30&&y<r.height+20;
+  const tela=(x,y)=>m2s(V,r,x,y);const dentro=(x,y)=>x>-30&&y>-20&&x<r.width+30&&y<r.height+20;
   const F=REG.dados.faz;let h="";
   const ord=F.map((f,i)=>i).sort((a,b)=>(b===REG.sel)-(a===REG.sel)||(!!F[b].cod-!!F[a].cod)||((F[b].bb[2]-F[b].bb[0])-(F[a].bb[2]-F[a].bb[0])));
   for(const i of ord){const f=F[i];const wpx=(f.bb[2]-f.bb[0])/u;if(f.n==="(sem nome)"||(i!==REG.sel&&!f.cod&&wpx<60))continue;const [x,y]=tela(f.P[0],f.P[1]);if(!dentro(x,y))continue;
-    const w=f.n.length*6.6+8;if(!livre(x,y,w,16))continue;h+=`<text class="rlab${f.cod?" cad":""}" transform="translate(${f.P[0]} ${f.P[1]}) scale(${u})">${esc(f.n)}</text>`;}
+    const w=f.n.length*6.6+8;if(!livre(x,y,w,16))continue;h+=`<text class="rlab${f.cod?" cad":""}" transform="translate(${f.P[0]} ${f.P[1]})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${u})">${esc(f.n)}</text>`;}
   $("#r-lab").innerHTML=h;
-  s.querySelectorAll(".rtl").forEach(g=>{const [x,y]=tela(+g.dataset.x,+g.dataset.y);const t=g.firstChild;const ok=dentro(x,y)&&livre(x,y,t.textContent.length*6.5+6,14);g.style.display=ok?"":"none";if(ok)g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y}) scale(${u}) translate(${-g.dataset.x} ${-g.dataset.y})`);});
-  s.querySelectorAll(".pd").forEach(g=>{const [x,y]=tela(+g.dataset.x,+g.dataset.y);livre(x+50,y,110,16);g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y}) scale(${u})`);});
+  s.querySelectorAll(".rtl").forEach(g=>{const [x,y]=tela(+g.dataset.x,+g.dataset.y);const t=g.firstChild;const ok=dentro(x,y)&&livre(x,y,t.textContent.length*6.5+6,14);g.style.display=ok?"":"none";if(ok)g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${u}) translate(${-g.dataset.x} ${-g.dataset.y})`);});
+  s.querySelectorAll(".pd").forEach(g=>{const [x,y]=tela(+g.dataset.x,+g.dataset.y);livre(x+50,y,110,16);g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${u})`);});
   s.querySelectorAll(".rf").forEach(p=>p.classList.toggle("sel",+p.dataset.f===REG.sel));}
 function rGps(){const g=$("#r-gps");if(!g)return;g.innerHTML="";if(!(GPS.on&&GPS.fix))return;const r=rsv().getBoundingClientRect(),u=REG.VB.w/r.width;const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);
   g.innerHTML=cursorGps(x,y,u);}
@@ -507,7 +535,7 @@ async function rtDMT(f){const el=$("#r-dmt");if(!el)return;el.innerHTML=`<span c
 /* ficha */
 function rInfo(){const el=$("#info");
   if(RT.res&&REG.sel==null&&REG.pd==null){el.innerHTML=rtCard();el.style.display="block";
-    $("#rt-seg").onclick=()=>{if(!GPS.on){gpsLigar();GPS.seguir=false;}if(GPS.fix){const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);const w=Math.min(REG.VB.w,40),h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};rAplicar();}else aviso("Esperando o sinal do GPS…");};
+    $("#rt-seg").onclick=()=>{if(!GPS.on)gpsLigar();GPS.seguir=true;GPS.auto=false;if(GPS.fix){const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);const w=Math.min(REG.VB.w,40),h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};rAplicar();}else aviso("Esperando o sinal do GPS…");};
     $("#rt-mud").onclick=rtFolha;$("#rt-car").onclick=abrirCarro;$("#rt-lim").onclick=()=>{RT.res=null;LISTA.forEach(m=>m._rt=null);rtDesenhar();rInfo();};return;}
   if(REG.sel==null&&REG.pd==null){el.style.display="none";return;}
   if(REG.pd!=null){const p=PEDR[REG.pd];el.innerHTML=`<b style="font-size:16px">⛰ ${esc(p.n)}</b><br><span class="muted">${esc(p.l)}</span>
@@ -525,27 +553,27 @@ function rInfo(){const el=$("#info");
     try{if(navigator.share){await navigator.share({text:t});return;}}catch(e){if(e&&e.name==="AbortError")return;}try{await navigator.clipboard.writeText(t);aviso("Pedido copiado. Cole no WhatsApp.");}catch(e){aviso("Não consegui compartilhar.");}};
   $("#r-x").onclick=()=>{REG.sel=null;rRotulos();rInfo();};}
 /* gestos da região */
-(()=>{let P=new Map(),v0=null,ini=null,mv=false;const s=rsv();
-  s.addEventListener("pointerdown",e=>{P.set(e.pointerId,[e.clientX,e.clientY]);v0={...REG.VB};ini=new Map([...P].map(([k,v])=>[k,[...v]]));if(P.size===1)mv=false;});
+(()=>{let P=new Map(),v0=null,ini=null,mv=false;const st={rotOn:false,off:0,a0:0};const s=rsv();
+  const R0=()=>{v0={...REG.VB};ini=new Map([...P].map(([k,v])=>[k,[...v]]));st.a0=ANG;if(st.rotOn)st.off=0;};
+  s.addEventListener("pointerdown",e=>{if(!P.size){st.rotOn=false;st.off=0;}P.set(e.pointerId,[e.clientX,e.clientY]);R0();if(P.size===1)mv=false;GPS.toque=Date.now();});
   window.addEventListener("pointermove",e=>{if(!REG.on||!P.has(e.pointerId))return;P.set(e.pointerId,[e.clientX,e.clientY]);const r=s.getBoundingClientRect();const ps=[...P.values()],is=[...P.keys()].map(k=>ini.get(k));
-    if(ps.length===1){const dx=ps[0][0]-is[0][0],dy=ps[0][1]-is[0][1];if(!mv&&Math.hypot(dx,dy)<7)return;mv=true;GPS.seguir=false;REG.VB={...v0,x:v0.x-dx*v0.w/r.width,y:v0.y-dy*v0.h/r.height};rAplicar();}
-    else{mv=true;GPS.seguir=false;const d0=Math.hypot(is[0][0]-is[1][0],is[0][1]-is[1][1])||1,d1=Math.hypot(ps[0][0]-ps[1][0],ps[0][1]-ps[1][1])||1;const m0=[(is[0][0]+is[1][0])/2-r.left,(is[0][1]+is[1][1])/2-r.top],m1=[(ps[0][0]+ps[1][0])/2-r.left,(ps[0][1]+ps[1][1])/2-r.top];
-      const n0=[v0.x+m0[0]*v0.w/r.width,v0.y+m0[1]*v0.h/r.height];const w=Math.min(Math.max(v0.w*d0/d1,3),9000),h=w*raz();REG.VB={w,h,x:n0[0]-m1[0]*w/r.width,y:n0[1]-m1[1]*h/r.height};rAplicar();}
+    if(ps.length===1&&!mv&&Math.hypot(ps[0][0]-is[0][0],ps[0][1]-is[0][1])<7)return;
+    mv=true;if(GPS.seguir){GPS.seguir=false;GPS.auto=true;}GPS.toque=Date.now();REG.VB=gestoVB(st,v0,is.slice(0,2),ps.slice(0,2),r,3,9000);rAplicar();
     e.preventDefault();},{passive:false});
-  const fimR=e=>{if(!P.has(e.pointerId))return;const pinça=P.size===2;P.delete(e.pointerId);if(P.size){v0={...REG.VB};ini=new Map([...P].map(([k,v])=>[k,[...v]]));}if(pinça&&REG.on)rChecarEntrada();};
+  const fimR=e=>{if(!P.has(e.pointerId))return;const pinça=P.size===2;P.delete(e.pointerId);if(P.size)R0();else gestoFim();if(pinça&&REG.on)rChecarEntrada();};
   window.addEventListener("pointerup",fimR);window.addEventListener("pointercancel",fimR);
-  s.addEventListener("wheel",e=>{e.preventDefault();const r=s.getBoundingClientRect(),V=REG.VB;rZoom((e=>{let d=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?400:1);d=Math.max(-120,Math.min(120,d));return Math.exp(d*(e.ctrlKey?0.012:0.0022));})(e),V.x+(e.clientX-r.left)*V.w/r.width,V.y+(e.clientY-r.top)*V.h/r.height);},{passive:false});
+  s.addEventListener("wheel",e=>{e.preventDefault();const r=s.getBoundingClientRect(),V=REG.VB;rZoom((e=>{let d=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?400:1);d=Math.max(-120,Math.min(120,d));return Math.exp(d*(e.ctrlKey?0.012:0.0022));})(e),...s2m(V,r,e.clientX,e.clientY));},{passive:false});
   s.addEventListener("click",e=>{if(mv){mv=false;return;}const pd=e.target.closest(".pd");if(pd){REG.pd=+pd.dataset.p;REG.sel=null;rRotulos();rInfo();return;}REG.pd=null;const t=e.target.closest(".rf");if(t){const i=+t.dataset.f;REG.sel=REG.sel===i?null:i;}else{
       /* toque perto de uma fazenda pequena também vale */
-      const r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.width,x=V.x+(e.clientX-r.left)*u,y=V.y+(e.clientY-r.top)*u;let best=null,bd=1e9;
+      const r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.width,[x,y]=s2m(V,r,e.clientX,e.clientY);let best=null,bd=1e9;
       REG.dados.faz.forEach((f,i)=>{const d=Math.hypot(Math.max(f.bb[0]-x,0,x-f.bb[2]),Math.max(f.bb[1]-y,0,y-f.bb[3]))/u;if(d<bd){bd=d;best=i;}});REG.sel=bd<=24?best:null;}
     rRotulos();rInfo();});})();
 /* botões: na região eles agem na região */
 (()=>{const orig={};["b-in","b-out","b-fit","b-gps","b-pt","b-menu"].forEach(id=>{orig[id]=$("#"+id).onclick;});
   $("#b-in").onclick=()=>REG.on?rZoom(1/1.6):orig["b-in"]();
   $("#b-out").onclick=()=>REG.on?rZoom(1.6):orig["b-out"]();
-  $("#b-fit").onclick=()=>{if(REG.on){REG.VB=null;rAplicar();}else orig["b-fit"]();};
-  $("#b-gps").onclick=()=>{if(!REG.on)return orig["b-gps"]();if(!GPS.on){gpsLigar();GPS.seguir=false;aviso("Ligando o GPS…");return;}if(GPS.fix){const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);const w=Math.min(REG.VB.w,60),h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};rAplicar();rChecarEntrada();}else gpsDesligar();};
+  $("#b-fit").onclick=()=>{if(REG.on){ANG=0;REG.VB=null;rAplicar();}else orig["b-fit"]();};
+  $("#b-gps").onclick=()=>{if(!REG.on)return orig["b-gps"]();if(!GPS.on){gpsLigar();aviso("Ligando o GPS… o mapa vai te seguir.");return;}if(GPS.seguir){gpsDesligar();aviso("GPS desligado.");return;}if(GPS.fix){GPS.seguir=true;GPS.auto=false;const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);const w=Math.min(REG.VB.w,60),h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};rAplicar();aviso("Seguindo você. Toque de novo para desligar o GPS.");rChecarEntrada();}else gpsDesligar();};
   $("#b-pt").onclick=()=>{if(!REG.on)return orig["b-pt"]();let lat,lon,o;if(GPS.on&&GPS.fix){lat=GPS.fix.lat;lon=GPS.fix.lon;o=`sua posição (±${Math.round(GPS.fix.acc)} m)`;}else{const V=REG.VB;[lat,lon]=RG(V.x+V.w/2,V.y+V.h/2);o="centro da tela (ligue o GPS ◉ para marcar onde você está)";}
     const [x,y]=RP(lon,lat);const f=REG.dados&&REG.dados.faz.find(f=>x>=f.bb[0]&&x<=f.bb[2]&&y>=f.bb[1]&&y<=f.bb[3]);
     NOVO={id:"p"+Date.now().toString(36),lat,lon,tipo:"",obs:"",foto:null,fazenda:f?f.n:"Fora das fazendas",mapa:"Região",em:new Date().toISOString()};folhaPonto(o);};

@@ -488,6 +488,7 @@ const APPMODO=/github\.io$/.test(location.hostname)||/[?&]app=1/.test(location.s
 const BASE={ok:false,em:"",erro:"",carregando:false};
 const COLS_BASE=["os","lanc","rdo","config","mapas","marcas","trechos","novas"];
 const b64u8=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+const senhaLimpa=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"");
 async function abrirBase(senha){const r=await fetch("dados/painel_base.json",{cache:"no-cache"});if(!r.ok)throw new Error("sem-base");const j=await r.json();
   const k0=await crypto.subtle.importKey("raw",new TextEncoder().encode(senha),"PBKDF2",false,["deriveKey"]);
   const k=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64u8(j.salt),iterations:j.it||150000,hash:"SHA-256"},k0,{name:"AES-GCM",length:256},false,["decrypt"]);
@@ -773,7 +774,7 @@ function listaEPS(){const s=new Set(EPS_BASE);(((DATA.config||{}).eps||{}).lista
 function appAvisoHTML(){
   if(BASE.carregando)return `<div class="note">Abrindo os dados do celular…</div>`;
   if(!BASE.ok)return `<div class="note" style="border-color:var(--warn);border-width:2px"><b>${BASE.erro==="senha"?"Senha errada. Tente de novo.":BASE.erro==="sem-base"?"Abra o app uma vez com internet para baixar os dados.":"Digite a senha da equipe (só na primeira vez)."}</b>
-    ${BASE.erro==="sem-base"?"":`<div class="row" style="margin-top:8px"><input class="inp" id="app-senha" type="password" autocomplete="current-password" placeholder="Senha da equipe" style="max-width:240px"><button class="btn primary" data-a="app-senha">Entrar</button></div>`}</div>`;
+    ${BASE.erro==="sem-base"?"":`<div class="row" style="margin-top:8px"><span style="position:relative;display:inline-block;max-width:240px;width:100%"><input class="inp" id="app-senha" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Senha da equipe" style="width:100%;padding-right:48px"><button type="button" aria-label="Mostrar ou esconder a senha" onclick="const i=this.previousElementSibling;i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:18px;padding:6px 8px;cursor:pointer">👁</button></span><button class="btn primary" data-a="app-senha">Entrar</button></div>`}</div>`;
   return `<div class="note"><b>📴 Painel no celular (funciona sem internet).</b> Dados de ${BASE.em?fDH(BASE.em):"—"}. O que você lançar fica guardado aqui.
     ${FILA.length?`<div class="row" style="margin-top:8px"><button class="btn primary" data-a="app-enviar">📤 Enviar ao painel (${FILA.length})</button><span class="muted small">Com sinal: manda o pacote para o supervisor ou abra o painel online e toque em Receber pacote.</span></div>`:`<div class="muted small" style="margin-top:4px">Nada pendente neste celular.</div>`}
     ${ME.id?"":`<label class="f" style="margin-top:8px">Seu nome (para registrar quem validou)<input class="inp" id="meu-nome" value="${esc(ME.nome)}" placeholder="Nome do técnico"></label>`}
@@ -3138,7 +3139,7 @@ async function onClick(ev){
   case "tc-st": {const M=DATA.mapas[ST.mapa];const t=M&&(M.trechos||[]).find(x=>x.n===+d.n);if(!t)return;const dd=tcDe(M,t.n);const ps=partesTr(M,t);
     if(ps.length===1&&ps[0].st===d.v)return;
     await salvarTrecho(M,t,{partes:[{km:kmTr(t,dd),st:d.v}]},`T${t.n}: ${STT[d.v].t}`);break;}
-  case "app-senha": {const v=(document.getElementById("app-senha")||{}).value||"";if(!v.trim()){toast("Digite a senha.");return;}BASE.carregando=true;render();carregarBase(v.trim()).then(()=>{COLS_BASE.forEach(c=>avisarCol(c));render();});return;}
+  case "app-senha": {const v=(document.getElementById("app-senha")||{}).value||"";if(!v.trim()){toast("Digite a senha.");return;}BASE.carregando=true;render();carregarBase(senhaLimpa(v)).then(()=>{COLS_BASE.forEach(c=>avisarCol(c));render();});return;}
   case "app-enviar": fecharTudo();enviarPacote();return;
   case "app-limpar": FILA=[];salvarFila();chipFila();fecharTudo();toast("Celular limpo. Os dados continuam no painel quando o pacote for recebido.");render();return;
   case "cam-abrir": ST.camMenu=!ST.camMenu;render();return;
