@@ -31,7 +31,7 @@ svg#mapa{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-se
 .racs{fill:none;stroke-width:3.2px;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;stroke:#8E938B}
 .racs.s-pronto,.racs.s-g-ok{stroke:#3F7A4E}.racs.s-preparo,.racs.s-agulhado,.racs.s-g-and{stroke:#C08A2E}.racs.s-falta,.racs.s-g-zero{stroke:#B5574A}
 .rod{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.rod.F{stroke:#7A6A5E;stroke-width:2.6px}.rod.E{stroke:#9C948A;stroke-width:1.6px}.rod.E.t{stroke-dasharray:5 4}
-.rodl{font:600 9.5px system-ui,sans-serif;fill:var(--mut);fill-opacity:.8;text-anchor:middle;dominant-baseline:central;letter-spacing:.6px;paint-order:stroke;stroke:var(--bg);stroke-width:2.5px;stroke-opacity:.7;stroke-linejoin:round}
+.rodl{font:600 8px system-ui,sans-serif;fill:var(--mut);fill-opacity:.8;text-anchor:middle;dominant-baseline:central;letter-spacing:.6px;paint-order:stroke;stroke:var(--bg);stroke-width:2.5px;stroke-opacity:.7;stroke-linejoin:round}
 .vic{fill:none;stroke:#A99D8A;stroke-width:1.2px;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;opacity:.9}.vic.t{stroke-dasharray:4 3;stroke-width:1px}
 .viz{fill:none;stroke-width:1.6px;stroke-opacity:.8;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .hit{fill:none;stroke:transparent;stroke-width:26;vector-effect:non-scaling-stroke}
@@ -61,6 +61,8 @@ body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 #esc i{display:block;height:5px;border:2px solid var(--ink);border-top:0}
 #leg{position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2;background:var(--sf);opacity:.92;border-radius:8px;padding:5px 8px;font-size:11px;display:flex;gap:4px 9px;flex-wrap:wrap;justify-content:flex-end;max-width:62%}
 #leg i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}
+#medbar{position:fixed;left:8px;right:8px;bottom:calc(44px + env(safe-area-inset-bottom));z-index:4;padding:10px 12px;display:none}#medbar.on{display:block}body.medindo #info{display:none!important}#medbar [aria-pressed=true]{background:var(--ok);border-color:var(--ok);color:#fff}
+.medl{fill:none;stroke:#E8B33A;stroke-width:3px;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}.meda{fill:#E8B33A;fill-opacity:.18;stroke:none}.medp{fill:#fff;stroke:#B07D10;stroke-width:2px;vector-effect:non-scaling-stroke}
 #info{position:fixed;left:8px;right:8px;bottom:calc(44px + env(safe-area-inset-bottom));z-index:3;max-height:46vh;overflow:auto;padding:10px 12px;line-height:1.5;display:none}
 #info hr{border:0;border-top:1px solid var(--ln);margin:6px 0}
 .pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12.5px;font-weight:700;background:var(--ln)}
@@ -120,10 +122,12 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <button id="b-fit" aria-label="Ver a fazenda inteira" title="Ver a fazenda inteira">⤢<span class="lb">Ver a fazenda inteira</span></button>
   <button id="b-cam" aria-label="Mapas oficiais (camadas)" title="Mapas oficiais (camadas)" hidden>🗂<span class="lb">Mapas oficiais</span></button>
   <button id="b-gps" aria-label="Onde estou (GPS)" title="Onde estou (GPS)">◉<span class="lb">Onde estou (GPS)</span></button>
+  <button id="b-med" aria-label="Medir distância ou área" title="Medir distância ou área">📏<span class="lb">Medir</span></button>
   <button id="b-pt" aria-label="Marcar ponto" title="Marcar ponto">📍<span class="lb">Marcar ponto</span></button>
   <button id="b-menu" aria-label="Talhões, pontos e mais" title="Talhões, pontos e mais">☰<span class="lb">Talhões, pontos e mais</span></button>
 </div>
 <div id="info" class="box"></div>
+<div id="medbar" class="box"><div id="med-r"><b>Toque no mapa</b> para marcar os pontos.</div><div class="row" style="flex-wrap:wrap;gap:6px;margin-top:8px"><div class="bar" style="width:auto;flex:0 0 auto"><button class="bt" data-mt="linha">Linha</button><button class="bt" data-mt="area">Área</button></div><button class="btn" id="med-gps">📍 Onde estou</button><button class="btn" id="med-und">↶ Desfazer</button><button class="btn" id="med-lim">Limpar</button><button class="btn" id="med-cp">Copiar</button><button class="btn pri" id="med-x">Fechar</button></div></div>
 <div id="esc"></div>
 <div id="leg"></div>
 <div id="upd" class="box"><span>Mapas novos disponíveis.</span><button class="btn pri" id="b-upd">Atualizar agora</button></div>
@@ -214,7 +218,7 @@ function rodMapa(m){if(!ROD||!LS.get("rod","1"))return "";if(m._rod!=null)return
   const b=[Math.min(...lo)-pad,Math.min(...la)-pad,Math.max(...lo)+pad,Math.max(...la)+pad];let lab=[];
   const h=ROD.rod.filter(r=>r[3].some(p=>p[0]>=b[0]&&p[0]<=b[2]&&p[1]>=b[1]&&p[1]<=b[3])).map(r=>{const P=r[3].map(p=>g2n(m,p[1],p[0]));
     /* placas ao longo da rodovia: uma a cada ~1/4 da largura do mapa (a sobreposição é resolvida na hora de desenhar) */
-    const passo=Math.max(m.w,m.h)/4;let acc=passo/2;for(let i=1;i<P.length;i++){const l=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);let pos=0;
+    const passo=Math.max(m.w,m.h)/1.6;let acc=passo/2;for(let i=1;i<P.length;i++){const l=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);let pos=0;
       while(acc<=l+pos&&l>0){const t=(acc-pos)/l;if(t<0||t>1)break;lab.push([r[1],[P[i-1][0]+(P[i][0]-P[i-1][0])*t,P[i-1][1]+(P[i][1]-P[i-1][1])*t],Math.atan2(P[i][1]-P[i-1][1],P[i][0]-P[i-1][0])/RAD,r[0]]);acc+=passo;}acc-=l;}
     return `<polyline class="rod ${r[0]}${r[2]?" t":""}" points="${P.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}"/>`;}).join("");
   return m._rod=`<g class="rodg">${h}</g>`+lab.map(([n,p,a])=>`<g class="fx rl" data-cx="${p[0]}" data-cy="${p[1]}" data-a="${a.toFixed(1)}"><text class="rodl" x="${p[0]}" y="${p[1]-0.1}">${esc(n)}</text></g>`).join("");}
@@ -237,13 +241,13 @@ function desenhar(){const m=M();sel=null;VB=null;
     m.trechos.map(t=>`<polyline class="tr s-${t.st}${t.n%2?"":" alt"}" data-n="${t.n}" points="${t.pts.join(" ")}"/><polyline class="hit" data-n="${t.n}" points="${t.pts.join(" ")}"/>`).join("")+
     m.talhoes.filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fx tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${Math.max(...xs)-Math.min(...xs)}" data-h="${Math.max(...ys)-Math.min(...ys)}" data-n="${String(t.id).length}"><text class="tt" x="${t.lab[0]}" y="${t.lab[1]}">${esc(t.id)}</text>${t.ha?`<text class="ts" x="${t.lab[0]}" y="${t.lab[1]+12}">${fmt(Math.round(t.ha*10)/10)} ha</text>`:""}</g>`;}).join("")+
     m.trechos.filter(t=>t.mid).map(t=>`<g class="fx nb" data-n="${t.n}" data-cx="${t.mid[0]}" data-cy="${t.mid[1]}"><circle cx="${t.mid[0]}" cy="${t.mid[1]}" r="10"/><text x="${t.mid[0]}" y="${t.mid[1]}">${t.n}</text></g>`).join("")+
-    `<g id="pins"></g><g id="gps"></g></g>`;
+    `<g id="pins"></g><g id="med"></g><g id="gps"></g></g>`;
   $("#leg").innerHTML=m.trechos.some(t=>!String(t.st).startsWith("g-"))||true?`<span><i style="background:var(--zero)"></i>Falta</span><span><i style="background:var(--and)"></i>Em andamento</span><span><i style="background:var(--ok)"></i>Pronto</span><span><i style="background:var(--np)"></i>Sem previsão</span>${ROD?`<span><i style="background:#7A6A5E"></i>Rodovia BR/MS</span><span><i style="background:#A99D8A"></i>Vicinal / terra</span>`:""}`:"";
   info();aplicar();LS.set("mapa",m.id);camAuto(m);}
 let raf=0;
 function aplicar(){const s=sv();const rr=s.getBoundingClientRect();if(!rr.width||!rr.height){requestAnimationFrame(aplicar);return;}if(!VB)VB=inteiro();const nh=VB.w*raz();VB.y+=(VB.h-nh)/2;VB.h=nh;s.setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);rotAplicar("rotf",VB);
   const z=inteiro().w/VB.w;s.style.setProperty("--tw",Math.max(1.6,Math.min(2+1.7*Math.sqrt(Math.max(z-1,0)),7)).toFixed(2)+"px");
-  if(!raf)raf=requestAnimationFrame(()=>{raf=0;rotulos();});}
+  if(!raf)raf=requestAnimationFrame(()=>{raf=0;rotulos();if(MED.on)medDesenhar();});}
 function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)return;const uu=VB.w/r0.width;
   const tf=(g,k)=>{const cx=+g.dataset.cx,cy=+g.dataset.cy;g.setAttribute("transform",`translate(${cx} ${cy})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${k}) translate(${-cx} ${-cy})`);};
   const cx=[];const livre=(x,y,w,h)=>{const b=[x-w/2,y-h/2,x+w/2,y+h/2];if(cx.some(c=>b[0]<c[2]&&b[2]>c[0]&&b[1]<c[3]&&b[3]>c[1]))return false;cx.push(b);return true;};
@@ -253,7 +257,7 @@ function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)
   [...s.querySelectorAll(".nb")].sort((a,b)=>(+b.dataset.n===sel)-(+a.dataset.n===sel)).forEach(g=>{tf(g,uu);const isSel=+g.dataset.n===sel;g.classList.toggle("sel",isSel);const [x,y]=tela(g);
     if(!isSel&&(!ver||!dentro(x,y))){g.style.display="none";return;}g.style.display=(livre(x,y,String(g.dataset.n).length*6.5+8,15)||isSel)?"":"none";});
   s.querySelectorAll(".tr").forEach(p=>p.classList.toggle("sel",+p.dataset.n===sel));
-  s.querySelectorAll(".rl").forEach(g=>{const cx=+g.dataset.cx,cy=+g.dataset.cy;g.setAttribute("transform",`translate(${cx} ${cy}) rotate(${angLeg(+g.dataset.a||0).toFixed(1)}) scale(${uu}) translate(${-cx} ${-cy})`);const [x,y]=tela(g);g.style.display=dentro(x,y)&&livre(x,y,g.textContent.length*6.2+4,14)?"":"none";});
+  s.querySelectorAll(".rl").forEach(g=>{const cx=+g.dataset.cx,cy=+g.dataset.cy;g.setAttribute("transform",`translate(${cx} ${cy}) rotate(${angLeg(+g.dataset.a||0).toFixed(1)}) scale(${uu}) translate(${-cx} ${-cy})`);const [x,y]=tela(g);g.style.display=dentro(x,y)&&livre(x,y,g.textContent.length*5.4+90,60)?"":"none";});
   [...s.querySelectorAll(".tl")].map(g=>({g,w:+g.dataset.w/uu,h:+g.dataset.h/uu})).sort((a,b)=>b.w-a.w).forEach(o=>{const g=o.g,wN=(+g.dataset.n)*7.2+6;const [x,y]=tela(g);
     if(o.w<wN*1.6||o.h<20||!dentro(x,y)){g.style.display="none";return;}tf(g,uu);const sub=g.querySelector(".ts");const cs=!!sub&&o.w>=60&&o.h>=46;if(sub)sub.style.display=cs?"":"none";
     g.style.display=livre(x,y+(cs?6:0),Math.max(wN,cs?50:0),cs?28:15)?"":"none";});
@@ -339,6 +343,32 @@ function camFolha(){const m=M();if(!m)return;const at=CAMS[m.id]||"";
   $("#sh-b").querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{if(b.dataset.ck)CAMS[m.id]=b.dataset.ck;else delete CAMS[m.id];LS.set("camadas",CAMS);fecharFolha();desenharMantendo();});
   $("#cam-op").oninput=e=>{CAMS._op=+e.target.value;LS.set("camadas",CAMS);const im=sv().querySelector("image");if(im)im.setAttribute("opacity",e.target.value);};}
 $("#b-cam").onclick=camFolha;
+/* ===== medir distância e área (linha ou área), funciona na fazenda e na região, sem internet ===== */
+const MED={on:false,tipo:"linha",pts:[]};
+function medTexto(){const P=MED.pts;if(!P.length)return "<b>Toque no mapa</b> para marcar os pontos.";let d=0;for(let i=1;i<P.length;i++)d+=dist(P[i-1],P[i]);
+  if(MED.tipo==="area"){if(P.length<3)return `${P.length} ponto(s) · marque pelo menos 3 para a área`;const la0=P[0][0],k=Math.cos(la0*Math.PI/180)*111320;const xy=P.map(p=>[(p[1]-P[0][1])*k,(p[0]-la0)*110574]);let a=0;for(let i=0;i<xy.length;i++){const q=xy[i],r=xy[(i+1)%xy.length];a+=q[0]*r[1]-r[0]*q[1];}a=Math.abs(a)/2;
+    const per=d+dist(P[P.length-1],P[0]);return `<b>Área: ${fmt(Math.round(a/100)/100)} ha</b> (${fmt(Math.round(a))} m²) · perímetro ${fM(per)} · ${P.length} pontos`;}
+  return `<b>Distância: ${fM(d)}</b> · ${P.length} ponto(s)`;}
+function medDesenhar(){const g=document.getElementById(REG.on?"r-med":"med");const out=document.getElementById(REG.on?"med":"r-med");if(out)out.innerHTML="";if(!g)return;if(!MED.on||!MED.pts.length){g.innerHTML="";return;}
+  let pts,u;if(REG.on){if(!REG.VB)return;pts=MED.pts.map(p=>RP(p[1],p[0]));u=REG.VB.w/rsv().getBoundingClientRect().width;}else{const m=M();if(!m||!VB)return;pts=MED.pts.map(p=>g2n(m,p[0],p[1]));u=VB.w/sv().getBoundingClientRect().width;}
+  const s=pts.map(p=>p[0].toFixed(3)+","+p[1].toFixed(3)).join(" ");
+  g.innerHTML=(MED.tipo==="area"&&pts.length>2?`<polygon class="meda" points="${s}"/><polygon class="medl" points="${s}"/>`:`<polyline class="medl" points="${s}"/>`)+pts.map(p=>`<circle class="medp" cx="${p[0]}" cy="${p[1]}" r="${5*u}"/>`).join("");
+  $("#med-r").innerHTML=medTexto();}
+function medAbrir(){MED.on=true;document.body.classList.add("medindo");$("#medbar").classList.add("on");$("#b-med").classList.add("on");medTipo(MED.tipo);}
+function medFechar(){MED.on=false;MED.pts=[];document.body.classList.remove("medindo");$("#medbar").classList.remove("on");$("#b-med").classList.remove("on");medDesenhar();if(!REG.on)info();}
+function medTipo(t){MED.tipo=t;document.querySelectorAll("#medbar [data-mt]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.mt===t)));medDesenhar();$("#med-r").innerHTML=medTexto();}
+$("#b-med").onclick=()=>MED.on?medFechar():medAbrir();
+document.querySelectorAll("#medbar [data-mt]").forEach(b=>b.onclick=()=>medTipo(b.dataset.mt));
+$("#med-und").onclick=()=>{MED.pts.pop();medDesenhar();$("#med-r").innerHTML=medTexto();};
+$("#med-lim").onclick=()=>{MED.pts=[];medDesenhar();$("#med-r").innerHTML=medTexto();};
+$("#med-x").onclick=medFechar;
+$("#med-gps").onclick=()=>{if(!GPS.on){gpsLigar();aviso("Ligando o GPS… toque de novo quando aparecer a seta.");return;}if(!GPS.fix){aviso("Esperando o sinal do GPS…");return;}MED.pts.push([GPS.fix.lat,GPS.fix.lon]);medDesenhar();};
+$("#med-cp").onclick=async()=>{const t=$("#med-r").textContent;try{await navigator.clipboard.writeText(t);aviso("Medida copiada.");}catch(e){aviso(t);}};
+/* toque no mapa (sem arrastar) marca um ponto */
+(()=>{let d0=null;const pega=s=>{s.addEventListener("pointerdown",e=>{d0=[e.clientX,e.clientY];},true);
+  s.addEventListener("click",e=>{if(!MED.on)return;e.stopPropagation();e.preventDefault();if(d0&&Math.hypot(e.clientX-d0[0],e.clientY-d0[1])>7)return;
+    let ll;if(s===rsv()){const [x,y]=s2m(REG.VB,s.getBoundingClientRect(),e.clientX,e.clientY);ll=RG(x,y);}else{const [x,y]=toN(e.clientX,e.clientY);ll=n2g(M(),x,y);}
+    MED.pts.push(ll);medDesenhar();},true);};setTimeout(()=>{pega(sv());pega(rsv());},0);})();
 /* ===== camadas guardadas no celular (sem internet) =====
    Ficam num cache próprio ("camadas") que NÃO é apagado quando o app atualiza.
    O botão do início baixa todas; ao abrir uma fazenda com internet, as dela são guardadas sozinhas. */
@@ -437,13 +467,13 @@ const rPath=rs=>rs.map(r=>"M"+r.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join("
 function rDesenhar(){const D=REG.dados;const s=rsv();if(!D){s.innerHTML="";return;}
   let h=`<g id="r-rod">${ROD?ROD.rod.map(([c,n,t,pts])=>`<polyline class="rod ${c}${t?" t":""}" points="${pts.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join(" ")}"/>`).join(""):""}</g><g id="r-fz">`;
   D.faz.forEach((f,i)=>{h+=`<path class="rf${f.cod?" cad":""}" data-f="${i}" d="${rPath(f.r)}"/>`;});
-  h+=`</g><g id="r-rede"></g><g id="r-ac"></g><g id="r-det"></g><g id="r-rota"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-gps"></g>`;s.innerHTML=`<g id="rotr">`+h+`</g>`;REG.detK="";rtDesenhar();rAplicar();}
+  h+=`</g><g id="r-rede"></g><g id="r-ac"></g><g id="r-det"></g><g id="r-rota"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-med"></g><g id="r-gps"></g>`;s.innerHTML=`<g id="rotr">`+h+`</g>`;REG.detK="";rtDesenhar();rAplicar();}
 function rTudo(){const D=REG.dados;const fs=D.faz.filter(f=>f.cod);const L=fs.length?fs:D.faz;
   return [Math.min(...L.map(f=>f.bb[0])),Math.min(...L.map(f=>f.bb[1])),Math.max(...L.map(f=>f.bb[2])),Math.max(...L.map(f=>f.bb[3]))];}
 function rIrPara(b,m=.25){const w=Math.max(b[2]-b[0],(b[3]-b[1])/raz())*(1+2*m)+2;const h=w*raz();REG.VB={x:(b[0]+b[2])/2-w/2,y:(b[1]+b[3])/2-h/2,w,h};rAplicar();}
 function rAplicar(){const s=rsv();const r=s.getBoundingClientRect();if(!r.width||!REG.dados)return;if(!REG.VB){rIrPara(rTudo());return;}
   const V=REG.VB;const h=V.w*raz();V.y+=(V.h-h)/2;V.h=h;s.setAttribute("viewBox",`${V.x} ${V.y} ${V.w} ${V.h}`);rotAplicar("rotr",V);
-  cancelAnimationFrame(REG.raf);REG.raf=requestAnimationFrame(()=>{rRede();rAcessos();rDetalhe();rRotulos();rGps();rEscala();});}
+  cancelAnimationFrame(REG.raf);REG.raf=requestAnimationFrame(()=>{rRede();rAcessos();rDetalhe();rRotulos();rGps();rEscala();if(MED.on)medDesenhar();});}
 /* estradas de terra e vicinais (as mesmas da rota) aparecem quando aproxima: a fazenda não fica "voando" */
 function rRede(){const g=$("#r-rede");if(!g)return;const V=REG.VB;if(V.w>140){if(REG.redeK){g.innerHTML="";REG.redeK="";}return;}
   if(!RT.G){rtCarregar().then(()=>{REG.redeK="";rRede();}).catch(()=>{});return;}
@@ -466,9 +496,9 @@ function rRotulos(){const s=rsv(),r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.w
   const ord=F.map((f,i)=>i).sort((a,b)=>(b===REG.sel)-(a===REG.sel)||(!!F[b].cod-!!F[a].cod)||((F[b].bb[2]-F[b].bb[0])-(F[a].bb[2]-F[a].bb[0])));
   for(const i of ord){const f=F[i];const wpx=(f.bb[2]-f.bb[0])/u;if(f.n==="(sem nome)"||(i!==REG.sel&&!f.cod&&wpx<60))continue;const [x,y]=tela(f.P[0],f.P[1]);if(!dentro(x,y))continue;
     const w=f.n.length*6.6+8;if(!livre(x,y,w,16))continue;h+=`<text class="rlab${f.cod?" cad":""}" transform="translate(${f.P[0]} ${f.P[1]})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${u})">${esc(f.n)}</text>`;}
-  if(ROD){if(!REG.rodLab){REG.rodLab=[];const passo=12000/RU;ROD.rod.forEach(([c,n,t,pts])=>{const P=pts.map(p=>RP(p[0],p[1]));let acc=passo/2;
+  if(ROD){if(!REG.rodLab){REG.rodLab=[];const passo=30000/RU;ROD.rod.forEach(([c,n,t,pts])=>{const P=pts.map(p=>RP(p[0],p[1]));let acc=passo/2;
       for(let i=1;i<P.length;i++){const l=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);let a0=0;while(l>0&&acc<=l){const t=acc/l;REG.rodLab.push([n,Math.atan2(P[i][1]-P[i-1][1],P[i][0]-P[i-1][0])/RAD,P[i-1][0]+(P[i][0]-P[i-1][0])*t,P[i-1][1]+(P[i][1]-P[i-1][1])*t]);acc+=passo;}acc-=l;}});}
-    for(const [n,a,x0,y0] of REG.rodLab){const [x,y]=tela(x0,y0);if(!dentro(x,y))continue;if(!livre(x,y,String(n).length*6.2+4,14))continue;
+    for(const [n,a,x0,y0] of REG.rodLab){const [x,y]=tela(x0,y0);if(!dentro(x,y))continue;if(!livre(x,y,String(n).length*5.4+90,60))continue;
       h+=`<g transform="translate(${x0} ${y0}) rotate(${angLeg(a).toFixed(1)}) scale(${u})"><text class="rodl" x="0" y="0">${esc(n)}</text></g>`;}}
   $("#r-lab").innerHTML=h;
   s.querySelectorAll(".rtl").forEach(g=>{const [x,y]=tela(+g.dataset.x,+g.dataset.y);const t=g.firstChild;const ok=dentro(x,y)&&livre(x,y,t.textContent.length*6.5+6,14);g.style.display=ok?"":"none";if(ok)g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${u}) translate(${-g.dataset.x} ${-g.dataset.y})`);});
