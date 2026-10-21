@@ -31,8 +31,7 @@ svg#mapa{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-se
 .racs{fill:none;stroke-width:3.2px;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;stroke:#8E938B}
 .racs.s-pronto,.racs.s-g-ok{stroke:#3F7A4E}.racs.s-preparo,.racs.s-agulhado,.racs.s-g-and{stroke:#C08A2E}.racs.s-falta,.racs.s-g-zero{stroke:#B5574A}
 .rod{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.rod.F{stroke:#7A6A5E;stroke-width:2.6px}.rod.E{stroke:#9C948A;stroke-width:1.6px}.rod.E.t{stroke-dasharray:5 4}
-.rodl{font:800 10.5px system-ui,sans-serif;fill:#2B2522;text-anchor:middle;dominant-baseline:central;letter-spacing:.2px}
-.rsh{fill:#FFFFFF;stroke:#5E5047;stroke-width:1.3px}.rsh.F{fill:#F3EEE4;stroke:#3F352F;stroke-width:1.6px}
+.rodl{font:600 9.5px system-ui,sans-serif;fill:var(--mut);fill-opacity:.8;text-anchor:middle;dominant-baseline:central;letter-spacing:.6px;paint-order:stroke;stroke:var(--bg);stroke-width:2.5px;stroke-opacity:.7;stroke-linejoin:round}
 .vic{fill:none;stroke:#A99D8A;stroke-width:1.2px;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;opacity:.9}.vic.t{stroke-dasharray:4 3;stroke-width:1px}
 .viz{fill:none;stroke-width:1.6px;stroke-opacity:.8;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .hit{fill:none;stroke:transparent;stroke-width:26;vector-effect:non-scaling-stroke}
@@ -216,9 +215,11 @@ function rodMapa(m){if(!ROD||!LS.get("rod","1"))return "";if(m._rod!=null)return
   const h=ROD.rod.filter(r=>r[3].some(p=>p[0]>=b[0]&&p[0]<=b[2]&&p[1]>=b[1]&&p[1]<=b[3])).map(r=>{const P=r[3].map(p=>g2n(m,p[1],p[0]));
     /* placas ao longo da rodovia: uma a cada ~1/4 da largura do mapa (a sobreposição é resolvida na hora de desenhar) */
     const passo=Math.max(m.w,m.h)/4;let acc=passo/2;for(let i=1;i<P.length;i++){const l=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);let pos=0;
-      while(acc<=l+pos&&l>0){const t=(acc-pos)/l;if(t<0||t>1)break;lab.push([r[1],[P[i-1][0]+(P[i][0]-P[i-1][0])*t,P[i-1][1]+(P[i][1]-P[i-1][1])*t],l,r[0]]);acc+=passo;}acc-=l;}
+      while(acc<=l+pos&&l>0){const t=(acc-pos)/l;if(t<0||t>1)break;lab.push([r[1],[P[i-1][0]+(P[i][0]-P[i-1][0])*t,P[i-1][1]+(P[i][1]-P[i-1][1])*t],Math.atan2(P[i][1]-P[i-1][1],P[i][0]-P[i-1][0])/RAD,r[0]]);acc+=passo;}acc-=l;}
     return `<polyline class="rod ${r[0]}${r[2]?" t":""}" points="${P.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ")}"/>`;}).join("");
-  return m._rod=`<g class="rodg">${h}</g>`+lab.map(([n,p,_,cl])=>{const w=String(n).length*6.6+10;return `<g class="fx rl" data-cx="${p[0]}" data-cy="${p[1]}"><rect class="rsh ${cl}" x="${p[0]-w/2}" y="${p[1]-8.5}" width="${w}" height="17" rx="3"/><text class="rodl" x="${p[0]}" y="${p[1]}">${esc(n)}</text></g>`;}).join("");}
+  return m._rod=`<g class="rodg">${h}</g>`+lab.map(([n,p,a])=>`<g class="fx rl" data-cx="${p[0]}" data-cy="${p[1]}" data-a="${a.toFixed(1)}"><text class="rodl" x="${p[0]}" y="${p[1]-0.1}">${esc(n)}</text></g>`).join("");}
+/* ângulo do nome da rodovia: segue a estrada e nunca fica de cabeça para baixo na tela */
+function angLeg(a){const s=angN(a+ANG);return s>90?a-180:s<-90?a+180:a;}
 /* estradas vicinais e de terra (OpenStreetMap) em volta da fazenda, por baixo dos trechos */
 function vicMapa(m){if(m._vic!=null)return m._vic;try{RT;}catch(e){return "";}if(!RT.G){rtCarregar().then(()=>{if(M()===m){const g=document.getElementById("vic");if(g)g.innerHTML=vicMapa(m);}}).catch(()=>{});return "";}
   const G=RT.G;const cs=[[0,0],[m.w,0],[0,m.h],[m.w,m.h]].map(p=>n2g(m,p[0],p[1]));const la=cs.map(c=>c[0]),lo=cs.map(c=>c[1]);
@@ -252,7 +253,7 @@ function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)
   [...s.querySelectorAll(".nb")].sort((a,b)=>(+b.dataset.n===sel)-(+a.dataset.n===sel)).forEach(g=>{tf(g,uu);const isSel=+g.dataset.n===sel;g.classList.toggle("sel",isSel);const [x,y]=tela(g);
     if(!isSel&&(!ver||!dentro(x,y))){g.style.display="none";return;}g.style.display=(livre(x,y,String(g.dataset.n).length*6.5+8,15)||isSel)?"":"none";});
   s.querySelectorAll(".tr").forEach(p=>p.classList.toggle("sel",+p.dataset.n===sel));
-  s.querySelectorAll(".rl").forEach(g=>{tf(g,uu);const [x,y]=tela(g);g.style.display=dentro(x,y)&&livre(x,y,g.textContent.length*6.6+16,22)?"":"none";});
+  s.querySelectorAll(".rl").forEach(g=>{const cx=+g.dataset.cx,cy=+g.dataset.cy;g.setAttribute("transform",`translate(${cx} ${cy}) rotate(${angLeg(+g.dataset.a||0).toFixed(1)}) scale(${uu}) translate(${-cx} ${-cy})`);const [x,y]=tela(g);g.style.display=dentro(x,y)&&livre(x,y,g.textContent.length*6.2+4,14)?"":"none";});
   [...s.querySelectorAll(".tl")].map(g=>({g,w:+g.dataset.w/uu,h:+g.dataset.h/uu})).sort((a,b)=>b.w-a.w).forEach(o=>{const g=o.g,wN=(+g.dataset.n)*7.2+6;const [x,y]=tela(g);
     if(o.w<wN*1.6||o.h<20||!dentro(x,y)){g.style.display="none";return;}tf(g,uu);const sub=g.querySelector(".ts");const cs=!!sub&&o.w>=60&&o.h>=46;if(sub)sub.style.display=cs?"":"none";
     g.style.display=livre(x,y+(cs?6:0),Math.max(wN,cs?50:0),cs?28:15)?"":"none";});
@@ -466,9 +467,9 @@ function rRotulos(){const s=rsv(),r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.w
   for(const i of ord){const f=F[i];const wpx=(f.bb[2]-f.bb[0])/u;if(f.n==="(sem nome)"||(i!==REG.sel&&!f.cod&&wpx<60))continue;const [x,y]=tela(f.P[0],f.P[1]);if(!dentro(x,y))continue;
     const w=f.n.length*6.6+8;if(!livre(x,y,w,16))continue;h+=`<text class="rlab${f.cod?" cad":""}" transform="translate(${f.P[0]} ${f.P[1]})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${u})">${esc(f.n)}</text>`;}
   if(ROD){if(!REG.rodLab){REG.rodLab=[];const passo=12000/RU;ROD.rod.forEach(([c,n,t,pts])=>{const P=pts.map(p=>RP(p[0],p[1]));let acc=passo/2;
-      for(let i=1;i<P.length;i++){const l=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);let a0=0;while(l>0&&acc<=l){const t=acc/l;REG.rodLab.push([n,c,P[i-1][0]+(P[i][0]-P[i-1][0])*t,P[i-1][1]+(P[i][1]-P[i-1][1])*t]);acc+=passo;}acc-=l;}});}
-    for(const [n,c,x0,y0] of REG.rodLab){const [x,y]=tela(x0,y0);if(!dentro(x,y))continue;const w=String(n).length*6.6+10;if(!livre(x,y,w+6,22))continue;
-      h+=`<g transform="translate(${x0} ${y0})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${u})"><rect class="rsh ${c}" x="${-w/2}" y="-8.5" width="${w}" height="17" rx="3"/><text class="rodl" x="0" y="0">${esc(n)}</text></g>`;}}
+      for(let i=1;i<P.length;i++){const l=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);let a0=0;while(l>0&&acc<=l){const t=acc/l;REG.rodLab.push([n,Math.atan2(P[i][1]-P[i-1][1],P[i][0]-P[i-1][0])/RAD,P[i-1][0]+(P[i][0]-P[i-1][0])*t,P[i-1][1]+(P[i][1]-P[i-1][1])*t]);acc+=passo;}acc-=l;}});}
+    for(const [n,a,x0,y0] of REG.rodLab){const [x,y]=tela(x0,y0);if(!dentro(x,y))continue;if(!livre(x,y,String(n).length*6.2+4,14))continue;
+      h+=`<g transform="translate(${x0} ${y0}) rotate(${angLeg(a).toFixed(1)}) scale(${u})"><text class="rodl" x="0" y="0">${esc(n)}</text></g>`;}}
   $("#r-lab").innerHTML=h;
   s.querySelectorAll(".rtl").forEach(g=>{const [x,y]=tela(+g.dataset.x,+g.dataset.y);const t=g.firstChild;const ok=dentro(x,y)&&livre(x,y,t.textContent.length*6.5+6,14);g.style.display=ok?"":"none";if(ok)g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${u}) translate(${-g.dataset.x} ${-g.dataset.y})`);});
   s.querySelectorAll(".pd").forEach(g=>{const [x,y]=tela(+g.dataset.x,+g.dataset.y);livre(x+50,y,110,16);g.setAttribute("transform",`translate(${g.dataset.x} ${g.dataset.y})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${u})`);});
