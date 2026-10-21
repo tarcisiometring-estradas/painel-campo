@@ -62,6 +62,8 @@ body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 #leg{position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2;background:var(--sf);opacity:.92;border-radius:8px;padding:5px 8px;font-size:11px;display:flex;gap:4px 9px;flex-wrap:wrap;justify-content:flex-end;max-width:62%}
 #leg i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}
 .ths{display:flex;gap:8px;flex-wrap:wrap}.ths .thumb{width:96px;height:96px;object-fit:cover;border-radius:8px}.thw{position:relative}.thx{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-weight:700;cursor:pointer}
+.legfin{font:inherit;font-size:inherit;color:inherit;background:none;border:1px solid var(--ln);border-radius:999px;padding:2px 8px;cursor:pointer;display:inline-flex;align-items:center;gap:4px}.legfin[aria-pressed=false]{opacity:.45;text-decoration:line-through}
+:root{--mapa-rotulo:var(--mut);--mapa-fundo:var(--bg)}
 #medbar{position:fixed;left:8px;right:8px;bottom:calc(44px + env(safe-area-inset-bottom));z-index:4;padding:10px 12px;display:none}#medbar.on{display:block}body.medindo #info{display:none!important}#medbar [aria-pressed=true]{background:var(--ok);border-color:var(--ok);color:#fff}
 .medl{fill:none;stroke:#E8B33A;stroke-width:3px;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}.meda{fill:#E8B33A;fill-opacity:.18;stroke:none}.medp{fill:#fff;stroke:#B07D10;stroke-width:2px;vector-effect:non-scaling-stroke}
 #info{position:fixed;left:8px;right:8px;bottom:calc(44px + env(safe-area-inset-bottom));z-index:3;max-height:46vh;overflow:auto;padding:10px 12px;line-height:1.5;display:none}
@@ -151,6 +153,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 </div></div>
 <div id="pin"><div class="box"><b style="font-size:19px">Estradas Sucuriú</b><div class="muted">Digite o código de acesso da equipe.</div><input id="pin-i" inputmode="numeric" autocomplete="off" maxlength="8"><button class="btn pri" id="pin-ok">Entrar</button></div></div>
 
+<script src="lib/mapa.js"></script>
 <script>
 "use strict";
 /* ================= dados ================= */
@@ -242,13 +245,17 @@ function desenhar(){const m=M();sel=null;VB=null;
     m.trechos.map(t=>`<polyline class="tr s-${t.st}${t.n%2?"":" alt"}" data-n="${t.n}" points="${t.pts.join(" ")}"/><polyline class="hit" data-n="${t.n}" points="${t.pts.join(" ")}"/>`).join("")+
     m.talhoes.filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fx tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${Math.max(...xs)-Math.min(...xs)}" data-h="${Math.max(...ys)-Math.min(...ys)}" data-n="${String(t.id).length}"><text class="tt" x="${t.lab[0]}" y="${t.lab[1]}">${esc(t.id)}</text>${t.ha?`<text class="ts" x="${t.lab[0]}" y="${t.lab[1]+12}">${fmt(Math.round(t.ha*10)/10)} ha</text>`:""}</g>`;}).join("")+
     m.trechos.filter(t=>t.mid).map(t=>`<g class="fx nb" data-n="${t.n}" data-cx="${t.mid[0]}" data-cy="${t.mid[1]}"><circle cx="${t.mid[0]}" cy="${t.mid[1]}" r="10"/><text x="${t.mid[0]}" y="${t.mid[1]}">${t.n}</text></g>`).join("")+
+    (window.MAPA?MAPA.finais(m.trechos.filter(t=>(t.st==="pronto"||t.st==="g-ok")&&t.fin).map(t=>({fin:t.fin,pts:t.pts}))):"")+
     `<g id="pins"></g><g id="med"></g><g id="gps"></g></g>`;
-  $("#leg").innerHTML=m.trechos.some(t=>!String(t.st).startsWith("g-"))||true?`<span><i style="background:var(--zero)"></i>Falta</span><span><i style="background:var(--and)"></i>Em andamento</span><span><i style="background:var(--ok)"></i>Pronto</span><span><i style="background:var(--np)"></i>Sem previsão</span>${ROD?`<span><i style="background:#7A6A5E"></i>Rodovia BR/MS</span><span><i style="background:#A99D8A"></i>Vicinal / terra</span>`:""}`:"";
+  $("#leg").innerHTML=m.trechos.some(t=>!String(t.st).startsWith("g-"))||true?`<span><i style="background:var(--zero)"></i>Falta</span><span><i style="background:var(--and)"></i>Em andamento</span><span><i style="background:var(--ok)"></i>Pronto</span><span><i style="background:var(--np)"></i>Sem previsão</span>${m.trechos.some(t=>t.fin&&(t.st==="pronto"||t.st==="g-ok"))?`<button class="legfin" id="leg-fin" aria-pressed="${LS.get("fin","1")?"true":"false"}" title="Ligar ou desligar a linha da atividade final"><i style="background:#4F7CAC"></i>${esc(finNomes().cascalho||"Preparo de leito com brita")} <i style="background:#9A6B47;margin-left:6px"></i>solo <i style="background:#8E8A9E;margin-left:6px"></i>outra</button>`:""}${ROD?`<span><i style="background:#7A6A5E"></i>Rodovia BR/MS</span><span><i style="background:#A99D8A"></i>Vicinal / terra</span>`:""}`:"";
+  sv().classList.toggle("semfin",!LS.get("fin","1"));const lf=$("#leg-fin");if(lf)lf.onclick=e=>{e.stopPropagation();const on=!LS.get("fin","1");LS.set("fin",on?"1":"");sv().classList.toggle("semfin",!on);lf.setAttribute("aria-pressed",String(on));};
   info();aplicar();LS.set("mapa",m.id);camAuto(m);}
+if(window.MAPA)MAPA.estilo();
+function finNomes(){return (SIT&&SIT.mapas&&SIT.mapas._fins)||{};}
 let raf=0;
 function aplicar(){const s=sv();const rr=s.getBoundingClientRect();if(!rr.width||!rr.height){requestAnimationFrame(aplicar);return;}if(!VB)VB=inteiro();const nh=VB.w*raz();VB.y+=(VB.h-nh)/2;VB.h=nh;s.setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);rotAplicar("rotf",VB);
   const z=inteiro().w/VB.w;s.style.setProperty("--tw",Math.max(1.6,Math.min(2+1.7*Math.sqrt(Math.max(z-1,0)),7)).toFixed(2)+"px");
-  if(!raf)raf=requestAnimationFrame(()=>{raf=0;rotulos();if(MED.on)medDesenhar();});}
+  if(!raf)raf=requestAnimationFrame(()=>{raf=0;rotulos();if(window.MAPA){const r=sv().getBoundingClientRect();if(r.width)MAPA.ajustarFinal(sv(),VB.w/r.width,3.4);}if(MED.on)medDesenhar();});}
 function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)return;const uu=VB.w/r0.width;
   const tf=(g,k)=>{const cx=+g.dataset.cx,cy=+g.dataset.cy;g.setAttribute("transform",`translate(${cx} ${cy})${ANG?` rotate(${(-ANG).toFixed(2)})`:""} scale(${k}) translate(${-cx} ${-cy})`);};
   const cx=[];const livre=(x,y,w,h)=>{const b=[x-w/2,y-h/2,x+w/2,y+h/2];if(cx.some(c=>b[0]<c[2]&&b[2]>c[0]&&b[1]<c[3]&&b[3]>c[1]))return false;cx.push(b);return true;};
@@ -679,7 +686,7 @@ function rInfo(){const el=$("#info");
 /* situação dos trechos: vem do painel toda madrugada (dados/situacao.json) */
 let SIT=null;
 function aplicarSit(){if(!DADOS||!SIT||!SIT.mapas)return;DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{const S=SIT.mapas[f.cod]||{};const k=(m.acesso?"A":"I");const s=m.fin==="implantacao"?(S[k+"i"]||S[k]):S[k];if(!s)return;
-  m.trechos.forEach(t=>{const v=s[t.n];if(v){t.st=v[0];t.partes=v[1]||[];}});}));}
+  m.trechos.forEach(t=>{const v=s[t.n];if(v){t.st=v[0];t.partes=v[1]||[];t.fin=v[2]||"";}});}));}
 async function buscarSit(forcar){try{const r=await fetch("dados/situacao.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)return false;const d=await r.json();
   const mudou=!SIT||d.em!==SIT.em;SIT=d;if(mudou)aplicarSit();return mudou;}catch(e){return false;}}
 function dataSit(){if(!SIT||!SIT.em)return "";const d=new Date(SIT.em);return isNaN(d)?"":d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}

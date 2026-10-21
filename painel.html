@@ -1,11 +1,10 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-
-
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Painel de Campo Sucuriú</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 :root{
+  --mapa-rotulo:var(--muted); --mapa-fundo:var(--bg);
   --m-zero2:#B5463D; --m-and2:#9C6B00; --m-ok2:#145C33; --m-np2:#6E726B;
   --m-prep:#3B7DD8; --m-prep2:#1F4F96; --mk:#7B3FB5; --m-zero:#E58B83; --m-and:#E0A100; --m-ok:#2E8B57; --m-np:#A9ADA6; --m-tal:#F7EBC6; --m-tal-l:#C9B98A;
   --bg:#F2F1EC; --surface:#FFFFFF; --sunk:#E8E7E0; --line:#D6D4CA;
@@ -344,6 +343,7 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <div class="wrap" id="app"></div><div id="layer"></div><div class="toast" id="toast" hidden></div>
+<script src="lib/mapa.js"></script>
 <script>
 (function(){"use strict";
 const CAT0=[[1, "Construção de caixa de contenção", "un"], [2, "Limpeza de caixa de contenção", "un"], [3, "Construção de saídas d’água", "un"], [4, "Limpeza de saídas d’água", "un"], [5, "Construção de bacia de retenção", "un"], [6, "Limpeza de bacia de retenção", "un"], [7, "Construção de mini curva - nível 1", "un"], [8, "Construção de mini curva - nível 2", "un"], [9, "Construção de mini curva - nível 3", "un"], [10, "Construção de mini curva - nível 4", "un"], [11, "Limpeza de mini curva - nível 1", "un"], [12, "Limpeza de mini curva - nível 2", "un"], [13, "Limpeza de mini curva - nível 3", "un"], [14, "Limpeza de mini curva - nível 4", "un"], [15, "Construção de camalhão/murchão - nível 1 (secundária)", "un"], [16, "Construção de camalhão/murchão - nível 2 (primária)", "un"], [17, "Abertura de estrada sem destoca ou derrubada", "m²"], [18, "Derrubada de árvores", "m²"], [19, "Destoca - nível 1", "m²"], [20, "Destoca - nível 2", "m²"], [21, "Agulhamento", "m²"], [22, "Compactação de base", "m²"], [23, "Limpeza de aceiro/grade", "m²"], [24, "Construção de ponto de módulo c/ destoca - nível 1", "un"], [25, "Construção de ponto de módulo c/ destoca - nível 2", "un"], [26, "Patrolamento", "m²"], [27, "Limpeza de estrada", "m²"], [28, "Carregamento de materiais", "m³"], [29, "Limpeza de camada vegetal", "m³"], [30, "Escavação e carregamento", "m³"], [31, "Preparo de leito com solo nível 1 (10cm)", "m³"], [32, "Preparo de leito com solo nível 1 (15cm)", "m³"], [33, "Preparo de leito com solo nível 1 (20cm)", "m³"], [34, "Preparo de leito com solo nível 1 (25cm)", "m³"], [35, "Preparo de leito com brita", "m³"], [36, "Elevação com solo local", "m³"], [37, "Regularização de base", "m³"], [38, "Construção de virador / manobrador", "—"], [39, "Umectação de estradas", "h"], [40, "Serviço de caminhão prancha", "km"], [41, "Transporte de solos (DMT 0 - 2,5 km)", "m³"], [42, "Transporte de solos (DMT 2,5 - 5 km)", "m³"], [43, "Transporte de solos (DMT 5 - 7,5 km)", "m³"], [44, "Transporte de solos (DMT 7,5 - 10 km)", "m³"], [45, "Transporte de solos (DMT 10 - 12,5 km)", "m³"], [46, "Transporte de solos (DMT 12,5 - 15 km)", "m³"], [47, "Transporte de solos (DMT 15 - 17,5 km)", "m³"], [48, "Transporte de solos (DMT 17,5 - 20 km)", "m³"], [49, "Transporte de solos (DMT 20 - 22,5 km)", "m³"], [50, "Transporte de solos (DMT 22,5 - 25 km)", "m³"], [51, "Transporte de solos (DMT 25 - 30 km)", "m³"], [52, "Transporte de solos (DMT 30 - 35 km)", "m³"], [53, "Transporte de solos (DMT 35 - 40 km)", "m³"], [54, "Transporte de solos (DMT 45 - 50 km)", "m³"], [55, "Transporte de brita (DMT 0 - 2,5 km)", "m³"], [56, "Transporte de brita (DMT 2,5 - 5 km)", "m³"], [57, "Transporte de brita (DMT 5 - 7,5 km)", "m³"], [58, "Transporte de brita (DMT 7,5 - 10 km)", "m³"], [59, "Transporte de brita (DMT 10 - 12,5 km)", "m³"], [60, "Transporte de brita (DMT 12,5 - 15 km)", "m³"], [61, "Transporte de brita (DMT 15 - 17,5 km)", "m³"], [62, "Transporte de brita (DMT 17,5 - 20 km)", "m³"], [63, "Transporte de brita (DMT 20 - 22,5 km)", "m³"], [64, "Transporte de brita (DMT 22,5 - 25 km)", "m³"], [65, "Transporte de brita (DMT 25 - 30 km)", "m³"], [66, "Transporte de brita (DMT 30 - 35 km)", "m³"], [67, "Transporte de brita (DMT 35 - 40 km)", "m³"], [68, "Transporte de brita (DMT 45 - 50 km)", "m³"], [69, "Transporte de brita (DMT 50 - 70 km)", "m³"], [70, "Transporte de brita (DMT 70 - 100 km)", "m³"], [71, "Transporte de brita (DMT 100 - 125 km)", "m³"], [72, "Transporte de brita (DMT 125 - 150 km)", "m³"], [73, "Transporte de brita (DMT 150 - 175 km)", "m³"], [74, "Transporte de brita (DMT 175 - 200 km)", "m³"], [75, "Serviços diversos", "h"], [76, "Ponto de captação", "—"], [77, "Taper (aceleração / desaceleração)", "—"], [78, "Entroncamento", "—"], [79, "Construção de aterro", "m³"], [80, "Recuperação de jazida – nível 1", "m³"], [81, "Motoniveladora (hora trabalhada)", "h"], [82, "Escavadeira hidráulica (hora trabalhada)", "h"], [83, "Retroescavadeira (hora trabalhada)", "h"], [84, "Rolo compactador (hora trabalhada)", "h"], [85, "Caminhão caçamba (hora trabalhada)", "h"], [86, "Caminhão pipa (hora trabalhada)", "h"], [87, "Pá carregadeira (hora trabalhada)", "h"], [88, "Trator de esteira (hora trabalhada)", "h"], [89, "Trator de grade (hora trabalhada)", "h"], [90, "Carreta prancha (por km)", "km"], [91, "Caminhão plataforma (por km)", "km"], [92, "Motoniveladora (hora à disposição)", "h disp."], [93, "Escavadeira hidráulica (hora à disposição)", "h disp."], [94, "Retroescavadeira (hora à disposição)", "h disp."], [95, "Rolo compactador (hora à disposição)", "h disp."], [96, "Caminhão caçamba (hora à disposição)", "h disp."], [97, "Caminhão pipa (hora à disposição)", "h disp."], [98, "Pá carregadeira (hora à disposição)", "h disp."], [99, "Trator de esteira (hora à disposição)", "h disp."], [100, "Trator de grade (hora à disposição)", "h disp."], [101, "Motoniveladora (diária)", "diária"], [102, "Escavadeira hidráulica (diária)", "diária"], [103, "Retroescavadeira (diária)", "diária"], [104, "Rolo compactador (diária)", "diária"], [105, "Caminhão caçamba (diária)", "diária"], [106, "Caminhão pipa (diária)", "diária"], [107, "Pá carregadeira (diária)", "diária"], [108, "Trator de esteira (diária)", "diária"], [109, "Trator de grade (diária)", "diária"], [110, "Carreta prancha (diária)", "diária"], [111, "Caminhão plataforma (diária)", "diária"]];
@@ -1315,7 +1315,7 @@ const prevServ=(t,k)=>n0(t.plan&&t.plan[k])||(k==="agulhada"?n0(t.plan&&t.plan.c
 /* Régua de entrega: o trecho fica pronto quando o SERVIÇO FINAL dele está conferido.
    Final = preparo com brita onde há brita prevista; preparo de leito onde só vai preparo. Agulhado nunca é entrega. Pode ser trocado por trecho na Tabela. */
 function finalDe(M,t){const d=M&&tcDe(M,t.n);if(d&&d.entrega)return d.entrega;if(n0(t.plan&&t.plan.cascalho))return "cascalho";if(n0(t.plan&&t.plan.preparo))return "preparo";const pc=Object.keys(t.plan||{}).find(k=>/^c\d+$/.test(k)&&n0(t.plan[k]));if(pc)return pc;return "cascalho";}
-const NOME_FINAL0={cascalho:"Preparo de leito com brita",preparo:"Preparo de leito com solo"};
+const NOME_FINAL0={cascalho:"Preparo de leito com brita",preparo:"Preparo de leito com solo nível 1"};
 const NOME_FINAL=new Proxy(NOME_FINAL0,{get:(o,k)=>{if(o[k])return o[k];const m=String(k).match(/^c(\d+)$/);return m&&C[+m[1]]?C[+m[1]].nome:"—";}});
 /* "Outra" atividade final: só as que andam ao longo da estrada (m² ou m³), na ordem do escopo */
 const FINAL_GRUPOS=[["Abertura e limpeza",[17,18,19,20,29,23,27]],["Base e leito",[30,36,37,22,79]],["Manutenção",[21,26]]];
@@ -1404,6 +1404,8 @@ function rotulosMapa(){const sv=svgMapa(),M=mapaAtual();if(!sv||!M)return;const 
   nbs.forEach(g=>{tf(g,uu);const sel=g.classList.contains("sel");const [x,y]=tela(g);
     if(!sel&&(!verNum||!dentro(x,y))){g.style.display="none";return;}
     const w=String(g.dataset.n||"").length*6.5+8;g.style.display=(livre(x,y,w,15)||sel)?"":"none";});
+  /* 1b) nomes das rodovias (mapa único, lib/mapa.js) */
+  if(window.MAPA){MAPA.rotulosRod(sv,uu,ang,tela,livre,dentro);MAPA.ajustarFinal(sv,uu,3.6);}
   /* 2) bolinhas de início/fim: pequenas, só bem perto */
   const verMq=gap>=130;sv.querySelectorAll(".mq").forEach(g=>{tf(g,uu*0.6);g.style.display=verMq?"":"none";});
   /* 3) talhões: número 12 px; área 9,5 px só se o talhão tiver espaço na tela */
@@ -1502,9 +1504,9 @@ function dadosOffline(cod){const r1=v=>Math.round(v*10)/10;const pt=p=>[r1(p[0])
     nome:M.nome||"",mapa:M.acesso?"Acesso":"Estradas internas",acesso:!!M.acesso,fin:finM(M),camadas:(M.camadas||[]).map(c=>({k:c.k,nome:c.nome,arq:c.arq,m:c.m})),w:M.w,h:M.h,geo:M.geo,
     talhoes:(M.talhoes||[]).map(t=>({id:t.id||"",ha:n0(t.ha),vol:n0(t.vol),pts:t.pts.map(pt),lab:t.lab?pt(t.lab):null})),
     trechos:(M.trechos||[]).map(t=>{const ps=partesEf(M,t);const st=corSt(ps)||("g-"+estadoGeral(R[t.n]||{s:{}}).c);return {n:t.n,tipo:t.tipo||"",m:n0(t.m),pts:t.pts.map(pt),mid:t.mid?pt(t.mid):null,st,partes:ps.length>1?ps.map(p=>kmF(p.km)+" km "+nomeSt(p.st)):[]};})};});}
-function situacaoApp(){const out={};for(const M of Object.values(DATA.mapas)){if(!temGeo(M))continue;const cod=M.codigo||M.id;const R=progressoMapa(M);const o={};
-  (M.trechos||[]).forEach(t=>{const ps=partesEf(M,t);const st=corSt(ps)||("g-"+estadoGeral(R[t.n]||{s:{}}).c);o[t.n]=ps.length>1?[st,ps.map(p=>kmF(p.km)+" km "+nomeSt(p.st))]:[st];});
-  (out[cod]=out[cod]||{})[(M.acesso?"A":"I")+(finM(M)==="implantacao"?"i":"")]=o;}return out;}
+function situacaoApp(){const out={},fins={};for(const M of Object.values(DATA.mapas)){if(!temGeo(M))continue;const cod=M.codigo||M.id;const R=progressoMapa(M);const o={};
+  (M.trechos||[]).forEach(t=>{const ps=partesEf(M,t);const st=corSt(ps)||("g-"+estadoGeral(R[t.n]||{s:{}}).c);const fin=finalDe(M,t);fins[fin]=NOME_FINAL[fin];o[t.n]=[st,ps.length>1?ps.map(p=>kmF(p.km)+" km "+nomeSt(p.st)):null,fin];});
+  (out[cod]=out[cod]||{})[(M.acesso?"A":"I")+(finM(M)==="implantacao"?"i":"")]=o;}out._fins=fins;return out;}
 let SIT_T=null;function agendarSituacao(){clearTimeout(SIT_T);SIT_T=setTimeout(async()=>{try{if(!NUVEM||!navigator.onLine||!DATA||!DATA.mapas)return;const m=situacaoApp();if(!Object.keys(m).length)return;
   const ant=DATA.config&&DATA.config.situacao_app;if(ant&&JSON.stringify(ant.mapas)===JSON.stringify(m))return;
   const doc={em:new Date().toISOString(),por:quem(),mapas:m};await DB.doc("config/situacao_app").set(clone(doc));DATA.config.situacao_app=doc;}catch(e){}},6000);}
@@ -1623,6 +1625,12 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 8px;b
   try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([html],{type:"text/html"}));a.download=nome;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);toast("Mapa offline baixado.");}catch(e){toast("Não foi possível baixar o mapa.");}}
 
 /* ---- tela do mapa ---- */
+/* camadas de base do mapa único (lib/mapa.js): estradas vicinais/terra e rodovias BR/MS, iguais às do app */
+function baseMapa(M){if(!window.MAPA||!temGeo(M))return "";MAPA.estilo();
+  if(!MAPA.BASE.rod&&!baseMapa.p1){baseMapa.p1=MAPA.carregarRodovias().then(d=>{if(d&&(ST.tela==="mapa"))render();});}
+  if(!MAPA.BASE.G&&!baseMapa.p2){baseMapa.p2=MAPA.carregarMalha().then(()=>{if(ST.tela==="mapa")render();}).catch(()=>{});}
+  const k=M.id+"|"+(MAPA.BASE.rod?1:0)+(MAPA.BASE.G?1:0);if(M._baseK===k)return M._base;
+  M._baseK=k;return M._base=`<g class="vicg">${MAPA.vicinais(M)}</g>${MAPA.rodovias(M)}`;}
 function renderMapa(){
   const L=Object.values(DATA.mapas).sort((a,b)=>(a.nome||"").localeCompare(b.nome||"")||(!!a.acesso)-(!!b.acesso));
   if(!L.length){app.innerHTML=`${barra("Mapa das estradas")}<div class="empty">Nenhum mapa cadastrado ainda. Toque em <b>+ Nova fazenda</b> e escolha a pasta da fazenda (mapa de trechos, mapa de estradas, acesso, colheita e planilha).<div class="row" style="justify-content:center;margin-top:12px">${nfBotao()}</div></div>`;return;}
@@ -1636,10 +1644,12 @@ function renderMapa(){
   const lab=(x,y,t,cl)=>`<text x="${x}" y="${y}" class="${cl}">${esc(t)}</text>`;
   const svg=`<svg class="mapa${camAtiva(M)?" comcamada":""}" viewBox="0 0 ${M.w} ${M.h}" style="aspect-ratio:${M.w}/${M.h}" role="img" aria-label="Mapa de ${esc(M.nome)} ${esc(M.mapa||"")}"><g class="rotg">
     ${camadaSVG(M)}
+    ${baseMapa(M)}
     ${(M.talhoes||[]).map(t=>`<polygon class="tal" points="${t.pts.map(p=>p.join(",")).join(" ")}"/>`).join("")}
     ${camadaVizinha(M)}
     ${(M.talhoes||[]).filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fix tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${(Math.max(...xs)-Math.min(...xs)).toFixed(1)}" data-h="${(Math.max(...ys)-Math.min(...ys)).toFixed(1)}" data-n="${String(t.id).length}" data-ns="${t.ha?(fmt(Math.round(n0(t.ha)*10)/10)+" ha").length:0}">${lab(t.lab[0],t.lab[1],t.id,"tal-t")+(t.ha?lab(t.lab[0],t.lab[1]+12,fmt(Math.round(n0(t.ha)*10)/10)+" ha","tal-s"):"")}</g>`;}).join("")}
     ${(M.trechos||[]).map(t=>{const e=estadoK(R[t.n],k);const pp=t.pts.map(p=>p.join(",")).join(" ");return `<polyline class="tr ${k==="conf"?"cf-"+(corSt(partesEf(M,t))||"nc"):e.c}${t.n%2?"":" alt"}${sel&&sel.t.n===t.n?" sel":""}" points="${pp}"/><polyline class="hit" data-a="mp-tr" data-n="${t.n}" points="${pp}"><title>Trecho ${t.n}</title></polyline>`;}).join("")}
+    ${k==="conf"&&window.MAPA?MAPA.finais((M.trechos||[]).filter(t=>corSt(partesEf(M,t))==="pronto").map(t=>({fin:finalDe(M,t),pts:t.pts}))):""}
     ${marcos(M).map(q=>`<g class="fix mq" data-cx="${q[0]}" data-cy="${q[1]}"><circle class="marco" cx="${q[0]}" cy="${q[1]}" r="4"/></g>`).join("")}
     <g id="mk-saved">${marcasSVG(M)}</g>
     ${(M.trechos||[]).map(t=>`<g class="nb fix${sel&&sel.t.n===t.n?" sel":""}" data-a="mp-tr" data-n="${t.n}" data-cx="${t.mid[0]}" data-cy="${t.mid[1]}"><circle cx="${t.mid[0]}" cy="${t.mid[1]}" r="10"/><text x="${t.mid[0]}" y="${t.mid[1]}">${t.n}</text></g>`).join("")}
@@ -1683,7 +1693,7 @@ function renderMapa(){
     ${G?`<div class="escala" id="escala"></div>`:""}
   </div>
   ${GPS.on&&!ST.mapCheio?`<div class="gpsinfo" id="gps-info">${gpsInfo(M)}</div>`:""}
-  ${k==="conf"?`<div class="legmap" style="margin:8px 0 14px"><span><i style="background:var(--m-zero)"></i>Falta</span><span><i style="background:var(--m-and)"></i>Em andamento (preparo feito ou agulhado)</span><span><i style="background:var(--m-ok)"></i>Pronto (atividade final feita)</span><span><i style="background:var(--m-np)"></i>Não conferido</span><span class="muted">Toque no trecho para ver os detalhes.</span></div><div class="stcard">${resumoTrHTML(M)}<div class="row"><button class="btn sm" data-a="ir" data-t="trechos">✎ Marcar situação dos trechos</button></div></div>`:`<div class="legmap" style="margin:8px 0 14px"><span><i style="background:var(--m-zero)"></i>Não iniciado</span><span><i style="background:var(--m-and)"></i>Em andamento</span><span><i style="background:var(--m-ok)"></i>Concluído</span><span><i style="background:var(--m-np)"></i>Não previsto</span><span><i style="background:linear-gradient(90deg,var(--m-zero) 0 50%,var(--m-zero2) 50%)"></i>Tom claro/escuro = troca de trecho · ● início/fim</span>${MKs.length?`<span><i style="background:var(--mk)"></i>Marcações</span>`:""}<span class="muted">${G?"Mapa georreferenciado (GeoPDF Geoplant). ":""}Toque num trecho para ver os metros.</span></div>
+  ${k==="conf"?`<div class="legmap" style="margin:8px 0 14px"><span><i style="background:var(--m-zero)"></i>Falta</span><span><i style="background:var(--m-and)"></i>Em andamento (preparo feito ou agulhado)</span><span><i style="background:var(--m-ok)"></i>Pronto (atividade final feita)</span><span><i style="background:#4F7CAC"></i>ao lado: Preparo de leito com brita</span><span><i style="background:#9A6B47"></i>ao lado: preparo com solo</span><span><i style="background:#8E8A9E"></i>ao lado: outra atividade</span><span><i style="background:var(--m-np)"></i>Não conferido</span><span class="muted">Toque no trecho para ver os detalhes.</span></div><div class="stcard">${resumoTrHTML(M)}<div class="row"><button class="btn sm" data-a="ir" data-t="trechos">✎ Marcar situação dos trechos</button></div></div>`:`<div class="legmap" style="margin:8px 0 14px"><span><i style="background:var(--m-zero)"></i>Não iniciado</span><span><i style="background:var(--m-and)"></i>Em andamento</span><span><i style="background:var(--m-ok)"></i>Concluído</span><span><i style="background:var(--m-np)"></i>Não previsto</span><span><i style="background:linear-gradient(90deg,var(--m-zero) 0 50%,var(--m-zero2) 50%)"></i>Tom claro/escuro = troca de trecho · ● início/fim</span>${MKs.length?`<span><i style="background:var(--mk)"></i>Marcações</span>`:""}<span class="muted">${G?"Mapa georreferenciado (GeoPDF Geoplant). ":""}Toque num trecho para ver os metros.</span></div>
   <div class="kpis slim" style="margin-bottom:10px">
     <div class="kpi"><span class="l">${nomeServ(k)} · previsto</span><span class="v">${rs.prev?fmt(rs.prev/1000)+" km":"—"}</span><span class="sub muted small">${rs.n} trecho(s)</span></div>
     <div class="kpi"><span class="l">Feito (conferido)</span><span class="v" style="color:var(--ok)">${fmt(rs.feito/1000)} km</span><span class="sub muted small">${rs.prev?Math.round(rs.feito/rs.prev*100)+"% · "+rs.ok+" trecho(s) concluído(s)":"sem previsão neste mapa"}</span></div>
@@ -1860,7 +1870,7 @@ function renderTrechos(){
       ${(()=>{if(um&&ps[0].st==="pronto")return "";const P=PM;const e=estadoGeral(P[t.n]);return e.c==="ok"?`<div class="sub" style="color:var(--ok);font-weight:700">✔ ${NOME_FINAL[e.fin]} conferido 100%: pode dar Pronto</div>`:"";})()}
       ${!um?`<div class="row" style="gap:4px;margin-top:4px">${ps.map(p=>`<span class="st ${p.st?STT[p.st].c:"neutral"}">${kmF(p.km)} ${nomeSt(p.st)}</span>`).join("")}</div>`:""}
       ${d&&d.em?`<div class="sub">${fD(d.data)}${d.eps?" · "+esc(d.eps):""} · ${esc(quemNome(d.por))}</div>`:""}</div>
-      <div class="tcol"><button class="finbtn" data-a="fin-abrir" data-n="${t.n}"><span class="fl">Atividade final</span><b>${esc(NOME_FINAL[finalDe(M,t)])}</b><span class="fch" aria-hidden="true">▾</span></button>
+      <div class="tcol"><button class="finbtn" data-a="fin-abrir" data-n="${t.n}"><span class="fl">Pronto =</span><b>${esc(NOME_FINAL[finalDe(M,t)])}</b><span class="fch" aria-hidden="true">▾</span></button>
       <div class="sbtns">${STT_K.map(k=>`<button class="sb sb-${k}" data-a="tc-st" data-n="${t.n}" data-v="${k}" aria-pressed="${um&&ps[0].st===k}">${k==="pronto"?"✔ Pronto":k==="preparo"?"Preparo":k==="falta"?"Falta":"Agulhado"}</button>`).join("")}<button class="sb" data-a="tc-div" data-n="${t.n}" aria-label="Dividir trecho ou editar">✂</button></div></div></div>`;}).join("")}</div>`}`;
 }
 async function salvarTrecho(M,t,patch,msg,semRender){const d=tcDe(M,t.n);const id=tcId(M,t.n);
@@ -1899,8 +1909,8 @@ function finalHTML(s){const M=DATA.mapas[ST.mapa];const t=M&&(M.trechos||[]).fin
   const outra=/^c\d+$/.test(at);const abre=s.outra||outra;
   return `<div class="howto">O trecho só fica <b>Pronto</b> (verde) quando esta atividade estiver conferida. Marcada agora: <b>${esc(NOME_FINAL[at])}</b>.</div>
   <div role="radiogroup" aria-label="Atividade final">
-  ${op("preparo","Preparo de leito com solo","m³","itens 31 a 34 do escopo (10, 15, 20 ou 25 cm)")}
   ${op("cascalho",C[35].nome,"m³","item 35 do escopo")}
+  ${[31,32,33,34].filter(c=>C[c]).map(c=>op("c"+c,C[c].nome,C[c].un,"item "+c+" do escopo")).join("")}
   <button class="fop" data-a="fin-outra" data-n="${t.n}" aria-expanded="${abre}"><span class="ck">${outra?"✓":""}</span><span class="fn">Outra atividade do escopo${outra?`<br><span class="fu">${esc(NOME_FINAL[at])}</span>`:""}</span><span class="fu">${abre?"▴":"▾"}</span></button>
   ${abre?FINAL_GRUPOS.map(([g,cs])=>`<div class="fgr">${g}</div>`+cs.filter(c=>C[c]).map(c=>op("c"+c,C[c].nome,C[c].un,"item "+c+" do escopo")).join("")).join(""):""}
   </div>
@@ -3313,7 +3323,5 @@ DB=DBF; /* grava no aparelho na hora; a nuvem recebe quando conectar */
 })();
 })();
 </script>
-
-
 
 </body></html>
