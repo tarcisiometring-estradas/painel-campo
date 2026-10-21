@@ -132,6 +132,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <div class="temas" id="h-tema"><span class="muted" style="align-self:center">Tela:</span><button data-tema="escuro">Escuro</button><button data-tema="claro">Claro</button><button data-tema="sol">Sol (forte)</button></div>
   <button class="choice" id="h-inst" style="display:none;border:2px solid var(--ok)"><span class="ic">📲</span><span><strong>Instalar o app</strong><small>Fica na tela inicial e abre sem internet.</small></span><span class="seta">›</span></button>
   <button class="choice" id="h-mapa"><span class="ic">🗺️</span><span><strong>Mapa das estradas</strong><small>Toque e escolha a fazenda. ⚙ para filtrar.</small></span><span class="seta">›</span></button>
+  <button class="choice" id="h-cam"><span class="ic">⬇️</span><span><strong>Guardar mapas oficiais no celular</strong><small id="h-cams">Faça com Wi‑Fi antes de ir a campo. Depois as camadas abrem sem internet.</small></span><span class="seta">›</span></button>
   <button class="choice" id="h-pontos"><span class="ic">📍</span><span><strong>Pontos marcados</strong><small id="h-np">Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.</small></span><span class="seta">›</span></button>
   <a class="choice" id="h-painel" href="painel.html"><span class="ic">📋</span><span><strong>Painel de Campo</strong><small>Conferir, marcar trechos e ver o mapa, mesmo sem internet. O que lançar fica no celular até enviar ao painel.</small></span><span class="seta">›</span></a>
   <a class="choice" href="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8" target="_blank" rel="noopener"><span class="ic">🌐</span><span><strong>Painel online</strong><small>Ler mensagem do WhatsApp, receber pacotes e parte do supervisor. Precisa de internet.</small></span><span class="seta">›</span></a>
@@ -225,7 +226,7 @@ function desenhar(){const m=M();sel=null;VB=null;
     m.trechos.filter(t=>t.mid).map(t=>`<g class="fx nb" data-n="${t.n}" data-cx="${t.mid[0]}" data-cy="${t.mid[1]}"><circle cx="${t.mid[0]}" cy="${t.mid[1]}" r="10"/><text x="${t.mid[0]}" y="${t.mid[1]}">${t.n}</text></g>`).join("")+
     `<g id="pins"></g><g id="gps"></g></g>`;
   $("#leg").innerHTML=m.trechos.some(t=>!String(t.st).startsWith("g-"))||true?`<span><i style="background:var(--zero)"></i>Falta</span><span><i style="background:var(--and)"></i>Em andamento</span><span><i style="background:var(--ok)"></i>Pronto</span><span><i style="background:var(--np)"></i>Sem previsão</span>${ROD?`<span><i style="background:#8A7E73"></i>Rodovia BR/MS</span>`:""}`:"";
-  info();aplicar();LS.set("mapa",m.id);}
+  info();aplicar();LS.set("mapa",m.id);camAuto(m);}
 let raf=0;
 function aplicar(){const s=sv();const rr=s.getBoundingClientRect();if(!rr.width||!rr.height){requestAnimationFrame(aplicar);return;}if(!VB)VB=inteiro();const nh=VB.w*raz();VB.y+=(VB.h-nh)/2;VB.h=nh;s.setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);rotAplicar("rotf",VB);
   const z=inteiro().w/VB.w;s.style.setProperty("--tw",Math.max(1.6,Math.min(2+1.7*Math.sqrt(Math.max(z-1,0)),7)).toFixed(2)+"px");
@@ -302,17 +303,20 @@ document.addEventListener("click",e=>{if(e.target.closest("[data-copia]")){e.sto
 const CAMB={};let CAMS=LS.get("camadas",{});
 function camAt(m){const k=CAMS[m.id];return k?(m.camadas||[]).find(c=>c.k===k)||null:null;}
 const b64u8=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
-async function camAbrir(c,senha){const j=await (await fetch(c.arq)).json();const k0=await crypto.subtle.importKey("raw",new TextEncoder().encode(senha),"PBKDF2",false,["deriveKey"]);
+async function camAbrir(c,senha){let j;try{j=await (await fetch(c.arq)).json();}catch(e){const x=new Error("rede");x.rede=1;throw x;}const k0=await crypto.subtle.importKey("raw",new TextEncoder().encode(senha),"PBKDF2",false,["deriveKey"]);
   const k=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64u8(j.salt),iterations:j.it||150000,hash:"SHA-256"},k0,{name:"AES-GCM",length:256},false,["decrypt"]);
   return URL.createObjectURL(new Blob([await crypto.subtle.decrypt({name:"AES-GCM",iv:b64u8(j.iv)},k,b64u8(j.ct))],{type:"image/jpeg"}));}
+const OLHO_A='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const OLHO_F='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+function olhoSenha(b){const i=b.previousElementSibling;const mostrar=i.type==="password";i.type=mostrar?"text":"password";b.innerHTML=mostrar?OLHO_F:OLHO_A;b.setAttribute("aria-label",mostrar?"Esconder a senha":"Mostrar a senha");}
 const senhaLimpa=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"");
 function senhaEquipe(){try{return localStorage.getItem("painel_senha")||"";}catch(e){return "";}}
 function camImg(m){const c=camAt(m);if(!c)return "";const u=CAMB[c.arq];
-  if(u===undefined){CAMB[c.arq]=null;camAbrir(c,senhaEquipe()).then(x=>{CAMB[c.arq]=x;desenharMantendo();}).catch(()=>{CAMB[c.arq]=undefined;delete CAMS[m.id];if(navigator.onLine)try{localStorage.removeItem("painel_senha");}catch(e){}LS.set("camadas",CAMS);aviso(navigator.onLine?"Senha da equipe errada ou faltando. Toque em 🗂 de novo.":"Ligue essa camada uma vez com internet.");desenharMantendo();});return "";}
+  if(u===undefined){CAMB[c.arq]=null;camAbrir(c,senhaEquipe()).then(x=>{CAMB[c.arq]=x;desenharMantendo();}).catch(er=>{CAMB[c.arq]=undefined;delete CAMS[m.id];if(navigator.onLine&&!(er&&er.rede))try{localStorage.removeItem("painel_senha");}catch(e){}LS.set("camadas",CAMS);aviso(navigator.onLine?"Senha da equipe errada ou faltando. Toque em 🗂 de novo.":"Esse mapa oficial ainda não está guardado no celular. Com Wi‑Fi, toque em ⬇ Guardar mapas oficiais no início.");desenharMantendo();});return "";}
   if(!u)return "";const op=CAMS._op!=null?CAMS._op:0.9;return `<image href="${u}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(${c.m.join(" ")})" opacity="${op}" style="pointer-events:none"/>`;}
 function desenharMantendo(){const v=VB;desenhar();if(v){VB=v;aplicar();}}
 function camFolha(){const m=M();if(!m)return;const at=CAMS[m.id]||"";
-  if(!senhaEquipe()){abrirFolha("🗂 Mapas oficiais",`<div class="muted">Digite a senha da equipe (só na primeira vez).</div><div style="position:relative"><input id="cam-senha" class="btn" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Senha da equipe" style="width:100%;text-align:left;padding-right:56px"><button type="button" class="btn" aria-label="Mostrar ou esconder a senha" onclick="const i=this.previousElementSibling;i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);min-height:38px;padding:0 10px;border:0;background:transparent">👁</button></div><button class="btn pri" id="cam-ok" style="min-height:50px">Entrar</button>`);
+  if(!senhaEquipe()){abrirFolha("🗂 Mapas oficiais",`<div class="muted">Digite a senha da equipe (só na primeira vez).</div><div style="position:relative"><input id="cam-senha" class="btn" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Senha da equipe" style="width:100%;text-align:left;padding-right:56px"><button type="button" class="btn" aria-label="Mostrar a senha" onclick="olhoSenha(this)" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);min-height:38px;padding:0 10px;border:0;background:transparent">${OLHO_A}</button></div><button class="btn pri" id="cam-ok" style="min-height:50px">Entrar</button>`);
     $("#cam-ok").onclick=()=>{const v=senhaLimpa($("#cam-senha").value);if(!v)return;try{localStorage.setItem("painel_senha",v);}catch(e){}camFolha();};return;}
   const op=CAMS._op!=null?CAMS._op:0.9;
   abrirFolha("🗂 Mapas oficiais · "+m.nome,`<div class="muted">Escolha o mapa da Geoplant para ver por baixo dos trechos.</div>
@@ -322,6 +326,28 @@ function camFolha(){const m=M();if(!m)return;const at=CAMS[m.id]||"";
   $("#sh-b").querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{if(b.dataset.ck)CAMS[m.id]=b.dataset.ck;else delete CAMS[m.id];LS.set("camadas",CAMS);fecharFolha();desenharMantendo();});
   $("#cam-op").oninput=e=>{CAMS._op=+e.target.value;LS.set("camadas",CAMS);const im=sv().querySelector("image");if(im)im.setAttribute("opacity",e.target.value);};}
 $("#b-cam").onclick=camFolha;
+/* ===== camadas guardadas no celular (sem internet) =====
+   Ficam num cache próprio ("camadas") que NÃO é apagado quando o app atualiza.
+   O botão do início baixa todas; ao abrir uma fazenda com internet, as dela são guardadas sozinhas. */
+const CAMC="camadas";let CAMBX=false;
+const camAbs=a=>new URL(a,location.href).href;
+function camTodas(){const v=new Set();(DADOS?DADOS.fazendas:[]).forEach(f=>f.mapas.forEach(m=>(m.camadas||[]).forEach(c=>v.add(c.arq))));return [...v];}
+async function camGuardadas(){try{const c=await caches.open(CAMC);const ks=await c.keys();return new Set(ks.map(r=>new URL(r.url).pathname.replace(/^.*\/dados\//,"dados/")));}catch(e){return new Set();}}
+async function camStatus(){const el=$("#h-cams");if(!el||!DADOS||CAMBX)return;const T=camTodas();if(!T.length){$("#h-cam").style.display="none";return;}
+  const G=await camGuardadas();const n=T.filter(a=>G.has(a)).length;const cv=LS.get("cam_ver","");const velho=!!cv&&cv!==DADOS.versao;
+  el.innerHTML=n===T.length&&!velho?`<b style="color:var(--ok)">✓ Todos os ${T.length} mapas oficiais guardados.</b> Abrem sem internet.`:velho?`Saiu mapa novo (${esc(DADOS.versao)}). Toque com Wi‑Fi para atualizar os guardados.`:`${n} de ${T.length} guardados. Toque com Wi‑Fi para guardar o resto (uns ${Math.max(1,Math.round((T.length-n)*0.2))} MB).`;}
+async function camBaixar(lista,atualizar,prog){const c=await caches.open(CAMC);let ok=0,falha=0;
+  for(let i=0;i<lista.length;i++){const u=camAbs(lista[i]);try{if(!atualizar&&await c.match(u)){ok++;prog&&prog(i+1,lista.length);continue;}
+      const r=await fetch(u+"?atualizar="+Date.now(),{cache:"no-store"});if(r.ok){await c.put(u,r);ok++;}else falha++;}catch(e){falha++;}prog&&prog(i+1,lista.length);}
+  return {ok,falha};}
+$("#h-cam").onclick=async()=>{if(CAMBX)return;if(!navigator.onLine){aviso("Sem internet agora. Faça isso com Wi‑Fi, antes de ir a campo.");return;}
+  if(!senhaEquipe()){aviso("Primeiro abra uma fazenda e toque em 🗂 para digitar a senha da equipe.");return;}
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
+  const T=camTodas(),cv0=LS.get("cam_ver",""),atual=!!cv0&&cv0!==DADOS.versao;CAMBX=true;const el=$("#h-cams");
+  const r=await camBaixar(T,atual,(i,n)=>{el.innerHTML=`Guardando ${i} de ${n}… não feche o app.`;});CAMBX=false;
+  if(!r.falha)LS.set("cam_ver",DADOS.versao);aviso(r.falha?`Guardei ${r.ok} de ${T.length}. A internet caiu em ${r.falha}; toque de novo para terminar.`:"Pronto: todos os mapas oficiais estão no celular.");camStatus();};
+/* ao abrir uma fazenda com internet, guarda as camadas dela em segundo plano */
+function camAuto(m){if(!navigator.onLine||CAMBX||!m||!(m.camadas||[]).length)return;clearTimeout(camAuto.t);camAuto.t=setTimeout(()=>{camBaixar(m.camadas.map(c=>c.arq),false).catch(()=>{});},2500);}
 /* ================= folhas ================= */
 function abrirFolha(t,h){$("#sh-t").textContent=t;$("#sh-b").innerHTML=h;$("#sheet").classList.add("on");$("#scrim").classList.add("on");}
 function fecharFolha(){$("#sheet").classList.remove("on");$("#scrim").classList.remove("on");}
@@ -630,7 +656,7 @@ function entrar(){$("#pin").style.display="none";iniciar();}
 function tema(t){document.documentElement.setAttribute("data-tema",t);LS.set("tema",t);document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tema===t));
   const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.content=t==="escuro"?"#1F2420":"#F2F1EC";}
 document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.onclick=()=>tema(b.dataset.tema));tema(LS.get("tema","escuro"));
-function home(){$("#home").classList.add("on");fecharFolha();if(!DADOS)return;
+function home(){$("#home").classList.add("on");fecharFolha();if(!DADOS)return;camStatus();
   $("#h-ver").textContent="· mapas de "+DADOS.versao+(dataSit()?" · situação de "+dataSit():"");
   $("#h-np").textContent=PONTOS.length?`${PONTOS.length} ponto(s) marcados neste celular. Toque para ver e enviar.`:"Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.";
   $("#h-et").querySelectorAll("[data-et]").forEach(b=>{b.setAttribute("aria-pressed",String(b.dataset.et===ETAPA));b.onclick=()=>{ETAPA=b.dataset.et;LS.set("etapa",ETAPA);montarLista();if(LISTA[I])$("#selm").value=String(I);home();};});
