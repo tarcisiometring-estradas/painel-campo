@@ -15,7 +15,7 @@
 :root[data-tema="claro"]{--r-rota:#2F5F8A;--r-pd:#5E4E44;--r-colh:#C9A24E;--r-meio:#5E8A66;--r-novo:#A9C3A0;--r-sem:#D6CFC4;--r-cad:#5E4E44;--r-sel:#B86A4E;--r-ln:rgba(60,50,40,.35);--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--tal:#F1E6C4;--tall:#C9B98A;--np:#8E938B}
 :root[data-tema="sol"]{--r-rota:#123E66;--r-pd:#3B2E25;--r-colh:#C9A24E;--r-meio:#3F6B4A;--r-novo:#8FB08A;--r-sem:#CFC8BC;--r-cad:#000;--r-sel:#B0402A;--r-ln:rgba(0,0,0,.5);--bg:#FFFFFF;--sf:#FFFFFF;--ln:#3A3A3A;--ink:#000;--mut:#1F1F1F;--tal:#F4E9C8;--tall:#8A7A4A;--np:#6E726B;--zero:#D0453A;--ok:#00702A}
 :root{--r-rota:#7FA7C9;--r-pd:#C9A97E;--r-colh:#B8954A;--r-meio:#4F7A5A;--r-novo:#7E9A78;--r-sem:#4A463F;--r-cad:#D8C3B0;--r-sel:#D08A70;--r-ln:rgba(0,0,0,.35);--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--tal:#3A3526;--tall:#6B6247;
-  --ok:#2E8B57;--and:#E0A100;--prep:#3B7DD8;--zero:#E58B83;--np:#A9ADA6;--mk:#B07CE8;--gps:#1A73E8;--danger:#F08A80}
+  --ok:#2E8B57;--and:#E0A100;--prep:#3B7DD8;--zero:#E58B83;--np:#A9ADA6;--mk:#9E3B2C;--gps:#1A73E8;--danger:#F08A80}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
 button,select,input,textarea{font:inherit;color:inherit}
@@ -48,7 +48,10 @@ body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 .rt{fill:none;stroke:var(--r-ln);stroke-width:.7px;vector-effect:non-scaling-stroke;pointer-events:none}
 .rtl text{font:600 10px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
 .rlab{font:600 11.5px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px;pointer-events:none}.rlab.cad{font-weight:800;fill:var(--r-cad)}
-.pin{fill:var(--mk);stroke:#fff;stroke-width:2;vector-effect:non-scaling-stroke}
+.favb{width:40px;height:40px;flex:0 0 40px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}.favb i{width:16px;height:16px;border-radius:50%;border:2px solid var(--mut);background:transparent;display:block}.favb.on i{background:#F4F3EE;border-color:#5b5b57;box-shadow:0 0 0 1px #fff inset}
+.lab{display:grid;gap:4px;font-weight:600;font-size:14px}.inp{width:100%;text-align:left;font-weight:500;color:var(--ink)}a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)}a.btn.pri{color:#fff}
+#sh-b .bt[aria-pressed=true]{background:var(--ok);border-color:var(--ok);color:#fff}
+.pin{cursor:pointer}.dep .dq{fill:#2B3A33;stroke:#F2F1EC;stroke-width:1.4;vector-effect:non-scaling-stroke}.dep .dt{fill:#F2F1EC;font:700 10px system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}.dep.ext .dq{fill:#F2F1EC;stroke:#2B3A33}.dep.ext .dt{fill:#2B3A33}.dep.pend .dq{fill:#8C7A52}.dep{cursor:pointer}.pin.verp .pc{fill:#1F3A68}.pin .pc{fill:var(--mk);stroke:#fff;stroke-width:1.6;vector-effect:non-scaling-stroke}.pin .pf{fill:#fff}.pin .ps{fill:#000;opacity:.18}
 .top{position:fixed;top:calc(8px + env(safe-area-inset-top));left:8px;right:64px;display:grid;gap:6px;z-index:2}
 .box{background:var(--sf);border:1px solid var(--ln);border-radius:12px}
 #selm{width:100%;min-height:46px;padding:0 12px;font-weight:700;background:var(--sf);border:1px solid var(--ln);border-radius:12px}
@@ -153,6 +156,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <button class="choice" id="h-mapa"><span class="ic">🗺️</span><span><strong>Mapa das estradas</strong><small>Toque e escolha a fazenda. ⚙ para filtrar.</small></span><span class="seta">›</span></button>
   <button class="choice" id="h-cam"><span class="ic">⬇️</span><span><strong>Guardar mapas oficiais no celular</strong><small id="h-cams">Faça com Wi‑Fi antes de ir a campo. Depois os mapas oficiais (com legenda e quadros) abrem sem internet.</small></span><span class="seta">›</span></button>
   <button class="choice" id="h-pontos"><span class="ic">📍</span><span><strong>Pontos marcados</strong><small id="h-np">Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.</small></span><span class="seta">›</span></button>
+  <button class="choice" id="h-brita"><span class="ic">🚚</span><span><strong>Entrega de brita</strong><small id="h-brs">Depósitos D1, D2… no mapa, cargas recebidas e conferência.</small></span><span class="seta">›</span></button>
   <a class="choice" id="h-painel" href="painel.html"><span class="ic">📋</span><span><strong>Painel de Campo</strong><small>Conferir, marcar trechos e ver o mapa, mesmo sem internet. O que lançar fica no celular até enviar ao painel.</small></span><span class="seta">›</span></a>
   <a class="choice" href="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8" target="_blank" rel="noopener"><span class="ic">🌐</span><span><strong>Painel online</strong><small>Ler mensagem do WhatsApp, receber pacotes e parte do supervisor. Precisa de internet.</small></span><span class="seta">›</span></a>
   <div class="eyebrow" style="margin-top:6px">Fazendas</div>
@@ -162,6 +166,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 <div id="pin"><div class="box"><b style="font-size:19px">Estradas Sucuriú</b><div class="muted">Digite o código de acesso da equipe.</div><input id="pin-i" inputmode="numeric" autocomplete="off" maxlength="8"><button class="btn pri" id="pin-ok">Entrar</button></div></div>
 
 <script src="lib/mapa.js"></script>
+<script src="brita/config.js"></script>
 <script>
 "use strict";
 /* ================= dados ================= */
@@ -277,9 +282,11 @@ function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)
   [...s.querySelectorAll(".tl")].map(g=>({g,w:+g.dataset.w/uu,h:+g.dataset.h/uu})).sort((a,b)=>b.w-a.w).forEach(o=>{const g=o.g,wN=(+g.dataset.n)*7.2+6;const [x,y]=tela(g);
     if(o.w<wN*1.6||o.h<20||!dentro(x,y)){g.style.display="none";return;}tf(g,uu);const sub=g.querySelector(".ts");const cs=!!sub&&o.w>=60&&o.h>=46;if(sub)sub.style.display=cs?"":"none";
     g.style.display=livre(x,y+(cs?6:0),Math.max(wN,cs?50:0),cs?28:15)?"":"none";});
-  $("#pins").innerHTML=PONTOS.map(p=>{const [x,y]=g2n(m,p.lat,p.lon);if(x<-m.w||y<-m.h||x>2*m.w||y>2*m.h)return "";return `<circle class="pin" data-pt="${p.id}" cx="${x}" cy="${y}" r="${8*uu}"/>`;}).join("");
+  $("#pins").innerHTML=depMarcas(m,uu)+PONTOS.map(p=>{const [x,y]=g2n(m,p.lat,p.lon);if(x<-m.w||y<-m.h||x>2*m.w||y>2*m.h)return "";return alfinete(x,y,uu,`data-pt="${p.id}"`);}).join("")+verMarca(m,uu);
   const gg=$("#gps");gg.innerHTML="";if(GPS.on&&GPS.fix){const [x,y]=g2n(m,GPS.fix.lat,GPS.fix.lon);gg.innerHTML=`<circle cx="${x}" cy="${y}" r="${GPS.fix.acc/mpu(m)}" fill="#1A73E8" fill-opacity=".15"/>`+cursorGps(x,y,uu);}
   const mp=mpu(m)*uu,alvo=mp*100,p=Math.pow(10,Math.floor(Math.log10(alvo))),n=[1,2,5,10].map(k=>k*p).filter(k=>k<=alvo).pop()||p;$("#esc").innerHTML=`<i style="width:${Math.round(n/mp)}px"></i>${fM(n)}`;}
+/* alfinete: a ponta fica exatamente no lugar marcado; sempre em pé na tela, mesmo com o mapa girado */
+function alfinete(x,y,uu,attr,cls){return `<g class="pin${cls?" "+cls:""}" ${attr||""} transform="translate(${x} ${y}) rotate(${(-ANG).toFixed(1)}) scale(${uu})"><ellipse class="ps" cx="0" cy="0" rx="4" ry="1.6"/><path class="pc" d="M0 0C-1.6-5-8-10-8-17A8 8 0 1 1 8-17C8-10 1.6-5 0 0Z"/><circle class="pf" cx="0" cy="-17" r="3"/></g>`;}
 function info(){if(REG.on)return;const m=M();const t=sel!=null?m.trechos.find(x=>x.n===sel):null;let h="";
   if(t)h=`<b>Trecho ${t.n}${m.acesso?" do acesso":""}</b> · ${esc(t.tipo)} · ${fmt(t.m)} m<br><span class="pill p-${t.st}">${ST_N[t.st]||t.st}</span> ${t.partes&&t.partes.length?esc(t.partes.join(" · ")):""}`;
   if(GPS.on){const f=GPS.fix;let g=GPS.erro?esc(GPS.erro):!f?"Procurando o sinal do GPS…":"";
@@ -304,6 +311,8 @@ const fim=e=>{if(!G||!G.P.has(e.pointerId))return;G.P.delete(e.pointerId);if(G.P
 window.addEventListener("pointerup",fim);window.addEventListener("pointercancel",fim);
 sv().addEventListener("wheel",e=>{e.preventDefault();const [x,y]=toN(e.clientX,e.clientY);zoom((e=>{let d=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?400:1);d=Math.max(-120,Math.min(120,d));return Math.exp(d*(e.ctrlKey?0.012:0.0022));})(e),x,y);},{passive:false});
 sv().addEventListener("click",e=>{if(moveu){moveu=false;return;}
+  if(BR.segurou){BR.segurou=false;return;}
+  const dp=e.target.closest("[data-dep]");if(dp){abrirDep(dp.dataset.dep);return;}
   const p=e.target.closest("[data-pt]");if(p){abrirPonto(p.dataset.pt);return;}
   const h=e.target.closest(".hit,.nb");if(h){const n=+h.dataset.n;sel=sel===n?null:n;}else sel=null;info();aplicar();});
 let rsz=0;window.addEventListener("resize",()=>{clearTimeout(rsz);rsz=setTimeout(()=>{if(REG.on){rAplicar();return;}if(VB){const c=[VB.x+VB.w/2,VB.y+VB.h/2];const h=VB.w*raz();VB={x:VB.x,y:c[1]-h/2,w:VB.w,h};aplicar();}},120);});
@@ -459,6 +468,93 @@ function abrirPonto(id){const p=PONTOS.find(x=>x.id===id);if(!p)return;
   fotosDe(p).forEach((f,i)=>{const im=$("#sh-b").querySelector(`[data-pv="${i}"]`);if(im)im.src=URL.createObjectURL(f);});
   $("#pv-del").onclick=()=>{$("#pv-del").outerHTML=`<span><b>Apagar mesmo?</b> <button class="btn dan" id="pv-sim">Sim</button> <button class="btn" id="pv-nao">Não</button></span>`;
     $("#pv-sim").onclick=async()=>{await DB.tirar(id);await carregarPontos();fecharFolha();aplicar();aviso("Ponto apagado.");};$("#pv-nao").onclick=()=>abrirPonto(id);};}
+
+/* ================= entrega de brita: depósitos no mapa =================
+   Depósitos ficam no servidor (planilha Google) e uma cópia no celular para ver sem sinal.
+   Cadastro só para quem tem a senha da gestão: segure o dedo ~1 s no mapa, ou use a posição do GPS. */
+const BR={deps:LS.get("brita_deps",[]),fila:LS.get("brita_fila",[]),segurou:false,
+  srv(){const c=window.BRITA_SERVIDOR||"";if(c)LS.set("brita_srv_cfg",c);return LS.get("brita_srv","")||c||LS.get("brita_srv_cfg","");},
+  chave(){return LS.get("brita_chave","");}};
+async function brGet(q){const s=BR.srv();if(!s)throw new Error("servidor");const r=await fetch(s+"?"+new URLSearchParams(q),{cache:"no-store"});const j=await r.json();if(!j.ok)throw new Error(j.erro||"erro");return j;}
+async function brPost(o){const s=BR.srv();if(!s)throw new Error("servidor");const r=await fetch(s,{method:"POST",body:JSON.stringify(o)});const j=await r.json();if(!j.ok)throw new Error(j.erro||"erro");return j;}
+async function brBaixar(){if(!navigator.onLine||!BR.srv())return;try{const j=await brGet({a:"depositos"});BR.deps=j.depositos||[];LS.set("brita_deps",BR.deps);if(!REG.on&&DADOS)aplicar();brHome();}catch(e){}}
+async function brFila(){if(!navigator.onLine||!BR.srv()||!BR.fila.length)return;const resto=[];let ok=0,erro="";
+  for(const o of BR.fila){try{const j=await brPost(Object.assign({},o,{chave:BR.chave()}));if(j.depositos){BR.deps=j.depositos;LS.set("brita_deps",BR.deps);}ok++;}catch(e){if(/senha/.test(e.message)){erro="Senha da gestão errada – confira em 🚚 Entrega de brita.";}resto.push(o);}}
+  BR.fila=resto;LS.set("brita_fila",resto);if(ok)aviso(`${ok} cadastro(s) de depósito enviado(s).`);else if(erro)aviso(erro);if(!REG.on&&DADOS)aplicar();brHome();}
+addEventListener("online",()=>{brFila().then(brBaixar);});
+function brHome(){const el=$("#h-brs");if(!el)return;const n=BR.deps.filter(d=>d.ativo!==false).length;el.textContent=(n?n+" depósito(s) cadastrados":"Depósitos D1, D2… no mapa, cargas recebidas e conferência.")+(BR.fila.length?` · ${BR.fila.length} cadastro(s) esperando sinal`:"");}
+const depNome=d=>d.id+(d.nome&&d.nome!==d.id?" – "+d.nome:"");
+/* desenho: quadradinho escuro com o número (D4); extensões em claro (D4-B); pendentes em cáqui */
+function depMarcas(m,uu){const dentro=([x,y])=>x>-m.w&&y>-m.h&&x<2*m.w&&y<2*m.h;let h="";
+  const q=(x,y,txt,cls,attr)=>{const w=Math.max(22,txt.length*6.6+8);return `<g class="dep ${cls}" ${attr} transform="translate(${x} ${y}) rotate(${(-ANG).toFixed(1)}) scale(${uu})"><rect class="dq" x="${-w/2}" y="-9" width="${w}" height="18" rx="4"/><text class="dt" x="0" y="0.5">${esc(txt)}</text></g>`;};
+  BR.deps.filter(d=>d.ativo!==false).forEach(d=>{const P=g2n(m,d.lat,d.lon);if(dentro(P))h+=q(P[0],P[1],d.id,"",`data-dep="${esc(d.id)}"`);
+    (d.extensoes||[]).forEach((e,i)=>{const E=g2n(m,+e.lat,+e.lon);if(dentro(E))h+=q(E[0],E[1],e.nome||d.id+"-"+String.fromCharCode(66+i),"ext",`data-dep="${esc(d.id)}"`);});});
+  BR.fila.forEach(o=>{const d=o.a==="deposito"?o.dep:o.ext;if(!d)return;const P=g2n(m,+d.lat,+d.lon);if(dentro(P))h+=q(P[0],P[1],o.a==="deposito"?"novo":"ext.","pend","");});
+  return h;}
+/* ponto vindo da gestão (📍 Ver no mapa): alfinete azul-marinho */
+let VER=null;
+function verMarca(m,uu){if(!VER)return "";const P=g2n(m,VER.lat,VER.lon);return alfinete(P[0],P[1],uu,"","verp");}
+function verAbrir(){const h=decodeURIComponent(location.hash||"");const mt=/^#ver=(-?[\d.]+),(-?[\d.]+)(?:,(.*))?$/.exec(h);if(!mt||!DADOS)return;
+  VER={lat:+mt[1],lon:+mt[2],rot:mt[3]||"Local da descarga"};let best=-1,bd=Infinity;
+  /* prefere o mapa onde o depósito mais perto foi cadastrado (ex.: o acesso da fazenda) */
+  const D0=depOrdenar(VER.lat,VER.lon)[0];if(D0&&D0.m<5000&&D0.d.mapa){const k=LISTA.findIndex(m=>m.nome+" · "+m.mapa===D0.d.mapa);if(k>=0){best=k;bd=-1;}}
+  if(bd>=0)LISTA.forEach((m,i)=>{const bb=bbCont(m);const [a,c]=g2n(m,VER.lat,VER.lon);const pad=bb.w*0.3;if(a<bb.x-pad||c<bb.y-pad||a>bb.x+bb.w+pad||c>bb.y+bb.h+pad)return;const d=distTrecho(m,VER.lat,VER.lon);if(d<bd){bd=d;best=i;}});
+  if(best<0){aviso("Esse ponto está fora dos mapas das fazendas.");best=I;}
+  abrirMapa(best);requestAnimationFrame(()=>{const m=M();const [x,y]=g2n(m,VER.lat,VER.lon);const w=1200/mpu(m);VB={x:x-w/2,y:y-w*raz()/2,w,h:w*raz()};aplicar();
+    const D=BR.deps.map(d=>{let mm=Infinity;[{lat:d.lat,lon:d.lon}].concat(d.extensoes||[]).forEach(p=>{mm=Math.min(mm,dist([VER.lat,VER.lon],[+p.lat,+p.lon]));});return {d,mm};}).sort((a,b)=>a.mm-b.mm)[0];
+    $("#info").innerHTML=`<b>📍 ${esc(VER.rot)}</b><br>${VER.lat.toFixed(6)}, ${VER.lon.toFixed(6)}${D?` · depósito mais perto: <b>${esc(depNome(D.d))}</b> a ${fM(Math.round(D.mm))}`:""} <button class="btn" id="ver-x" style="min-height:34px;padding:0 10px">Fechar</button>`;$("#info").style.display="block";
+    $("#ver-x").onclick=()=>{VER=null;history.replaceState(null,"",location.pathname+location.search);info();aplicar();};});}
+addEventListener("hashchange",verAbrir);
+/* segurar o dedo no mapa ~0,7 s: cadastrar depósito ali (só com a senha da gestão) */
+(()=>{let t=0,p0=null;const s=sv();
+  s.addEventListener("pointerdown",e=>{clearTimeout(t);if(!BR.chave()||MED.on||(G&&G.P.size>1))return;p0=[e.clientX,e.clientY];
+    t=setTimeout(()=>{if(moveu||(G&&G.P.size>1))return;BR.segurou=true;setTimeout(()=>BR.segurou=false,900);try{navigator.vibrate&&navigator.vibrate(60);}catch(x){}
+      const [x,y]=toN(p0[0],p0[1]);const [lat,lon]=n2g(M(),x,y);depCadastro(lat,lon,"ponto escolhido no mapa");},700);});
+  const parar=()=>clearTimeout(t);s.addEventListener("pointerup",parar);s.addEventListener("pointercancel",parar);
+  s.addEventListener("pointermove",e=>{if(p0&&Math.hypot(e.clientX-p0[0],e.clientY-p0[1])>8)clearTimeout(t);});
+  s.addEventListener("contextmenu",e=>e.preventDefault());})();
+function depOrdenar(lat,lon){return BR.deps.filter(d=>d.ativo!==false).map(d=>{let mm=Infinity;[{lat:d.lat,lon:d.lon}].concat(d.extensoes||[]).forEach(p=>{mm=Math.min(mm,dist([lat,lon],[+p.lat,+p.lon]));});return {d,m:mm};}).sort((a,b)=>a.m-b.m);}
+function depCadastro(lat,lon,orig,modo){const m=M();modo=modo||"novo";const O=depOrdenar(lat,lon);
+  const projs=[...new Set(BR.deps.map(d=>d.projeto).concat(LISTA.map(x=>x.nome)).filter(Boolean))],refs=[...new Set(BR.deps.map(d=>d.referencia).filter(Boolean))];
+  const prox=O[0]&&O[0].m<2000?O[0].d:null;
+  abrirFolha("Cadastrar depósito?",`<div class="muted">${esc(orig)}<br>${lat.toFixed(6)}, ${lon.toFixed(6)}${O[0]?` · mais perto: ${esc(O[0].d.id)} a ${fM(Math.round(O[0].m))}`:""}</div>
+  <div class="bar"><button class="bt" data-dm="novo" aria-pressed="${modo==="novo"}">Depósito novo</button><button class="bt" data-dm="ext" aria-pressed="${modo==="ext"}" ${O.length?"":"disabled"}>Extensão de um depósito</button></div>
+  ${modo==="novo"?`<div class="muted">Vai receber o próximo número (D${(BR.deps.reduce((a,d)=>Math.max(a,+(/^D(\d+)$/.exec(d.id)||[0,0])[1]),0)+1+BR.fila.filter(o=>o.a==="deposito").length)}).</div>
+    <label class="lab">Apelido (opcional)<input id="dc-n" class="btn inp" placeholder="Ex.: Pátio km 12"></label>
+    <label class="lab">Projeto – fazenda que leva o custo<input id="dc-p" class="btn inp" list="dc-pl" value="${esc(prox?prox.projeto:m.nome)}"></label><datalist id="dc-pl">${projs.map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+    <label class="lab">Referência (opcional)<input id="dc-r" class="btn inp" list="dc-rl" value="${esc(prox?prox.referencia:"")}" placeholder="Ex.: MS-316 – parte da AGESUL"></label><datalist id="dc-rl">${refs.map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+    <div class="row" style="gap:8px"><label class="lab" style="flex:1">Previsto (t)<input id="dc-t" class="btn inp" inputmode="decimal" placeholder="opcional"></label><label class="lab" style="flex:1">Raio aceito (m)<input id="dc-ra" class="btn inp" inputmode="numeric" value="150"></label></div>`
+   :`<div class="muted">O ponto passa a contar para o depósito escolhido (ex.: o pátio encheu e a carga foi para cá).</div>${O.slice(0,8).map(o=>`<button class="fzb" data-de="${esc(o.d.id)}" style="text-align:left"><span><b>${esc(depNome(o.d))}</b><small style="display:block">${esc(o.d.projeto)}${o.d.referencia?" · "+esc(o.d.referencia):""} · a ${fM(Math.round(o.m))}</small></span></button>`).join("")}`}
+  <div class="row">${modo==="novo"?`<button class="btn pri" id="dc-sim">Sim, cadastrar</button>`:""}<button class="btn" id="dc-nao">Não</button></div>`);
+  const B=$("#sh-b");B.querySelectorAll("[data-dm]").forEach(b=>b.onclick=()=>depCadastro(lat,lon,orig,b.dataset.dm));$("#dc-nao").onclick=fecharFolha;
+  const salvar=o=>{BR.fila.push(o);LS.set("brita_fila",BR.fila);fecharFolha();aplicar();brHome();if(navigator.onLine)brFila();else aviso("Guardado no celular. Vai para o servidor quando tiver sinal.");};
+  if(modo==="novo")$("#dc-sim").onclick=()=>{const proj=$("#dc-p").value.trim();if(!proj){aviso("Diga o projeto (fazenda que leva o custo).");return;}
+    salvar({a:"deposito",por:"app",dep:{nome:$("#dc-n").value.trim(),projeto:proj,referencia:$("#dc-r").value.trim(),lat,lon,raio_m:+$("#dc-ra").value||150,planejado_t:parseFloat(($("#dc-t").value||"0").replace(",","."))||0,mapa:m.nome+" · "+m.mapa}});};
+  B.querySelectorAll("[data-de]").forEach(b=>b.onclick=()=>salvar({a:"extensao",por:"app",id:b.dataset.de,ext:{lat,lon}}));}
+function abrirDep(id){const d=BR.deps.find(x=>x.id===id);if(!d)return;const adm=!!BR.chave();
+  abrirFolha("Depósito "+d.id,`<div class="box card" style="display:grid;gap:4px"><b>${esc(depNome(d))}</b><span>Projeto: <b>${esc(d.projeto)}</b></span>${d.referencia?`<span>Referência: ${esc(d.referencia)}</span>`:""}
+    ${d.planejado_t?`<span>Previsto: ${fmt(d.planejado_t)} t</span>`:""}<span class="muted">${(+d.lat).toFixed(6)}, ${(+d.lon).toFixed(6)} · raio ${d.raio_m||150} m${(d.extensoes||[]).length?` · ${d.extensoes.length} extensão(ões)`:""}</span></div>
+    ${adm?`<label class="lab">Apelido<input id="de-n" class="btn inp" value="${esc(d.nome&&d.nome!==d.id?d.nome:"")}"></label><label class="lab">Projeto<input id="de-p" class="btn inp" value="${esc(d.projeto)}"></label><label class="lab">Referência<input id="de-r" class="btn inp" value="${esc(d.referencia)}"></label>
+    <div class="row" style="gap:8px"><label class="lab" style="flex:1">Previsto (t)<input id="de-t" class="btn inp" inputmode="decimal" value="${d.planejado_t||""}"></label><label class="lab" style="flex:1">Raio (m)<input id="de-ra" class="btn inp" inputmode="numeric" value="${d.raio_m||150}"></label></div>
+    <div class="row"><button class="btn pri" id="de-s">Salvar</button><a class="btn" href="brita/gestao.html#dep=${encodeURIComponent(d.id)}">Ver cargas</a></div><button class="btn dan" id="de-x">Desativar depósito</button>`:`<a class="btn" href="brita/gestao.html#dep=${encodeURIComponent(d.id)}">Ver cargas (gestão)</a>`}`);
+  if(!adm)return;const env=o=>{BR.fila.push(o);LS.set("brita_fila",BR.fila);fecharFolha();if(navigator.onLine)brFila();else aviso("Guardado. Vai quando tiver sinal.");};
+  $("#de-s").onclick=()=>env({a:"deposito",por:"app",dep:{id:d.id,lat:d.lat,lon:d.lon,nome:$("#de-n").value.trim()||d.id,projeto:$("#de-p").value.trim(),referencia:$("#de-r").value.trim(),planejado_t:parseFloat(($("#de-t").value||"0").replace(",","."))||0,raio_m:+$("#de-ra").value||150}});
+  $("#de-x").onclick=()=>{$("#de-x").outerHTML=`<span><b>Desativar ${esc(d.id)}?</b> As cargas antigas continuam. <button class="btn dan" id="de-xs">Sim</button> <button class="btn" id="de-xn">Não</button></span>`;
+    $("#de-xs").onclick=()=>env({a:"deposito",por:"app",dep:{id:d.id,lat:d.lat,lon:d.lon,ativo:false}});$("#de-xn").onclick=()=>abrirDep(id);};}
+function brFolha(){const adm=BR.chave(),lk=new URL("brita/",location.href).href;
+  abrirFolha("🚚 Entrega de brita",`<a class="btn pri" href="brita/gestao.html" style="text-decoration:none">📋 Cargas recebidas, resumo e conferência</a>
+  <div class="box card" style="display:grid;gap:8px"><b>Cadastrar depósitos (supervisor/técnico)</b>
+   ${adm?`<div class="muted">No mapa, <b>segure o dedo ~1 segundo</b> no lugar do depósito. Ou cadastre onde você está:</div><button class="btn" id="bf-gps">📍 Cadastrar na minha posição (GPS)</button>`:`<div class="muted">Digite a senha da gestão para poder cadastrar.</div>`}
+   <div style="position:relative"><input id="bf-k" class="btn inp" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Senha da gestão" value="${esc(adm)}" style="width:100%;padding-right:52px"><button type="button" class="btn" onclick="olhoSenha(this)" aria-label="Mostrar a senha" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);min-height:38px;padding:0 10px;border:0;background:transparent">${OLHO_A}</button></div>
+   <button class="btn" id="bf-ok">Salvar senha</button>
+   ${BR.fila.length?`<div class="muted">${BR.fila.length} cadastro(s) esperando sinal.</div>`:""}</div>
+  <div class="box card" style="display:grid;gap:8px"><b>App do motorista</b><div class="muted">Mande este link para as pedreiras passarem aos motoristas:</div><input class="btn inp" readonly value="${esc(lk)}" onclick="this.select()" style="width:100%"><button class="btn" id="bf-cp">Copiar link</button></div>`);
+  $("#bf-ok").onclick=async()=>{const k=$("#bf-k").value.trim();if(!k){LS.set("brita_chave","");brFolha();return;}
+    if(navigator.onLine&&BR.srv()){try{await brPost({a:"chave",chave:k});}catch(e){aviso(/senha/.test(e.message)?"Senha errada.":"Não consegui conferir agora; guardei mesmo assim.");if(/senha/.test(e.message))return;}}
+    LS.set("brita_chave",k);aviso("Senha guardada neste celular.");brFolha();};
+  if($("#bf-gps"))$("#bf-gps").onclick=()=>{if(!(GPS.on&&GPS.fix)){if(!GPS.on)gpsLigar();aviso("Esperando o GPS… toque de novo quando aparecer seu ponto azul.");return;}depCadastro(GPS.fix.lat,GPS.fix.lon,`sua posição (±${Math.round(GPS.fix.acc)} m)`);};
+  $("#bf-cp").onclick=()=>{try{navigator.clipboard.writeText(lk);aviso("Link copiado.");}catch(e){}};}
+$("#h-brita").onclick=()=>{if(LISTA[I])abrirMapa(I);brFolha();};
 
 /* menu */
 $("#b-menu").onclick=()=>{const m=M();const tal=m.talhoes.filter(t=>t.id).sort((a,b)=>String(a.id).localeCompare(String(b.id),"pt",{numeric:true}));
@@ -733,7 +829,7 @@ window.addEventListener("online",()=>buscarDados(true));
 const PIN_H="7c14d3";function h(s){let x=5381;for(const c of s)x=((x<<5)+x+c.charCodeAt(0))>>>0;return (x%0xffffff).toString(16).padStart(6,"0");}
 async function iniciar(){await carregarPontos();
   const r=await fetch("dados/mapas.json").catch(()=>null);if(!r||!r.ok){document.body.innerHTML='<div style="padding:24px">Abra o app uma vez com internet para baixar os mapas.</div>';return;}
-  DADOS=await r.json();await buscarSit(false);montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();home();
+  DADOS=await r.json();await buscarSit(false);montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();home();brHome();brFila().then(brBaixar);if(location.hash.startsWith("#ver="))verAbrir();
   if(navigator.onLine)setTimeout(()=>buscarDados(true),2500);}
 function entrar(){$("#pin").style.display="none";iniciar();}
 function tema(t){document.documentElement.setAttribute("data-tema",t);LS.set("tema",t);document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tema===t));
@@ -743,25 +839,28 @@ function home(){$("#home").classList.add("on");fecharFolha();if(!DADOS)return;ca
   $("#h-ver").textContent="· mapas de "+DADOS.versao+(dataSit()?" · situação de "+dataSit():"");
   $("#h-np").textContent=PONTOS.length?`${PONTOS.length} ponto(s) marcados neste celular. Toque para ver e enviar.`:"Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.";
   $("#h-et").querySelectorAll("[data-et]").forEach(b=>{b.setAttribute("aria-pressed",String(b.dataset.et===ETAPA));b.onclick=()=>{ETAPA=b.dataset.et;LS.set("etapa",ETAPA);montarLista();if(LISTA[I])$("#selm").value=String(I);home();};});
-  const FE=fazEt();$("#h-fz").innerHTML=!ETAPA?`<div class="muted" style="padding:6px 2px">Escolha a etapa acima para ver as fazendas.</div>`:!FE.length?`<div class="muted" style="padding:6px 2px">Nenhuma fazenda dessa etapa ainda.</div>`:FE.map(({f,ms})=>`<div class="fzb" style="display:grid;gap:8px"><div><b>${esc(f.mapas[0].nome)}</b> <small style="display:inline">· ${esc(f.cod)}</small></div>
+  const FAV=new Set(LS.get("fav_fz",[])||[]);const FE=fazEt().slice().sort((a,b)=>(FAV.has(b.f.cod)?1:0)-(FAV.has(a.f.cod)?1:0));$("#h-fz").innerHTML=!ETAPA?`<div class="muted" style="padding:6px 2px">Escolha a etapa acima para ver as fazendas.</div>`:!FE.length?`<div class="muted" style="padding:6px 2px">Nenhuma fazenda dessa etapa ainda.</div>`:FE.map(({f,ms})=>`<div class="fzb" style="display:grid;gap:8px"><div style="display:flex;align-items:center;gap:8px"><span style="flex:1"><b>${esc(f.mapas[0].nome)}</b> <small style="display:inline">· ${esc(f.cod)}</small></span><button class="favb${FAV.has(f.cod)?" on":""}" data-fav="${esc(f.cod)}" aria-pressed="${FAV.has(f.cod)}" aria-label="${FAV.has(f.cod)?"Tirar dos mais usados":"Pôr nos mais usados (aparece primeiro)"}" title="${FAV.has(f.cod)?"Mais usado – toque para tirar":"Toque para pôr no topo da lista"}"><i></i></button></div>
     <div class="bar">${ms.map(m=>`<button class="bt" data-abre="${LISTA.indexOf(m)}">${m.acesso?"Acesso":"Estradas internas"}</button>`).join("")}</div></div>`).join("");
-  $("#h-fz").querySelectorAll("[data-abre]").forEach(b=>b.onclick=()=>abrirMapa(+b.dataset.abre));}
+  $("#h-fz").querySelectorAll("[data-abre]").forEach(b=>b.onclick=()=>abrirMapa(+b.dataset.abre));
+  $("#h-fz").querySelectorAll("[data-fav]").forEach(b=>b.onclick=e=>{e.stopPropagation();const c=b.dataset.fav;if(FAV.has(c))FAV.delete(c);else FAV.add(c);LS.set("fav_fz",[...FAV]);home();});}
 function abrirMapa(i){$("#home").classList.remove("on");if(i==null){REG.VB=null;irRegiao(false);return;}if(REG.on){REG.on=false;document.body.classList.remove("regiao");}if(i!==I){I=i;desenhar();}else $("#selm").value=String(I);requestAnimationFrame(()=>{VB=null;aplicar();});}
 /* menu rápido de mapas: toca e escolhe; ⚙ abre o filtro quando precisar */
 let MF={et:LS.get("menu_et",""),q:"",ver:false};
 function menuMapas(){if(!DADOS){abrirMapa(null);return;}
   const fz=DADOS.fazendas.map(f=>({f,ms:f.mapas.filter(m=>!MF.et||finA(m)===MF.et)})).filter(x=>x.ms.length&&(!MF.q||norm2(x.f.mapas[0].nome+" "+x.f.cod).includes(norm2(MF.q))));
+  const FAV=new Set(LS.get("fav_fz",[])||[]);fz.sort((a,b)=>(FAV.has(b.f.cod)?1:0)-(FAV.has(a.f.cod)?1:0));
   const etTxt={"":"Todas",implantacao:"Implantação",abastecimento:"Abastecimento"};
   abrirFolha("🗺️ Qual mapa?",`<div style="display:flex;gap:8px;flex-shrink:0"><button class="fzb" data-mreg style="flex:1;flex-shrink:0"><span><b>🌎 Região – todas as fazendas</b></span></button><button class="btn" id="mf-eng" aria-label="Filtrar" title="Filtrar" style="min-width:52px;font-size:20px;${MF.ver||MF.et?"border:2px solid var(--ok)":""}">⚙</button></div>
    ${MF.ver?`<div class="card" style="display:grid;gap:8px"><b>Filtrar</b><div class="bar">${Object.keys(etTxt).map(k=>`<button class="bt" data-mfet="${k}" aria-pressed="${MF.et===k}" style="${MF.et===k?"background:var(--ok);color:#fff;border-color:var(--ok)":""}">${etTxt[k]}</button>`).join("")}</div><input id="mf-q" class="btn" placeholder="Buscar fazenda (nome ou código)" value="${esc(MF.q)}" style="width:100%;text-align:left"></div>`:MF.et?`<div class="muted">Mostrando só ${etTxt[MF.et]}. Toque em ⚙ para mudar.</div>`:""}
-   ${fz.length?`<div class="fzg">`+fz.map(({f,ms})=>`<div class="fzb" style="display:grid;gap:8px"><div><b>${esc(f.mapas[0].nome)}</b> <small style="display:inline">· ${esc(f.cod)}</small></div>
+   ${fz.length?`<div class="fzg">`+fz.map(({f,ms})=>`<div class="fzb" style="display:grid;gap:8px"><div style="display:flex;align-items:center;gap:8px"><span style="flex:1"><b>${esc(f.mapas[0].nome)}</b> <small style="display:inline">· ${esc(f.cod)}</small></span><button class="favb${FAV.has(f.cod)?" on":""}" data-fav="${esc(f.cod)}" aria-pressed="${FAV.has(f.cod)}" aria-label="${FAV.has(f.cod)?"Tirar dos mais usados":"Pôr nos mais usados (aparece primeiro)"}" title="${FAV.has(f.cod)?"Mais usado – toque para tirar":"Toque para pôr no topo da lista"}"><i></i></button></div>
     <div class="bar">${ms.map(m=>`<button class="bt" data-mab="${LISTA.indexOf(m)}">${m.acesso?"Acesso":"Internas"}${MF.et?"":" · "+(finA(m)==="implantacao"?"Impl.":"Abast.")}</button>`).join("")}</div></div>`).join("")+`</div>`:`<div class="muted">Nenhuma fazenda com esse filtro.</div>`}`);
   const B=$("#sh-b");
   B.querySelector("[data-mreg]").onclick=()=>{fecharFolha();abrirMapa(null);};
   $("#mf-eng").onclick=()=>{MF.ver=!MF.ver;menuMapas();};
   B.querySelectorAll("[data-mfet]").forEach(b=>b.onclick=()=>{MF.et=b.dataset.mfet;LS.set("menu_et",MF.et);menuMapas();});
   const q=$("#mf-q");if(q)q.oninput=()=>{MF.q=q.value;const pos=q.selectionStart;menuMapas();const q2=$("#mf-q");if(q2){q2.focus();q2.setSelectionRange(pos,pos);}};
-  B.querySelectorAll("[data-mab]").forEach(b=>b.onclick=()=>{fecharFolha();abrirMapa(+b.dataset.mab);});}
+  B.querySelectorAll("[data-mab]").forEach(b=>b.onclick=()=>{fecharFolha();abrirMapa(+b.dataset.mab);});
+  B.querySelectorAll("[data-fav]").forEach(b=>b.onclick=e=>{e.stopPropagation();const c=b.dataset.fav;if(FAV.has(c))FAV.delete(c);else FAV.add(c);LS.set("fav_fz",[...FAV]);const st=$("#sh-b").scrollTop;menuMapas();$("#sh-b").scrollTop=st;});}
 function norm2(t){return String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
 $("#h-mapa").onclick=menuMapas;
 $("#h-pontos").onclick=()=>{abrirMapa(I);$("#b-menu").onclick();};

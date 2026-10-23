@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Entrega de Brita</title>
+<meta name="theme-color" content="#2B3A33">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png">
+<style>
+:root{--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--pri:#2B3A33;--ok:#3F6B4A;--warn:#9A6A1F;--dan:#9E3B2C;--acc:#C9A24E}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+header{background:var(--pri);color:#fff;padding:14px 16px calc(14px);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+header b{font-size:19px;flex:1}
+header small{opacity:.8;font-size:13px}
+main{padding:16px;max-width:620px;margin:0 auto;display:grid;gap:14px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:16px;display:grid;gap:10px}
+h2{margin:0;font-size:20px}
+.muted{color:var(--mut);font-size:15px}
+label.f{display:grid;gap:6px;font-weight:600}
+input,select,textarea{font:inherit;padding:14px;border:1.5px solid var(--ln);border-radius:12px;background:#fff;color:var(--ink);width:100%}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--acc);border-color:var(--acc)}
+.btn{font:inherit;font-weight:700;min-height:56px;border-radius:14px;border:1.5px solid var(--ln);background:#fff;color:var(--ink);padding:0 18px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+.btn.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+.btn.ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+.btn.big{min-height:76px;font-size:21px}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.passos{display:flex;gap:6px}
+.passos i{flex:1;height:6px;border-radius:3px;background:var(--ln)}
+.passos i.on{background:var(--acc)}
+.passos i.ok{background:var(--ok)}
+.aviso{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));background:#1E2420;color:#fff;padding:14px 16px;border-radius:12px;z-index:50;display:none;font-size:16px}
+.aviso.on{display:block}
+.ent{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-top:1px solid var(--ln)}
+.ent:first-child{border-top:0}
+.tag{font-size:13px;font-weight:700;padding:3px 8px;border-radius:20px;align-self:start;white-space:nowrap}
+.tag.ok{background:#E3EDE5;color:var(--ok)}
+.tag.esp{background:#F4EAD6;color:var(--warn)}
+.gps{display:flex;gap:10px;align-items:center;font-weight:600}
+.gps i{width:14px;height:14px;border-radius:50%;background:var(--warn);flex:0 0 14px}
+.gps.bom i{background:var(--ok)}
+.dep{display:grid;gap:4px;padding:14px;border:1.5px solid var(--ln);border-radius:12px;background:#fff;text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
+.dep[aria-pressed=true]{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok) inset}
+.dep b{font-size:18px}
+.prev{width:100%;border-radius:12px;border:1px solid var(--ln);display:block;background:#ddd}
+/* câmera */
+#cam{position:fixed;inset:0;background:#000;z-index:40;display:none;flex-direction:column}
+#cam.on{display:flex}
+#cam video{flex:1;width:100%;object-fit:cover;min-height:0}
+#cam .moldura{position:absolute;inset:12% 8% 22% 8%;border:3px dashed rgba(255,255,255,.75);border-radius:10px;pointer-events:none}
+#cam .dica{position:absolute;top:calc(12px + env(safe-area-inset-top));left:12px;right:12px;color:#fff;text-align:center;font-weight:700;text-shadow:0 1px 3px #000;font-size:18px}
+#cam .barra{display:flex;align-items:center;justify-content:space-around;padding:18px 12px calc(18px + env(safe-area-inset-bottom));background:#000}
+#cam .disp{width:84px;height:84px;border-radius:50%;border:6px solid #fff;background:#fff;box-shadow:0 0 0 3px #000 inset;cursor:pointer}
+#cam .sair{color:#fff;background:none;border:0;font:inherit;font-weight:700;padding:12px;min-width:90px}
+/* recorte da nota */
+#rec{position:fixed;inset:0;background:#111;z-index:41;display:none;flex-direction:column}
+#rec.on{display:flex}
+#rec .area{flex:1;position:relative;min-height:0;touch-action:none}
+#rec canvas{position:absolute;inset:0;width:100%;height:100%}
+#rec .dica{color:#fff;text-align:center;padding:12px;font-weight:600}
+#rec .barra{display:flex;gap:10px;padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+</style>
+</head>
+<body>
+<header><b>🚚 Entrega de Brita</b><small id="h-net"></small></header>
+<main id="tela"></main>
+<div id="cam"><video id="cam-v" playsinline muted autoplay></video><div class="moldura" id="cam-m"></div><div class="dica" id="cam-d"></div>
+  <div class="barra"><button class="sair" id="cam-x">Cancelar</button><button class="disp" id="cam-b" aria-label="Tirar foto"></button><span style="min-width:90px"></span></div></div>
+<div id="rec"><div class="dica">Arraste as 4 bolinhas até os cantos da nota</div><div class="area" id="rec-a"><canvas id="rec-c"></canvas></div>
+  <div class="barra"><button class="btn" id="rec-r">Tirar de novo</button><button class="btn ok" id="rec-ok">Pronto</button></div></div>
+<div class="aviso" id="aviso"></div>
+<input type="file" accept="image/*" capture="environment" id="arq" hidden>
+<script src="config.js"></script>
+<script src="comum.js"></script>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),T=$("#tela"),{esc,fT,fM}=BRITA;
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+function aviso(t,ms){const a=$("#aviso");a.textContent=t;a.classList.add("on");clearTimeout(aviso.t);aviso.t=setTimeout(()=>a.classList.remove("on"),ms||3500);}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+
+/* ---------- fila de entregas guardada no celular (funciona sem sinal) ---------- */
+const DB={db:null,abrir(){if(this.db)return Promise.resolve(this.db);return new Promise(ok=>{const r=indexedDB.open("brita",1);r.onupgradeneeded=()=>r.result.createObjectStore("ent",{keyPath:"id"});r.onsuccess=()=>{this.db=r.result;ok(this.db);};r.onerror=()=>ok(null);});},
+  async todos(){const d=await this.abrir();if(!d)return [];return new Promise(ok=>{const q=d.transaction("ent").objectStore("ent").getAll();q.onsuccess=()=>ok(q.result||[]);q.onerror=()=>ok([]);});},
+  async por(o){const d=await this.abrir();if(!d)throw new Error("sem banco");return new Promise((ok,er)=>{const t=d.transaction("ent","readwrite");t.objectStore("ent").put(o);t.oncomplete=ok;t.onerror=()=>er(t.error);});}};
+
+/* ---------- depósitos (baixados quando tem sinal, guardados para usar sem sinal) ---------- */
+let DEPS=LS.get("deps",[]);
+async function baixarDeps(){try{const j=await BRITA.get({a:"depositos"});DEPS=j.depositos||[];LS.set("deps",DEPS);LS.set("deps_em",new Date().toISOString());return true;}catch(e){return false;}}
+
+/* ---------- GPS ---------- */
+const GPS={fix:null,id:null,erro:""};
+function gpsLigar(){if(GPS.id!=null||!navigator.geolocation)return;GPS.id=navigator.geolocation.watchPosition(p=>{GPS.fix={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy,em:Date.now()};GPS.erro="";gpsMostrar();},
+  e=>{GPS.erro=e.code===1?"O GPS está bloqueado para este app. Libere a localização nas configurações do celular.":"Procurando sinal do GPS…";gpsMostrar();},{enableHighAccuracy:true,maximumAge:5000,timeout:60000});}
+function gpsMostrar(){const el=$("#gps");if(!el)return;const f=GPS.fix;
+  if(!f){el.className="gps";el.innerHTML=`<i></i><span>${esc(GPS.erro||"Procurando sinal do GPS… fique a céu aberto.")}</span>`;return;}
+  const bom=f.acc<=30;el.className="gps"+(bom?" bom":"");el.innerHTML=`<i></i><span>${bom?"GPS pronto":"GPS ainda fraco"} (±${Math.round(f.acc)} m)</span>`;
+  if(typeof gpsMudou==="function")gpsMudou();}
+
+/* ---------- câmera ao vivo (a foto é sempre tirada na hora) ---------- */
+let STREAM=null;
+function camera(dica,moldura){return new Promise(async(ok)=>{
+  const fim=v=>{$("#cam").classList.remove("on");if(STREAM){STREAM.getTracks().forEach(t=>t.stop());STREAM=null;}ok(v);};
+  try{STREAM=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1440}},audio:false});}
+  catch(e){/* celular sem acesso direto à câmera: usa a câmera do sistema */const a=$("#arq");a.value="";a.onchange=async()=>{const f=a.files&&a.files[0];if(!f)return ok(null);const im=await imagemDe(f);ok(im);};a.click();return;}
+  const v=$("#cam-v");v.srcObject=STREAM;$("#cam-d").textContent=dica;$("#cam-m").style.display=moldura?"":"none";$("#cam").classList.add("on");
+  $("#cam-x").onclick=()=>fim(null);
+  $("#cam-b").onclick=()=>{if(!v.videoWidth)return;const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);try{navigator.vibrate&&navigator.vibrate(40);}catch(e){}fim(c);};});}
+function imagemDe(f){return new Promise((ok,er)=>{const i=new Image();i.onload=()=>{const c=document.createElement("canvas");c.width=i.naturalWidth;c.height=i.naturalHeight;c.getContext("2d").drawImage(i,0,0);URL.revokeObjectURL(i.src);ok(c);};i.onerror=er;i.src=URL.createObjectURL(f);});}
+function reduzir(c,max){const s=Math.min(1,max/Math.max(c.width,c.height));if(s>=1)return c;const d=document.createElement("canvas");d.width=Math.round(c.width*s);d.height=Math.round(c.height*s);d.getContext("2d").drawImage(c,0,0,d.width,d.height);return d;}
+/* carimbo com data, hora e coordenada na foto */
+function carimbar(c,linhas){const ctx=c.getContext("2d"),h=Math.max(22,Math.round(c.width/42)),pad=Math.round(h*.5),alt=linhas.length*(h*1.3)+pad*2;
+  ctx.fillStyle="rgba(0,0,0,.6)";ctx.fillRect(0,c.height-alt,c.width,alt);ctx.fillStyle="#fff";ctx.font=`600 ${h}px system-ui,sans-serif`;ctx.textBaseline="top";
+  linhas.forEach((l,i)=>ctx.fillText(l,pad,c.height-alt+pad+i*h*1.3));return c;}
+
+/* ---------- recorte da nota: arrasta os cantos e o app endireita ---------- */
+function recortar(src){return new Promise(ok=>{
+  const c=$("#rec-c"),A=$("#rec-a");$("#rec").classList.add("on");
+  const pv=reduzir(src,1600);let Q=[[.08,.08],[.92,.08],[.92,.92],[.08,.92]].map(([x,y])=>[x*pv.width,y*pv.height]);let lay=null,arr=-1;
+  function desenhar(){const r=A.getBoundingClientRect(),dpr=devicePixelRatio||1;c.width=r.width*dpr;c.height=r.height*dpr;const s=Math.min(r.width/pv.width,r.height/pv.height),ox=(r.width-pv.width*s)/2,oy=(r.height-pv.height*s)/2;lay={s,ox,oy};
+    const g=c.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,r.width,r.height);g.drawImage(pv,ox,oy,pv.width*s,pv.height*s);
+    const P=Q.map(([x,y])=>[ox+x*s,oy+y*s]);g.fillStyle="rgba(0,0,0,.45)";g.beginPath();g.rect(0,0,r.width,r.height);g.moveTo(P[0][0],P[0][1]);for(let i=3;i>=0;i--)g.lineTo(P[i][0],P[i][1]);g.closePath();g.fill("evenodd");
+    g.strokeStyle="#C9A24E";g.lineWidth=3;g.beginPath();P.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.stroke();
+    P.forEach(p=>{g.beginPath();g.arc(p[0],p[1],16,0,7);g.fillStyle="rgba(201,162,78,.35)";g.fill();g.lineWidth=3;g.strokeStyle="#fff";g.stroke();});}
+  const pto=e=>{const r=A.getBoundingClientRect();return [(e.clientX-r.left-lay.ox)/lay.s,(e.clientY-r.top-lay.oy)/lay.s];};
+  A.onpointerdown=e=>{const p=pto(e);let b=-1,bd=1e9;Q.forEach((q,i)=>{const d=Math.hypot(q[0]-p[0],q[1]-p[1]);if(d<bd){bd=d;b=i;}});if(bd*lay.s<60){arr=b;A.setPointerCapture(e.pointerId);}};
+  A.onpointermove=e=>{if(arr<0)return;const p=pto(e);Q[arr]=[Math.max(0,Math.min(pv.width,p[0])),Math.max(0,Math.min(pv.height,p[1]))];desenhar();};
+  A.onpointerup=A.onpointercancel=()=>{arr=-1;};
+  const rs=()=>desenhar();addEventListener("resize",rs);requestAnimationFrame(desenhar);
+  const fim=v=>{removeEventListener("resize",rs);$("#rec").classList.remove("on");ok(v);};
+  $("#rec-r").onclick=()=>fim(null);
+  $("#rec-ok").onclick=()=>{const k=src.width/pv.width;fim(endireitar(src,Q.map(([x,y])=>[x*k,y*k])));};});}
+/* correção de perspectiva (homografia) */
+function endireitar(src,Q){const L=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);let W=Math.max(L(Q[0],Q[1]),L(Q[3],Q[2])),H=Math.max(L(Q[0],Q[3]),L(Q[1],Q[2]));
+  const s=Math.min(1,1700/Math.max(W,H));W=Math.round(W*s);H=Math.round(H*s);
+  const M=homog([[0,0],[W,0],[W,H],[0,H]],Q);const sc=src.getContext("2d").getImageData(0,0,src.width,src.height),sd=sc.data,SW=src.width,SH=src.height;
+  const out=document.createElement("canvas");out.width=W;out.height=H;const od=out.getContext("2d").createImageData(W,H),dd=od.data;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const z=M[6]*x+M[7]*y+1,u=(M[0]*x+M[1]*y+M[2])/z,v=(M[3]*x+M[4]*y+M[5])/z;const xi=Math.min(SW-1,Math.max(0,u|0)),yi=Math.min(SH-1,Math.max(0,v|0)),si=(yi*SW+xi)*4,di=(y*W+x)*4;
+    dd[di]=sd[si];dd[di+1]=sd[si+1];dd[di+2]=sd[si+2];dd[di+3]=255;}
+  out.getContext("2d").putImageData(od,0,0);return out;}
+function homog(P,Q){const A=[],b=[];for(let i=0;i<4;i++){const [x,y]=P[i],[u,v]=Q[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v);}
+  for(let i=0;i<8;i++){let m=i;for(let r=i+1;r<8;r++)if(Math.abs(A[r][i])>Math.abs(A[m][i]))m=r;[A[i],A[m]]=[A[m],A[i]];[b[i],b[m]]=[b[m],b[i]];
+    for(let r=0;r<8;r++){if(r===i)continue;const f=A[r][i]/A[i][i];for(let c=i;c<8;c++)A[r][c]-=f*A[i][c];b[r]-=f*b[i];}}
+  return b.map((v,i)=>v/A[i][i]);}
+
+/* ---------- telas ---------- */
+const EU=()=>LS.get("motorista",null);
+function telaCadastro(){const e=EU()||{};
+  T.innerHTML=`<div class="card"><h2>Seus dados</h2><div class="muted">Só na primeira vez. Fica guardado neste celular.</div>
+  <label class="f">Seu nome<input id="c-n" value="${esc(e.nome)}" autocomplete="name"></label>
+  <label class="f">Telefone (WhatsApp)<input id="c-t" value="${esc(e.telefone)}" inputmode="tel"></label>
+  <label class="f">Pedreira<input id="c-p" value="${esc(e.pedreira)}" list="pedr" placeholder="Nome da pedreira"></label><datalist id="pedr"></datalist>
+  <label class="f">Placa do caminhão<input id="c-pl" value="${esc(e.placa)}" style="text-transform:uppercase" placeholder="ABC1D23"></label>
+  <button class="btn pri big" id="c-ok">Salvar</button></div>`;
+  $("#c-ok").onclick=()=>{const o={nome:$("#c-n").value.trim(),telefone:$("#c-t").value.trim(),pedreira:$("#c-p").value.trim(),placa:$("#c-pl").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"")};
+    if(!o.nome||!o.pedreira||o.placa.length<7){aviso("Preencha nome, pedreira e a placa completa.");return;}LS.set("motorista",o);inicio();};}
+
+async function inicio(){if(!EU()){telaCadastro();return;}const e=EU();const L=(await DB.todos()).sort((a,b)=>b.descarga_em.localeCompare(a.descarga_em));
+  const hj=L.filter(x=>BRITA.dataLocal(x.descarga_em)===BRITA.hoje());const pend=L.filter(x=>!x.enviado);
+  T.innerHTML=`<div class="card" style="gap:4px"><div class="muted">${esc(e.nome)} · ${esc(e.pedreira)}</div><b style="font-size:20px">${esc(e.placa)}</b><button class="btn" id="i-ed" style="min-height:40px;margin-top:6px">Trocar dados / placa</button></div>
+  <button class="btn pri big" id="i-nova">➕ Nova entrega</button>
+  ${pend.length?`<div class="card" style="border-color:var(--warn)"><b>${pend.length} entrega(s) esperando sinal</b><div class="muted">Estão guardadas no celular. Quando pegar sinal, abra o app que elas vão sozinhas.</div><button class="btn" id="i-env">Enviar agora</button></div>`:""}
+  <div class="card"><h2>Hoje</h2>${hj.length?`<div class="muted">${hj.length} carga(s) · ${fT(hj.reduce((a,x)=>a+(+x.toneladas||0),0))}</div>`+hj.map(x=>`<div class="ent"><span><b>${esc(x.deposito_nome||"Sem depósito")}</b> · ${fT(x.toneladas)}</span><span class="tag ${x.enviado?"ok":"esp"}">${x.enviado?"✓ Enviada":"Aguardando sinal"}</span><span class="muted">NF ${esc(x.nf)} · ${new Date(x.descarga_em).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span></div>`).join(""):`<div class="muted">Nenhuma entrega hoje.</div>`}</div>
+  <div class="muted" style="text-align:center">${DEPS.length?DEPS.length+" depósitos no celular":"Sem lista de depósitos – abra com sinal uma vez"}${LS.get("deps_em","")?" · atualizada "+new Date(LS.get("deps_em")).toLocaleDateString("pt-BR"):""}</div>`;
+  $("#i-ed").onclick=telaCadastro;$("#i-nova").onclick=novaEntrega;if($("#i-env"))$("#i-env").onclick=()=>enviarFila(true);}
+
+/* ---------- nova entrega: 4 passos ---------- */
+let N=null;let gpsMudou=null;
+function novaEntrega(){gpsLigar();const e=EU();N={id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),motorista:e.nome,telefone:e.telefone,pedreira:e.pedreira,placa:e.placa,nf:"",toneladas:"",fotoNf:null,fotoCarga:null,deposito_id:"",escolha:"",obs:""};passo1();}
+const passos=n=>`<div class="passos">${[1,2,3,4].map(i=>`<i class="${i<n?"ok":i===n?"on":""}"></i>`).join("")}</div>`;
+const sair=`<button class="btn" id="p-sair" style="min-height:44px">Cancelar entrega</button>`;
+function ligarSair(){$("#p-sair").onclick=()=>{if(confirmar("Cancelar esta entrega? O que foi feito será perdido."))inicio();};}
+function confirmar(t){return window.confirm(t);}
+function passo1(){gpsMudou=null;
+  T.innerHTML=`${passos(1)}<div class="card"><h2>1. Foto da nota fiscal</h2><div class="muted">Ponha a nota numa superfície lisa, com luz. Depois você ajusta os cantos.</div>
+  ${N.fotoNf?`<img class="prev" id="p1-img"><div class="row"><button class="btn" id="p1-de">Tirar de novo</button><button class="btn ok" id="p1-ok">Continuar</button></div>`:`<button class="btn pri big" id="p1-tir">📷 Fotografar a nota</button>`}</div>${sair}`;ligarSair();
+  const tirar=async()=>{const c=await camera("Enquadre a nota inteira",true);if(!c)return;const r=await recortar(c);if(!r){tirar();return;}N.fotoNf=reduzir(r,1500).toDataURL("image/jpeg",.8);passo1();};
+  if(N.fotoNf){$("#p1-img").src=N.fotoNf;$("#p1-de").onclick=tirar;$("#p1-ok").onclick=passo2;}else $("#p1-tir").onclick=tirar;}
+function passo2(){gpsMudou=null;
+  T.innerHTML=`${passos(2)}<div class="card"><h2>2. Dados da nota</h2><img class="prev" id="p2-img" style="max-height:220px;object-fit:contain">
+  <label class="f">Número da nota fiscal<input id="p2-nf" inputmode="numeric" value="${esc(N.nf)}" placeholder="Ex.: 012345"></label>
+  <label class="f">Toneladas (igual está na nota)<input id="p2-t" inputmode="decimal" value="${esc(N.toneladas)}" placeholder="Ex.: 37,5"></label>
+  <button class="btn ok big" id="p2-ok">Continuar</button><button class="btn" id="p2-v">Voltar</button></div>${sair}`;ligarSair();$("#p2-img").src=N.fotoNf;
+  $("#p2-v").onclick=passo1;
+  $("#p2-ok").onclick=()=>{const nf=$("#p2-nf").value.trim(),t=parseFloat($("#p2-t").value.replace(/\./g,"").replace(",","."));
+    if(!nf){aviso("Digite o número da nota.");return;}if(!(t>0)){aviso("Digite as toneladas da nota.");return;}
+    if((t<3||t>80)&&!confirmar(`${fT(t)} está certo? Confira na nota.`))return;N.nf=nf;N.toneladas=t;passo3();};}
+function passo3(){
+  T.innerHTML=`${passos(3)}<div class="card"><h2>3. Onde você descarregou?</h2><div class="gps" id="gps"></div><div id="p3-l"></div>
+  <label class="f">Observação ${'<span class="muted" id="p3-ob">(opcional)</span>'}<textarea id="p3-o" rows="2" placeholder="Ex.: depósito cheio, mandaram descarregar aqui">${esc(N.obs)}</textarea></label>
+  <button class="btn ok big" id="p3-ok" disabled>Continuar</button><button class="btn" id="p3-v">Voltar</button></div>${sair}`;ligarSair();
+  $("#p3-v").onclick=passo2;let espera=Date.now(),tm=null;
+  const montar=()=>{const f=GPS.fix,el=$("#p3-l");if(!el)return;
+    if(!f){el.innerHTML=`<div class="muted">Esperando o GPS para achar o depósito…</div>`;$("#p3-ok").disabled=true;return;}
+    const O=BRITA.ordenar(f.lat,f.lon,DEPS);const perto=O.find(o=>o.dentro);
+    if(!N.deposito_id&&perto){N.deposito_id=perto.d.id;N.escolha="gps";}
+    const lista=N.verTodos||!perto?O:[perto];
+    el.innerHTML=(perto?`<div class="muted">Pelo GPS você está no depósito abaixo. Está certo?</div>`:DEPS.length?`<div class="muted" style="color:var(--dan);font-weight:600">Você não está perto de nenhum depósito cadastrado. Escolha para qual depósito é a carga e explique na observação.</div>`:`<div class="muted">Sem lista de depósitos no celular. A carga vai só com a coordenada.</div>`)+
+      lista.slice(0,N.verTodos?50:1).map(o=>`<button class="dep" data-d="${esc(o.d.id)}" aria-pressed="${N.deposito_id===o.d.id}"><b>${esc(o.d.id)}${o.d.nome&&o.d.nome!==o.d.id?" – "+esc(o.d.nome):""}</b><span class="muted">${esc(o.d.projeto)}${o.d.referencia?" · "+esc(o.d.referencia):""}</span><span class="muted">a ${fM(o.m)}${o.dentro?" · você está aqui":""}</span></button>`).join("")+
+      (perto&&!N.verTodos?`<button class="btn" id="p3-out" style="min-height:44px">Não, é outro depósito</button>`:"");
+    el.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{N.deposito_id=b.dataset.d;N.escolha=perto&&perto.d.id===b.dataset.d?"gps":"motorista";montar();});
+    const out=$("#p3-out");if(out)out.onclick=()=>{N.verTodos=true;N.deposito_id="";montar();};
+    const precisaObs=DEPS.length&&(!perto||N.deposito_id!==perto.d.id);$("#p3-ob").textContent=precisaObs?"(obrigatória: por que descarregou fora?)":"(opcional)";
+    const gpsOk=f.acc<=30||Date.now()-espera>45000;$("#p3-ok").disabled=!gpsOk||(DEPS.length&&!N.deposito_id);
+    if(!gpsOk){clearTimeout(tm);tm=setTimeout(montar,3000);}};
+  gpsMudou=montar;gpsMostrar();montar();
+  $("#p3-ok").onclick=()=>{const f=GPS.fix;N.obs=$("#p3-o").value.trim();const O=f?BRITA.ordenar(f.lat,f.lon,DEPS):[];const perto=O.find(o=>o.dentro);
+    if(DEPS.length&&(!perto||N.deposito_id!==perto.d.id)&&N.obs.length<5){aviso("Escreva na observação por que descarregou fora do depósito.");$("#p3-o").focus();return;}
+    N.lat=f.lat;N.lon=f.lon;N.precisao_m=f.acc;const d=DEPS.find(x=>x.id===N.deposito_id);N.deposito_nome=d?(d.id+(d.nome&&d.nome!==d.id?" – "+d.nome:"")):"";gpsMudou=null;passo4();};}
+function passo4(){gpsMudou=null;
+  T.innerHTML=`${passos(4)}<div class="card"><h2>4. Foto da carga no chão</h2><div class="muted">Fotografe o monte de brita descarregado, com o lugar aparecendo em volta.</div>
+  ${N.fotoCarga?`<img class="prev" id="p4-img"><button class="btn" id="p4-de">Tirar de novo</button>`:`<button class="btn pri big" id="p4-tir">📷 Fotografar a carga</button>`}
+  <button class="btn ok big" id="p4-ok" ${N.fotoCarga?"":"disabled"}>✔ Enviar entrega</button><button class="btn" id="p4-v">Voltar</button></div>${sair}`;ligarSair();
+  const tirar=async()=>{const c=await camera("Fotografe a carga descarregada",false);if(!c)return;const r=reduzir(c,1600);const f=GPS.fix||N;
+    carimbar(r,[new Date().toLocaleString("pt-BR"),`${(+f.lat).toFixed(6)}, ${(+f.lon).toFixed(6)} (±${Math.round(f.acc||N.precisao_m||0)} m)`,`${N.placa} · NF ${N.nf} · ${fT(N.toneladas)}`]);N.fotoCarga=r.toDataURL("image/jpeg",.78);passo4();};
+  if(N.fotoCarga){$("#p4-img").src=N.fotoCarga;$("#p4-de").onclick=tirar;}else $("#p4-tir").onclick=tirar;
+  $("#p4-v").onclick=passo3;
+  $("#p4-ok").onclick=async()=>{const o={id:N.id,descarga_em:new Date().toISOString(),motorista:N.motorista,telefone:N.telefone,pedreira:N.pedreira,placa:N.placa,nf:N.nf,toneladas:N.toneladas,
+      lat:N.lat,lon:N.lon,precisao_m:N.precisao_m,deposito_id:N.deposito_id,deposito_nome:N.deposito_nome,escolha:N.escolha,obs:N.obs,foto_nf:N.fotoNf,foto_carga:N.fotoCarga,enviado:false};
+    try{await DB.por(o);}catch(e){aviso("Não consegui guardar no celular. Libere espaço e tente de novo.");return;}
+    N=null;aviso("Entrega guardada. Enviando…");await inicio();enviarFila(false);};}
+
+/* ---------- envio (tenta sempre que tem sinal) ---------- */
+let ENVIANDO=false;
+async function enviarFila(avisar){if(ENVIANDO)return;if(!BRITA.servidor()){if(avisar)aviso("O app ainda não foi ligado ao servidor. Fale com o supervisor.");return;}
+  ENVIANDO=true;let ok=0,falha=0;try{const L=(await DB.todos()).filter(x=>!x.enviado);
+    for(const x of L){try{const p=Object.assign({a:"entrega"},x);delete p.enviado;const r=await BRITA.post(p,90000);x.enviado=true;x.enviado_em=new Date().toISOString();x.alerta=r.alerta||"";
+        /* depois de enviada, o celular guarda só uma miniatura para não ocupar espaço */x.foto_nf="";x.foto_carga="";await DB.por(x);ok++;}catch(e){falha++;}}}finally{ENVIANDO=false;}
+  if(ok||falha){if(ok)aviso(`${ok} entrega(s) enviada(s).`);else if(avisar)aviso("Sem sinal agora. As entregas continuam guardadas.");if(!N)inicio();}}
+function rede(){$("#h-net").textContent=navigator.onLine?"":"sem sinal";if(navigator.onLine){baixarDeps().then(()=>{if(!N)inicio();});enviarFila(false);}}
+addEventListener("online",rede);addEventListener("offline",rede);setInterval(()=>{if(navigator.onLine)enviarFila(false);},60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&navigator.onLine)enviarFila(false);});
+inicio();rede();
+</script>
+</body>
+</html>

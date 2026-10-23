@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Brita – Gestão das entregas</title>
+<meta name="theme-color" content="#2B3A33">
+<link rel="icon" href="icone-192.png">
+<style>
+:root{--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--pri:#2B3A33;--ok:#3F6B4A;--warn:#9A6A1F;--dan:#9E3B2C;--acc:#C9A24E;--soft:#ECEAE2}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--pri);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5;flex-wrap:wrap}
+header b{font-size:18px;flex:1;min-width:180px}
+header a{color:#fff;text-decoration:none;font-weight:600;opacity:.9}
+main{padding:16px;max-width:1100px;margin:0 auto;display:grid;gap:14px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:14px;display:grid;gap:10px;min-width:0}
+.muted{color:var(--mut);font-size:13px}
+input,select,textarea{font:inherit;padding:10px 12px;border:1px solid var(--ln);border-radius:10px;background:#fff;color:var(--ink);min-width:0}
+.btn{font:inherit;font-weight:700;min-height:42px;border-radius:10px;border:1px solid var(--ln);background:#fff;color:var(--ink);padding:0 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
+.btn.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+.btn.ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+.btn.sm{min-height:36px;padding:0 10px;font-size:14px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-weight:600;border:1px solid var(--ln);background:#fff;border-radius:20px;padding:8px 14px;cursor:pointer;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--pri);color:#fff;border-color:var(--pri)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:12px 14px}
+.kpi b{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+.kpi span{color:var(--mut);font-size:13px}
+.kpi.al b{color:var(--dan)}
+.ent{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--ln)}
+.ent:first-of-type{border-top:0}
+.fts{display:flex;gap:6px}
+.fts img{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--ln);background:var(--soft);cursor:pointer}
+.tg{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:12px;margin:2px 4px 2px 0}
+.tg.al{background:#F3E1DC;color:var(--dan)}.tg.ok{background:#E3EDE5;color:var(--ok)}.tg.dv{background:#F4EAD6;color:var(--warn)}.tg.nt{background:var(--soft);color:var(--mut)}
+.t{font-variant-numeric:tabular-nums;font-weight:700}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--ln);text-align:left;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);font-weight:700}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.proj td{background:var(--soft);font-weight:700}
+.tw{overflow-x:auto}
+.conf{display:grid;gap:8px;background:var(--soft);border-radius:10px;padding:10px}
+.vazio{padding:24px;text-align:center;color:var(--mut)}
+.aviso{position:fixed;left:16px;right:16px;bottom:16px;max-width:520px;margin:0 auto;background:#1E2420;color:#fff;padding:12px 14px;border-radius:10px;display:none;z-index:50}
+.aviso.on{display:block}
+#zoom{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+#zoom.on{display:flex}#zoom img{max-width:100%;max-height:100%;border-radius:8px}
+.bar-p{height:8px;border-radius:4px;background:var(--soft);overflow:hidden;min-width:80px}.bar-p i{display:block;height:100%;background:var(--ok)}
+@media(max-width:560px){.ent{grid-template-columns:1fr}.fts img{width:72px;height:72px}}
+</style>
+</head>
+<body>
+<header><b>🚚 Brita – entregas recebidas</b><a href="../">‹ App de mapas</a></header>
+<main id="tela"></main>
+<div class="aviso" id="aviso"></div>
+<div id="zoom"><img alt="Foto ampliada"></div>
+<script src="config.js"></script>
+<script src="comum.js"></script>
+<script src="../lib/xlsx.full.min.js"></script>
+<script>
+"use strict";
+const $=s=>document.querySelector(s),T=$("#tela"),{esc,fT,fM}=BRITA;
+/* mesma memória do app de mapas (mesmo endereço) */
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+if(!localStorage.getItem("brita_servidor")){const s=LS.get("brita_srv","");if(s)try{localStorage.setItem("brita_servidor",s);}catch(e){}}
+function aviso(t){const a=$("#aviso");a.textContent=t;a.classList.add("on");clearTimeout(aviso.t);aviso.t=setTimeout(()=>a.classList.remove("on"),3200);}
+const chave=()=>LS.get("brita_chave","");
+const dia=n=>{const d=new Date();d.setDate(d.getDate()+n);return BRITA.dataLocal(d.toISOString());};
+const S={per:"hoje",de:dia(0),ate:dia(0),aba:"cargas",proj:"",dep:"",so:"",ents:[],deps:[],abre:null};
+const h0=decodeURIComponent(location.hash);const md=/#dep=(.+)/.exec(h0);if(md){S.dep=md[1];S.per="30";S.de=dia(-30);}
+
+function telaChave(msg){T.innerHTML=`<div class="card" style="max-width:420px"><b>Senha da gestão</b><div class="muted">A mesma que você cadastrou no app de mapas (🚚 Entrega de brita).</div>
+  ${msg?`<div style="color:var(--dan);font-weight:600">${esc(msg)}</div>`:""}<input id="k" type="password" autocapitalize="off" placeholder="Senha"><button class="btn pri" id="k-ok">Entrar</button></div>`;
+  $("#k-ok").onclick=()=>{LS.set("brita_chave",$("#k").value.trim());carregar();};}
+
+async function carregar(){if(!BRITA.servidor()){T.innerHTML=`<div class="card"><b>Servidor ainda não ligado.</b><div class="muted">Falta implantar o servidor do Google e colar o endereço no app (veja brita/servidor/LEIA-ME.md).</div></div>`;return;}
+  if(!chave()){telaChave();return;}
+  T.innerHTML=`<div class="vazio">Carregando entregas…</div>`;
+  try{const [e,d]=await Promise.all([BRITA.get({a:"entregas",chave:chave(),de:S.de,ate:S.ate}),BRITA.get({a:"depositos"})]);S.ents=e.entregas||[];S.deps=d.depositos||[];LS.set("brita_deps",S.deps);desenhar();}
+  catch(x){if(/senha/.test(x.message)){telaChave("Senha errada.");return;}T.innerHTML=`<div class="card"><b>Não consegui buscar as entregas.</b><div class="muted">${esc(x.message)} – confira a internet e tente de novo.</div><button class="btn" onclick="carregar()">Tentar de novo</button></div>`;}}
+
+const depDe=id=>S.deps.find(d=>d.id===id);
+const nomeDep=d=>d?d.id+(d.nome&&d.nome!==d.id?" – "+d.nome:""):"";
+function filtradas(){return S.ents.filter(e=>(!S.proj||e.projeto===S.proj)&&(!S.dep||e.deposito_id===S.dep)&&(!S.so||(S.so==="alerta"?!!e.alerta&&!/^vinculada/.test(e.alerta)&&!e.conferencia:S.so==="semconf"?!e.conferencia:true))).sort((a,b)=>String(b.descarga_em).localeCompare(String(a.descarga_em)));}
+const temAlerta=e=>!!String(e.alerta||"").split("; ").filter(a=>a&&!/^vinculada/.test(a)).length;
+
+function desenhar(){const L=filtradas(),tot=L.reduce((a,e)=>a+(+e.toneladas||0),0),al=L.filter(temAlerta).length,cf=L.filter(e=>e.conferencia).length;
+  const projs=[...new Set(S.deps.map(d=>d.projeto).concat(S.ents.map(e=>e.projeto)).filter(Boolean))].sort();
+  const pers={hoje:"Hoje",ontem:"Ontem","7":"7 dias","30":"30 dias",mes:"Este mês"};
+  T.innerHTML=`<div class="card"><div class="seg" id="per">${Object.entries(pers).map(([k,v])=>`<button data-p="${k}" aria-pressed="${S.per===k}">${v}</button>`).join("")}
+    <span class="bar"><input type="date" id="de" value="${S.de}"> até <input type="date" id="ate" value="${S.ate}"><button class="btn sm" id="ir">Ver</button></span></div>
+   <div class="bar"><select id="fp"><option value="">Todos os projetos</option>${projs.map(p=>`<option ${S.proj===p?"selected":""}>${esc(p)}</option>`).join("")}</select>
+    <select id="fd"><option value="">Todos os depósitos</option>${S.deps.filter(d=>!S.proj||d.projeto===S.proj).map(d=>`<option value="${esc(d.id)}" ${S.dep===d.id?"selected":""}>${esc(nomeDep(d))}</option>`).join("")}</select>
+    <select id="fs"><option value="">Todas as cargas</option><option value="alerta" ${S.so==="alerta"?"selected":""}>Só com alerta (a resolver)</option><option value="semconf" ${S.so==="semconf"?"selected":""}>Só não conferidas</option></select>
+    <button class="btn sm" id="xl">⬇ Excel</button><button class="btn sm" id="rf">↻ Atualizar</button></div></div>
+  <div class="kpis"><div class="kpi"><b>${L.length}</b><span>cargas</span></div><div class="kpi"><b>${fT(tot)}</b><span>entregues (nota)</span></div><div class="kpi ${al?"al":""}"><b>${al}</b><span>com alerta</span></div><div class="kpi"><b>${cf} / ${L.length}</b><span>conferidas em campo</span></div></div>
+  <div class="seg" id="abas">${[["cargas","Cargas"],["resumo","Resumo por projeto e depósito"],["dia","Por dia"]].map(([k,v])=>`<button data-a="${k}" aria-pressed="${S.aba===k}">${v}</button>`).join("")}</div>
+  <div id="corpo"></div>`;
+  $("#per").querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{S.per=b.dataset.p;const k=S.per;if(k==="hoje"){S.de=S.ate=dia(0);}else if(k==="ontem"){S.de=S.ate=dia(-1);}else if(k==="mes"){S.de=dia(0).slice(0,8)+"01";S.ate=dia(0);}else{S.de=dia(-(+k-1));S.ate=dia(0);}carregar();});
+  $("#ir").onclick=()=>{S.per="";S.de=$("#de").value;S.ate=$("#ate").value;carregar();};
+  $("#fp").onchange=e=>{S.proj=e.target.value;S.dep="";desenhar();};$("#fd").onchange=e=>{S.dep=e.target.value;desenhar();};$("#fs").onchange=e=>{S.so=e.target.value;desenhar();};
+  $("#rf").onclick=carregar;$("#xl").onclick=()=>excel(L);
+  $("#abas").querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{S.aba=b.dataset.a;desenhar();});
+  if(S.aba==="cargas")cargas(L);else if(S.aba==="resumo")resumo(L);else porDia(L);}
+
+function cargas(L){const c=$("#corpo");if(!L.length){c.innerHTML=`<div class="card vazio">Nenhuma carga nesse período.</div>`;return;}
+  c.innerHTML=`<div class="card">${L.map(e=>{const d=depDe(e.deposito_id),als=String(e.alerta||"").split("; ").filter(Boolean),hora=new Date(e.descarga_em);
+    return `<div class="ent" data-id="${esc(e.id)}"><div class="fts">${e.foto_nf?`<img loading="lazy" src="${BRITA.foto(e.foto_nf)}" data-big="${esc(e.foto_nf)}" alt="Nota fiscal">`:""}${e.foto_carga?`<img loading="lazy" src="${BRITA.foto(e.foto_carga)}" data-big="${esc(e.foto_carga)}" alt="Carga no chão">`:""}</div>
+    <div style="display:grid;gap:4px;min-width:0"><div><span class="t" style="font-size:17px">${fT(e.toneladas)}</span> · <b>${esc(d?nomeDep(d):e.deposito_nome||"Sem depósito")}</b> <span class="muted">${esc(e.projeto)}${e.referencia?" · "+esc(e.referencia):""}</span></div>
+     <div class="muted">${hora.toLocaleDateString("pt-BR")} ${hora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · ${esc(e.motorista)} · <b>${esc(e.placa)}</b> · ${esc(e.pedreira)} · NF ${esc(e.nf)}${e.distancia_m!==""?" · a "+fM(+e.distancia_m)+" do depósito":""}${e.precisao_m?" · GPS ±"+e.precisao_m+" m":""}</div>
+     <div>${als.map(a=>`<span class="tg ${/^vinculada/.test(a)?"nt":"al"}">${esc(a)}</span>`).join("")}${e.conferencia?`<span class="tg ${e.conferencia==="ok"?"ok":"dv"}">${e.conferencia==="ok"?"✓ Conferida":"Divergente"}${e.conf_toneladas!==""&&e.conf_toneladas!=null?" · "+fT(e.conf_toneladas):""}${e.conf_por?" · "+esc(e.conf_por):""}</span>`:`<span class="tg nt">Não conferida</span>`}</div>
+     ${e.obs?`<div class="muted">Motorista: “${esc(e.obs)}”</div>`:""}${e.conf_obs?`<div class="muted">Técnico: “${esc(e.conf_obs)}”</div>`:""}
+     <div class="bar">${e.lat!==""?`<a class="btn sm" href="${BRITA.verNoMapa(e.lat,e.lon,(d?d.id+" · ":"")+e.placa+" · NF "+e.nf+" · "+fT(e.toneladas))}">📍 Ver no mapa</a>`:""}<button class="btn sm" data-cf="${esc(e.id)}">Conferir</button>${temAlerta(e)?`<button class="btn sm" data-vc="${esc(e.id)}">Dizer o depósito certo</button>`:""}</div>
+     ${S.abre&&S.abre.id===e.id?painel(e):""}</div></div>`;}).join("")}</div>`;
+  c.querySelectorAll("[data-big]").forEach(i=>i.onclick=()=>{$("#zoom img").src=BRITA.foto(i.dataset.big);$("#zoom").classList.add("on");});
+  c.querySelectorAll("[data-cf]").forEach(b=>b.onclick=()=>{S.abre={id:b.dataset.cf,t:"cf"};cargas(L);});
+  c.querySelectorAll("[data-vc]").forEach(b=>b.onclick=()=>{S.abre={id:b.dataset.vc,t:"vc"};cargas(L);});
+  const P=c.querySelector(".conf");if(P)ligarPainel(P,L);}
+function painel(e){if(S.abre.t==="cf")return `<div class="conf"><b>Conferência em campo</b><div class="seg"><button data-st="ok" aria-pressed="${e.conferencia!=="divergente"}">✓ Está certo</button><button data-st="divergente" aria-pressed="${e.conferencia==="divergente"}">Divergente</button></div>
+  <div class="bar"><input id="cf-t" inputmode="decimal" placeholder="Toneladas que viu (opcional)" value="${e.conf_toneladas??""}" style="flex:1"><input id="cf-p" placeholder="Seu nome" value="${esc(e.conf_por||LS.get("brita_tecnico",""))}" style="flex:1"></div>
+  <textarea id="cf-o" rows="2" placeholder="Observação (ex.: monte menor que a nota)">${esc(e.conf_obs||"")}</textarea><div class="bar"><button class="btn ok" id="cf-s">Salvar conferência</button><button class="btn" id="cf-x">Fechar</button></div></div>`;
+  const O=e.lat!==""?BRITA.ordenar(+e.lat,+e.lon,S.deps):S.deps.map(d=>({d,m:NaN}));
+  return `<div class="conf"><b>A qual depósito esta carga pertence?</b><div class="muted">Use quando a carga caiu fora do lugar (ex.: o pátio encheu e mandaram descarregar mais à frente).</div>
+  <select id="vc-d">${O.map(o=>`<option value="${esc(o.d.id)}">${esc(nomeDep(o.d))} · ${esc(o.d.projeto)}${isFinite(o.m)?" · a "+fM(o.m):""}</option>`).join("")}</select>
+  <label style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="vc-e" checked style="width:20px;height:20px;margin-top:2px;flex:0 0 20px"><span>Este lugar vira extensão do depósito (as próximas cargas aqui não dão alerta)</span></label>
+  <input id="vc-p" placeholder="Seu nome" value="${esc(LS.get("brita_tecnico",""))}"><div class="bar"><button class="btn ok" id="vc-s">Salvar</button><button class="btn" id="vc-x">Fechar</button></div></div>`;}
+function ligarPainel(P,L){const fechar=()=>{S.abre=null;cargas(L);};
+  if(S.abre.t==="cf"){let st=P.querySelector('[data-st="divergente"][aria-pressed=true]')?"divergente":"ok";
+    P.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{st=b.dataset.st;P.querySelectorAll("[data-st]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));});
+    $("#cf-x").onclick=fechar;
+    $("#cf-s").onclick=async()=>{const por=$("#cf-p").value.trim();if(!por){aviso("Escreva seu nome.");return;}LS.set("brita_tecnico",por);const tv=$("#cf-t").value.trim();
+      const o={a:"conferir",chave:chave(),id:S.abre.id,status:st,toneladas:tv?parseFloat(tv.replace(",",".")):"",obs:$("#cf-o").value.trim(),por};
+      if(st==="divergente"&&!o.obs&&o.toneladas===""){aviso("Diga o que está divergente.");return;}
+      try{$("#cf-s").disabled=true;await BRITA.post(o);aviso("Conferência salva.");S.abre=null;carregar();}catch(x){$("#cf-s").disabled=false;aviso("Não salvou: "+x.message);}};}
+  else{$("#vc-x").onclick=fechar;
+    $("#vc-s").onclick=async()=>{const por=$("#vc-p").value.trim();if(!por){aviso("Escreva seu nome.");return;}LS.set("brita_tecnico",por);
+      try{$("#vc-s").disabled=true;await BRITA.post({a:"vincular",chave:chave(),id:S.abre.id,deposito_id:$("#vc-d").value,extensao:$("#vc-e").checked,por});aviso("Carga vinculada.");S.abre=null;carregar();}catch(x){$("#vc-s").disabled=false;aviso("Não salvou: "+x.message);}};}}
+
+/* Resumo: projeto (quem leva o custo) > referência (ex.: MS-316) > depósito */
+function resumo(L){const g={};L.forEach(e=>{const p=e.projeto||"(sem projeto)",r=e.referencia||"(sem referência)",d=e.deposito_id||"(sem depósito)";
+    g[p]=g[p]||{t:0,n:0,r:{}};g[p].t+=+e.toneladas||0;g[p].n++;const R=g[p].r[r]=g[p].r[r]||{t:0,n:0,d:{}};R.t+=+e.toneladas||0;R.n++;const D=R.d[d]=R.d[d]||{t:0,n:0,c:0,ct:0};D.t+=+e.toneladas||0;D.n++;if(e.conferencia){D.c++;}if(e.conf_toneladas!==""&&e.conf_toneladas!=null)D.ct+=+e.conf_toneladas;});
+  const ps=Object.keys(g).sort();if(!ps.length){$("#corpo").innerHTML=`<div class="card vazio">Nada nesse período.</div>`;return;}
+  const ped={};L.forEach(e=>{ped[e.pedreira||"—"]=(ped[e.pedreira||"—"]||0)+(+e.toneladas||0);});
+  $("#corpo").innerHTML=`<div class="card"><div class="muted">O projeto é a fazenda que leva o custo. A referência separa o que foi entregue em cada parte (ex.: MS-316 – parte da AGESUL × acesso próprio), mesmo sendo acesso comum.</div><div class="tw"><table>
+   <thead><tr><th>Projeto / referência / depósito</th><th class="n">Cargas</th><th class="n">Entregue (t)</th><th class="n">Previsto (t)</th><th>Andamento</th><th class="n">Conferidas</th></tr></thead><tbody>
+   ${ps.map(p=>`<tr class="proj"><td>${esc(p)}</td><td class="n">${g[p].n}</td><td class="n">${fT(g[p].t)}</td><td class="n"></td><td></td><td></td></tr>`+
+     Object.keys(g[p].r).sort().map(r=>`<tr><td style="padding-left:22px;font-weight:600">${esc(r)}</td><td class="n">${g[p].r[r].n}</td><td class="n t">${fT(g[p].r[r].t)}</td><td></td><td></td><td></td></tr>`+
+       Object.keys(g[p].r[r].d).sort((a,b)=>a.localeCompare(b,"pt",{numeric:true})).map(k=>{const D=g[p].r[r].d[k],dp=depDe(k),pl=dp?+dp.planejado_t||0:0,pc=pl?Math.min(100,D.t/pl*100):0;
+         return `<tr><td style="padding-left:40px">${esc(dp?nomeDep(dp):k)}</td><td class="n">${D.n}</td><td class="n">${fT(D.t)}</td><td class="n">${pl?fT(pl):"—"}</td><td>${pl?`<div class="bar-p" title="${Math.round(D.t/pl*100)}%"><i style="width:${pc}%"></i></div><span class="muted">${Math.round(D.t/pl*100)}%</span>`:""}</td><td class="n">${D.c}/${D.n}</td></tr>`;}).join("")).join("")).join("")}
+   </tbody></table></div><div class="muted">Previsto e andamento consideram só as cargas do período escolhido.</div></div>
+   <div class="card"><b>Por pedreira</b><table><tbody>${Object.entries(ped).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n t">${fT(v)}</td></tr>`).join("")}</tbody></table></div>`;}
+
+/* Resumo do dia: o que entrou em cada depósito, por dia */
+function porDia(L){const g={};L.forEach(e=>{const d=BRITA.dataLocal(e.descarga_em),k=e.deposito_id||"(sem depósito)";g[d]=g[d]||{};const x=g[d][k]=g[d][k]||{n:0,t:0,a:0};x.n++;x.t+=+e.toneladas||0;if(temAlerta(e))x.a++;});
+  const ds=Object.keys(g).sort().reverse();if(!ds.length){$("#corpo").innerHTML=`<div class="card vazio">Nada nesse período.</div>`;return;}
+  $("#corpo").innerHTML=ds.map(d=>{const tot=Object.values(g[d]).reduce((a,x)=>a+x.t,0),n=Object.values(g[d]).reduce((a,x)=>a+x.n,0);
+    return `<div class="card"><div class="bar" style="justify-content:space-between"><b>${new Date(d+"T12:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"2-digit"})}</b><span><span class="t">${fT(tot)}</span> · ${n} carga(s)</span></div><table><tbody>
+    ${Object.keys(g[d]).sort((a,b)=>a.localeCompare(b,"pt",{numeric:true})).map(k=>{const x=g[d][k],dp=depDe(k);return `<tr><td>${esc(dp?nomeDep(dp):k)}<div class="muted">${esc(dp?dp.projeto+(dp.referencia?" · "+dp.referencia:""):"")}</div></td><td class="n">${x.n}</td><td class="n t">${fT(x.t)}</td><td>${x.a?`<span class="tg al">${x.a} alerta(s)</span>`:""}</td></tr>`;}).join("")}</tbody></table></div>`;}).join("");}
+
+function excel(L){if(!window.XLSX){aviso("Excel indisponível sem internet.");return;}
+  const rows=L.map(e=>({Data:new Date(e.descarga_em).toLocaleString("pt-BR"),Projeto:e.projeto,Referência:e.referencia,Depósito:e.deposito_id,"Nome do depósito":e.deposito_nome,Toneladas:+e.toneladas,NF:e.nf,Pedreira:e.pedreira,Placa:e.placa,Motorista:e.motorista,Telefone:e.telefone,
+    Latitude:e.lat,Longitude:e.lon,"GPS ± (m)":e.precisao_m,"Distância do depósito (m)":e.distancia_m,Alerta:e.alerta,"Obs. motorista":e.obs,Conferência:e.conferencia,"t conferidas":e.conf_toneladas,"Conferido por":e.conf_por,"Obs. técnico":e.conf_obs,
+    "Foto NF":e.foto_nf?BRITA.fotoAbrir(e.foto_nf):"","Foto carga":e.foto_carga?BRITA.fotoAbrir(e.foto_carga):""}));
+  const wb=XLSX.utils.book_new();const ws=XLSX.utils.json_to_sheet(rows);ws["!cols"]=Object.keys(rows[0]||{a:1}).map(k=>({wch:Math.max(10,Math.min(40,k.length+4))}));XLSX.utils.book_append_sheet(wb,ws,"Entregas");
+  XLSX.writeFile(wb,`Entregas_brita_${S.de}_a_${S.ate}.xlsx`);}
+$("#zoom").onclick=()=>$("#zoom").classList.remove("on");
+if(S.per==="hoje"){S.de=S.ate=dia(0);}
+carregar();
+</script>
+</body>
+</html>

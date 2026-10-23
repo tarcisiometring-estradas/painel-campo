@@ -1,0 +1,2 @@
+{"name":"Entrega de Brita","short_name":"Brita","description":"Registro de entrega de brita: foto da nota, toneladas, local e foto da carga. Funciona sem sinal.","start_url":"./","scope":"./","display":"standalone","orientation":"portrait","background_color":"#F2F1EC","theme_color":"#2B3A33","lang":"pt-BR",
+"icons":[{"src":"icone-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"icone-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}

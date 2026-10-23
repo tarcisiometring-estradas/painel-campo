@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fotos da Obra – esboço</title>
+<style>
+:root{--bg:#E9E7DF;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--pri:#2B3A33;--ok:#3F6B4A;--warn:#9A6A1F;--acc:#C9A24E;--soft:#F2F1EC;--a1:#7D8B6E;--a2:#B7894A;--a3:#5E7A8C}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.topo{max-width:980px;margin:0 auto;padding:18px 16px 6px}
+.topo h1{margin:0 0 4px;font-size:22px}
+.topo p{margin:0;color:var(--mut)}
+.faixa{display:inline-block;background:var(--acc);color:#2B2410;font-weight:800;font-size:12px;letter-spacing:.08em;padding:3px 10px;border-radius:20px;margin-bottom:8px}
+.palco{max-width:980px;margin:0 auto;padding:12px 16px 40px;display:grid;grid-template-columns:minmax(0,380px) 1fr;gap:24px;align-items:start}
+@media(max-width:820px){.palco{grid-template-columns:1fr}.notas{order:2}}
+.cel{background:#111;border-radius:34px;padding:12px;box-shadow:0 12px 30px rgba(0,0,0,.18);max-width:380px;width:100%;margin:0 auto}
+.tela{background:var(--soft);border-radius:24px;overflow:hidden;height:720px;display:flex;flex-direction:column;position:relative}
+.cab{background:var(--pri);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.cab b{flex:1;font-size:17px}
+.cab button{background:none;border:0;color:#fff;font:inherit;font-weight:700;cursor:pointer;padding:4px 6px}
+.cont{flex:1;overflow:auto;padding:14px;display:grid;gap:12px;align-content:start}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:12px;display:grid;gap:8px}
+.muted{color:var(--mut);font-size:13px}
+.btn{font:inherit;font-weight:700;min-height:50px;border-radius:12px;border:1px solid var(--ln);background:#fff;color:var(--ink);padding:0 14px;cursor:pointer;width:100%}
+.btn.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+.btn.ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+.lin{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1px solid var(--ln);border-radius:12px;background:#fff;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.lin small{display:block;color:var(--mut)}
+.tg{font-size:12px;font-weight:700;padding:3px 8px;border-radius:12px;white-space:nowrap}
+.tg.ok{background:#E3EDE5;color:var(--ok)}.tg.and{background:#F4EAD6;color:var(--warn)}
+.et{display:grid;gap:8px;border:1px solid var(--ln);border-radius:12px;padding:10px;background:#fff}
+.et h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+.et h3 i{width:10px;height:10px;border-radius:50%}
+.grade{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.ft{aspect-ratio:1;border-radius:8px;overflow:hidden;border:1px solid var(--ln);position:relative;background:var(--soft)}
+.ft svg{width:100%;height:100%;display:block}
+.mais{aspect-ratio:1;border-radius:8px;border:2px dashed var(--ln);display:grid;place-items:center;font-size:24px;color:var(--mut);background:#fff;cursor:pointer}
+.cnt{font-size:12px;color:var(--mut)}
+.camv{position:absolute;inset:0;background:#000;display:flex;flex-direction:column}
+.camv .vis{flex:1;position:relative;overflow:hidden}
+.camv .vis svg{position:absolute;inset:0;width:100%;height:100%}
+.fant{opacity:.38}
+.guia{position:absolute;top:12px;left:12px;right:12px;background:rgba(0,0,0,.6);color:#fff;border-radius:10px;padding:10px 12px;font-size:14px}
+.guia b{color:#E8C877}
+.camv .bar{display:flex;align-items:center;justify-content:space-around;padding:16px;background:#000}
+.disp{width:72px;height:72px;border-radius:50%;border:5px solid #fff;background:#fff;box-shadow:0 0 0 3px #000 inset;cursor:pointer}
+.camv .bar button.t{color:#fff;background:none;border:0;font:inherit;font-weight:700;cursor:pointer;min-width:80px}
+.rel{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rel .col{display:grid;gap:4px;align-content:start}
+.rel .col b{font-size:12px;text-align:center}
+.notas{display:grid;gap:12px}
+.notas .card h2{margin:0;font-size:16px}
+.notas ol{margin:0;padding-left:20px;display:grid;gap:6px}
+.mapa-passos{display:flex;gap:6px;flex-wrap:wrap}
+.mapa-passos button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--ln);background:#fff;border-radius:20px;padding:6px 12px;cursor:pointer;color:var(--ink)}
+.mapa-passos button[aria-pressed=true]{background:var(--pri);color:#fff;border-color:var(--pri)}
+</style>
+</head>
+<body>
+<div class="topo"><span class="faixa">ESBOÇO – NÃO GRAVA NADA</span><h1>Fotos da Obra – app do encarregado</h1><p>Antes, durante e depois de cada atividade, no mesmo ponto. Toque nos botões dentro do celular para navegar.</p></div>
+<div class="palco">
+  <div class="cel"><div class="tela" id="tela"></div></div>
+  <div class="notas">
+    <div class="card"><h2>Telas do esboço</h2><div class="mapa-passos" id="atalhos"></div></div>
+    <div class="card"><h2>Como funciona</h2><ol>
+      <li>O encarregado entra com o nome e a empresa (EPS). <b>Não vê mapa nenhum</b>: escolhe fazenda, trecho e atividade em listas, só com os nomes do escopo.</li>
+      <li><b>Antes:</b> as fotos antes de começar. A primeira foto grava o <b>ponto de referência</b> (coordenada e direção do celular).</li>
+      <li><b>Durante</b> e <b>Depois:</b> a câmera mostra a 1ª foto do Antes <b>transparente por cima</b> e diz a distância até o ponto. Ele não precisa acertar o ângulo exato, só chegar perto.</li>
+      <li>Mínimo de <b>1 foto em cada etapa</b> (3 no total) e até <b>10 por etapa</b>. Sem as 3 etapas a atividade não fecha.</li>
+      <li>Toda foto sai com <b>data, hora, coordenada</b> e o nome da atividade carimbados.</li>
+      <li>O <b>relatório</b> junta Antes | Durante | Depois lado a lado, por trecho e atividade, pronto para a gestão.</li>
+      <li>Funciona <b>sem sinal</b>. Quando tiver rede, as fotos sobem para o mesmo Google da brita, e o técnico e você veem na gestão.</li>
+    </ol></div>
+    <div class="card"><h2>Para decidir</h2><ol>
+      <li>Quantas fotos no máximo: 10 por etapa (como está) ou 10 no total?</li>
+      <li>Quem fecha a atividade: o próprio encarregado ou o técnico, depois de olhar as fotos?</li>
+      <li>O relatório sai em PDF para mandar no WhatsApp, ou só na tela da gestão?</li>
+    </ol></div>
+  </div>
+</div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+/* cenas desenhadas (no app real são as fotos tiradas) */
+const ceu=`<rect width="120" height="120" fill="#C9D6DC"/>`;
+const cena={
+  antes:`${ceu}<rect y="58" width="120" height="62" fill="#7D8B6E"/><path d="M40 120 L56 58 L64 58 L80 120Z" fill="#A6865C"/><path d="M50 95 q8-6 16 0 q6 4 12 0" stroke="#5B4630" stroke-width="3" fill="none"/><circle cx="20" cy="70" r="6" fill="#5E6F4E"/><circle cx="100" cy="66" r="8" fill="#5E6F4E"/>`,
+  durante:`${ceu}<rect y="58" width="120" height="62" fill="#7D8B6E"/><path d="M40 120 L56 58 L64 58 L80 120Z" fill="#B99C72"/><rect x="62" y="76" width="30" height="14" rx="2" fill="#C9A24E"/><rect x="66" y="68" width="14" height="10" fill="#8C6D2E"/><circle cx="68" cy="92" r="5" fill="#333"/><circle cx="88" cy="92" r="5" fill="#333"/><path d="M92 82 l14 6" stroke="#8C6D2E" stroke-width="3"/><circle cx="20" cy="70" r="6" fill="#5E6F4E"/>`,
+  depois:`${ceu}<rect y="58" width="120" height="62" fill="#7D8B6E"/><path d="M38 120 L55 58 L65 58 L82 120Z" fill="#9C9488"/><path d="M60 62 L60 120" stroke="#E7E1D3" stroke-width="1.5" stroke-dasharray="4 4"/><circle cx="20" cy="70" r="6" fill="#5E6F4E"/><circle cx="100" cy="66" r="8" fill="#5E6F4E"/>`};
+const ft=(k,i)=>`<div class="ft"><svg viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice"><g transform="translate(${(i%3-1)*4} 0)">${cena[k]}</g></svg></div>`;
+const S={tela:"inicio",fotos:{antes:2,durante:1,depois:0},cam:"depois"};
+const TELAS={
+ inicio:()=>`<div class="cab"><b>📷 Fotos da Obra</b></div><div class="cont">
+   <div class="card"><div class="muted">Encarregado</div><b>Carlos · FERMAQ Construtiva 01</b></div>
+   <button class="btn pri" data-ir="fazenda">➕ Nova atividade</button>
+   <div class="muted" style="margin-top:4px">Em andamento</div>
+   <button class="lin" data-ir="atividade"><span><b>Preparo de leito com brita</b><small>Chave de Ouro · Acesso · T7</small></span><span class="tg and">Falta Depois</span></button>
+   <button class="lin"><span><b>Construção de bueiro</b><small>Matinha · Internas · T3</small></span><span class="tg and">Falta Durante</span></button>
+   <div class="muted" style="margin-top:4px">Fechadas hoje</div>
+   <button class="lin" data-ir="relatorio"><span><b>Patrolamento</b><small>Chave de Ouro · Acesso · T5</small></span><span class="tg ok">✓ 3 etapas</span></button>
+   <div class="muted" style="text-align:center">2 atividades esperando sinal para enviar</div></div>`,
+ fazenda:()=>`<div class="cab"><button data-ir="inicio">‹</button><b>Nova atividade</b></div><div class="cont">
+   <div class="card"><b>1. Fazenda</b>${["Chave de Ouro","Matinha","Barra do Boa Vista I","JKR"].map((f,i)=>`<button class="lin" ${i===0?'style="border-color:var(--ok);box-shadow:0 0 0 2px var(--ok) inset"':""}><span><b>${f}</b></span></button>`).join("")}</div>
+   <div class="card"><b>2. Onde</b><div style="display:flex;gap:8px"><button class="btn" style="border-color:var(--ok);box-shadow:0 0 0 2px var(--ok) inset">Acesso</button><button class="btn">Internas</button></div>
+     <div class="muted">Trecho</div><div style="display:flex;gap:6px;flex-wrap:wrap">${[1,2,3,4,5,6,7,8].map(n=>`<button class="btn" style="width:auto;min-height:40px;${n===7?"background:var(--ok);color:#fff;border-color:var(--ok)":""}">T${n}</button>`).join("")}</div></div>
+   <div class="card"><b>3. Atividade (escopo)</b><input class="btn" style="text-align:left;font-weight:500" placeholder="Buscar atividade…">${["Preparo de leito com brita","Patrolamento","Construção de bueiro"].map((a,i)=>`<button class="lin" ${i===0?'style="border-color:var(--ok);box-shadow:0 0 0 2px var(--ok) inset"':""}><span><b>${a}</b></span></button>`).join("")}</div>
+   <button class="btn ok" data-ir="atividade">Começar: fotos do Antes</button></div>`,
+ atividade:()=>{const F=S.fotos,et=[["antes","Antes","var(--a1)"],["durante","Durante","var(--a2)"],["depois","Depois","var(--a3)"]];const pronto=et.every(([k])=>F[k]>0);
+   return `<div class="cab"><button data-ir="inicio">‹</button><b>Preparo de leito com brita</b></div><div class="cont">
+   <div class="card" style="gap:2px"><b>Chave de Ouro · Acesso · T7</b><div class="muted">Ponto de referência: -19.8712, -51.6034 (gravado na 1ª foto do Antes)</div></div>
+   ${et.map(([k,n,c])=>`<div class="et"><h3><i style="background:${c}"></i>${n}<span class="cnt" style="margin-left:auto">${F[k]} de 10</span></h3>
+     <div class="grade">${Array.from({length:F[k]},(_,i)=>ft(k,i)).join("")}${F[k]<10?`<div class="mais" data-cam="${k}" title="Tirar foto">＋</div>`:""}</div>
+     ${F[k]===0?`<div class="cnt">Falta pelo menos 1 foto.</div>`:""}</div>`).join("")}
+   <button class="btn ok" ${pronto?'data-ir="relatorio"':"disabled"} style="${pronto?"":"opacity:.45"}">${pronto?"✔ Fechar atividade":"Fechar atividade (falta "+et.filter(([k])=>!F[k]).map(([,n])=>n).join(", ")+")"}</button></div>`;},
+ camera:()=>{const k=S.cam,n={antes:"Antes",durante:"Durante",depois:"Depois"}[k];
+   return `<div class="camv"><div class="vis"><svg viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">${cena[k]}</svg>${k!=="antes"&&S.fotos.antes?`<svg class="fant" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">${cena.antes}</svg>`:""}
+     <div class="guia">${k==="antes"&&!S.fotos.antes?"<b>1ª foto do Antes</b>: este lugar vira o ponto de referência da atividade.":`<b>${n}</b> · a foto do Antes aparece clarinha por cima. Chegue perto do ponto: <b>você está a 6 m</b>.`}</div></div>
+     <div class="bar"><button class="t" data-ir="atividade">Cancelar</button><button class="disp" data-tira="${k}" aria-label="Tirar foto"></button><span class="t"></span></div></div>`;},
+ relatorio:()=>`<div class="cab"><button data-ir="atividade">‹</button><b>Relatório</b></div><div class="cont">
+   <div class="card" style="gap:2px"><b>Preparo de leito com brita</b><div class="muted">Chave de Ouro · Acesso · T7 · FERMAQ Construtiva 01 · Carlos</div><div class="muted">Antes 20/10 07:12 · Durante 21/10 10:40 · Depois 23/10 16:05</div></div>
+   <div class="card"><div class="rel">${["antes","durante","depois"].map(k=>`<div class="col"><b>${k[0].toUpperCase()+k.slice(1)}</b>${ft(k,0)}${S.fotos[k]>1?ft(k,1):""}</div>`).join("")}</div><div class="muted">Mesmo ponto nas três etapas (até 12 m de diferença).</div></div>
+   <button class="btn pri">📄 Gerar PDF / mandar no WhatsApp</button><button class="btn" data-ir="inicio">Voltar ao início</button></div>`};
+const NOMES={inicio:"Início",fazenda:"Escolher atividade",atividade:"Antes · Durante · Depois",camera:"Câmera com a foto do Antes por cima",relatorio:"Relatório"};
+function ir(t){S.tela=t;const el=$("#tela");el.innerHTML=TELAS[t]();
+  el.querySelectorAll("[data-ir]").forEach(b=>b.onclick=()=>ir(b.dataset.ir));
+  el.querySelectorAll("[data-cam]").forEach(b=>b.onclick=()=>{S.cam=b.dataset.cam;ir("camera");});
+  el.querySelectorAll("[data-tira]").forEach(b=>b.onclick=()=>{S.fotos[b.dataset.tira]=Math.min(10,S.fotos[b.dataset.tira]+1);ir("atividade");});
+  $("#atalhos").innerHTML=Object.entries(NOMES).map(([k,v])=>`<button data-t="${k}" aria-pressed="${k===t}">${v}</button>`).join("");
+  $("#atalhos").querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{if(b.dataset.t==="camera")S.cam="depois";ir(b.dataset.t);});}
+ir("inicio");
+</script>
+</body>
+</html>
