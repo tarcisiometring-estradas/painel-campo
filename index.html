@@ -447,7 +447,7 @@ $("#med-cp").onclick=async()=>{const t=$("#med-r").textContent;try{await navigat
 /* ===== camadas guardadas no celular (sem internet) =====
    Ficam num cache próprio ("camadas") que NÃO é apagado quando o app atualiza.
    O botão do início baixa todas; ao abrir uma fazenda com internet, as dela são guardadas sozinhas. */
-const CAMC="camadas-folha";let CAMBX=false;
+const CAMC="camadas-folha-2";let CAMBX=false;
 const camAbs=a=>new URL(a,location.href).href;
 function camKB(){const k={};(DADOS?DADOS.fazendas:[]).forEach(f=>f.mapas.forEach(m=>(m.camadas||[]).forEach(c=>{k[c.arq]=c.kb||200;})));return k;}
 function camTodas(){const v=new Set();(DADOS?DADOS.fazendas:[]).forEach(f=>f.mapas.forEach(m=>(m.camadas||[]).forEach(c=>v.add(c.arq))));return [...v];}
