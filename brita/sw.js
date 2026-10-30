@@ -1,5 +1,5 @@
 /* Entrega de Brita – abre sem sinal. Com sinal, busca a versão nova. */
-const VERSAO="brita-v1-2026-10-29c";
+const VERSAO="brita-v1-2026-10-29d";
 const ARQS=["./","index.html","comum.js","config.js","manifest.webmanifest","icone-192.png","icone-512.png"];
 self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(VERSAO).then(c=>c.addAll(ARQS.map(u=>new Request(u,{cache:"reload"})))));});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("brita-")&&k!==VERSAO).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});

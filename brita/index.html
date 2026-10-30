@@ -191,9 +191,12 @@ function passo2(){gpsMudou=null;
     if((t<3||t>80)&&!confirmar(`${fT(t)} está certo? Confira na nota.`))return;N.nf=nf;N.toneladas=t;passo3();};}
 function passo3(){
   T.innerHTML=`${passos(3)}<div class="card"><h2>3. Onde você descarregou?</h2><div class="gps" id="gps"></div><div id="p3-l"></div>
+  <div id="p3-nv" style="display:none;gap:8px"><label class="f">Motivo<select id="p3-mot">${["Carga desviada do pedido","Emergência (estrada ruim / atoleiro)","Depósito cheio","Ordem do encarregado","Outro"].map(x=>`<option ${N.novo&&N.novo.motivo===x?"selected":""}>${x}</option>`).join("")}</select></label>
+   <label class="f">Quem mandou descarregar aqui?<input id="p3-quem" value="${esc(N.novo&&N.novo.quem||"")}" placeholder="Nome / empresa"></label></div>
   <label class="f">Observação ${'<span class="muted" id="p3-ob">(opcional)</span>'}<textarea id="p3-o" rows="2" placeholder="Ex.: depósito cheio, mandaram descarregar aqui">${esc(N.obs)}</textarea></label>
   <button class="btn ok big" id="p3-ok" disabled>Continuar</button><button class="btn" id="p3-v">Voltar</button></div>${sair}`;ligarSair();
-  $("#p3-v").onclick=passo2;let espera=Date.now(),tm=null;
+  $("#p3-v").onclick=passo2;
+  $("#p3-mot").onchange=e=>{if(N.novo)N.novo.motivo=e.target.value;};$("#p3-quem").oninput=e=>{if(N.novo)N.novo.quem=e.target.value;};let espera=Date.now(),tm=null;
   const montar=()=>{const f=GPS.fix,el=$("#p3-l");if(!el)return;
     if(!f){el.innerHTML=`<div class="muted">Esperando o GPS para achar o depósito…</div>`;$("#p3-ok").disabled=true;return;}
     const O=BRITA.ordenar(f.lat,f.lon,DEPS);const perto=O.find(o=>o.dentro);
@@ -202,12 +205,10 @@ function passo3(){
     el.innerHTML=(perto?`<div class="muted">Pelo GPS você está no depósito abaixo. Está certo?</div>`:DEPS.length?`<div class="muted" style="color:var(--dan);font-weight:600">Você não está dentro de nenhum depósito cadastrado. O mais perto é este. Se não for, toque em "outro depósito" ou cadastre o lugar novo.</div>`:`<div class="muted">Sem lista de depósitos no celular. A carga vai só com a coordenada.</div>`)+
       lista.slice(0,N.verTodos?50:1).map(o=>`<button class="dep" data-d="${esc(o.d.id)}" aria-pressed="${N.deposito_id===o.d.id}"><b>${esc(o.d.id)}${o.d.nome&&o.d.nome!==o.d.id?" – "+esc(o.d.nome):""}</b><span class="muted">${esc(o.d.projeto)}${o.d.referencia?" · "+esc(o.d.referencia):""}</span><span class="muted">a ${fM(o.m)}${o.dentro?" · você está aqui":""}</span></button>`).join("")+
       (!N.verTodos&&O.length>1?`<button class="btn" id="p3-out" style="min-height:44px">Não, é outro depósito</button>`:"")+
-      `<button class="dep" id="p3-novo" aria-pressed="${!!N.novo}"><b>➕ Lugar novo, sem depósito cadastrado</b><span class="muted">Carga desviada do pedido, emergência, depósito cheio… Cria um depósito provisório aqui, no seu GPS.</span></button>`+
-      (N.novo?`<label class="f">Motivo<select id="p3-mot">${["Carga desviada do pedido","Emergência (estrada ruim / atoleiro)","Depósito cheio","Ordem do encarregado","Outro"].map(x=>`<option ${N.novo.motivo===x?"selected":""}>${x}</option>`).join("")}</select></label>
-       <label class="f">Quem mandou descarregar aqui?<input id="p3-quem" value="${esc(N.novo.quem||"")}" placeholder="Nome / empresa"></label>`:"");
+      `<button class="dep" id="p3-novo" aria-pressed="${!!N.novo}"><b>➕ Lugar novo, sem depósito cadastrado</b><span class="muted">Carga desviada do pedido, emergência, depósito cheio… Cria um depósito provisório aqui, no seu GPS.</span></button>`;
     el.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{N.novo=null;N.deposito_id=b.dataset.d;N.escolha=perto&&perto.d.id===b.dataset.d?"gps":"motorista";montar();});
-    $("#p3-novo").onclick=()=>{N.novo=N.novo||{motivo:"Carga desviada do pedido",quem:""};N.deposito_id="";N.escolha="novo";montar();};
-    if(N.novo){$("#p3-mot").onchange=e=>N.novo.motivo=e.target.value;$("#p3-quem").oninput=e=>N.novo.quem=e.target.value;}
+    $("#p3-novo").onclick=()=>{N.novo=N.novo||{motivo:$("#p3-mot").value,quem:$("#p3-quem").value};N.deposito_id="";N.escolha="novo";montar();};
+    $("#p3-nv").style.display=N.novo?"grid":"none";
     const out=$("#p3-out");if(out)out.onclick=()=>{N.verTodos=true;N.deposito_id="";montar();};
     const precisaObs=!N.novo&&DEPS.length&&(!perto||N.deposito_id!==perto.d.id);$("#p3-ob").textContent=precisaObs?"(obrigatória: por que descarregou fora?)":"(opcional)";
     const gpsOk=f.acc<=30||Date.now()-espera>45000;$("#p3-ok").disabled=!gpsOk||(DEPS.length&&!N.deposito_id&&!N.novo);
