@@ -1,0 +1,86 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Trilha Estradas Sucuriú · Técnico de campo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik+Dirt&family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{--chao:#EFE7DA;--papel:#FBF7F0;--tinta:#2B2420;--mut:#76695E;--linha:#D9CDBD;--terra:#A8492A;--ok:#2F7D4F;--chuva:#1F3A68;
+--P:#1F3A68;--D:#A8492A;--C:#B8860B;--A:#2F6B4F;--f-disp:"Rubik Dirt","Archivo",system-ui,sans-serif;--f-txt:"Archivo",system-ui,sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root{--chao:#1D1916;--papel:#26211D;--tinta:#EFE6DA;--mut:#A99B8D;--linha:#3F3730;--terra:#D06A45;--ok:#5FB884;--chuva:#7FA2DE;--P:#7FA2DE;--D:#D06A45;--C:#E0B04A;--A:#5FA884;color-scheme:dark}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--chao);color:var(--tinta);font:15px/1.5 var(--f-txt)}
+.wrap{max-width:1040px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left));display:grid;gap:16px}
+.topo{border-left:8px solid var(--nv);padding:4px 0 4px 14px}
+.eye{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:700}
+h1{font:400 clamp(30px,6vw,50px)/1.05 var(--f-disp);color:var(--nv);margin:2px 0;text-wrap:balance}
+.sub{color:var(--mut);margin:0;max-width:62ch}
+.acs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px}
+.ac{background:var(--papel);border:1px solid var(--linha);border-radius:12px;padding:12px;display:grid;gap:6px;min-width:0}
+.ac b{font-size:15px}.ac small{color:var(--mut)}
+.link{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.link code{font:500 12px var(--f-mono);background:var(--chao);border:1px solid var(--linha);border-radius:6px;padding:4px 6px;word-break:break-all;min-width:0;flex:1 1 200px}
+a.btn,button{font:600 14px var(--f-txt);border-radius:10px;border:1px solid var(--linha);background:var(--papel);color:var(--tinta);padding:8px 12px;cursor:pointer;min-height:40px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+button.pri{background:var(--nv);border-color:var(--nv);color:#fff}
+a.btn:focus-visible,button:focus-visible{outline:3px solid var(--chuva);outline-offset:2px}
+.fases{display:flex;flex-wrap:wrap;gap:8px}
+.fase{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--papel);border:1px solid var(--linha)}
+.fase i{font-style:normal;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;color:#fff;font-size:12px;font-weight:800}
+.tab{background:var(--papel);border:1px solid var(--linha);border-radius:14px;overflow:hidden;position:relative;padding:18px 0 8px}
+.trilho{display:flex;align-items:flex-start;gap:0;transition:transform .45s cubic-bezier(.3,.7,.2,1);will-change:transform}
+.cs{flex:0 0 auto;width:92px;display:grid;justify-items:center;gap:4px;position:relative;cursor:pointer;background:none;border:0;padding:0;min-height:0;font:inherit;color:inherit}
+.cs::before{content:"";position:absolute;top:22px;left:-50%;width:100%;height:6px;background:repeating-linear-gradient(90deg,var(--terra) 0 4px,transparent 4px 10px);opacity:.55;z-index:0}
+.cs:first-child::before{display:none}
+.bola{position:relative;z-index:1;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--papel);border:3px solid var(--fc);color:var(--fc);font:800 18px var(--f-txt);transition:transform .3s,background .3s}
+.cs.at .bola{transform:scale(1.25);background:var(--fc);color:#fff}
+.cs.ok .bola::after{content:"✓";position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--ok);color:#fff;font-size:11px;display:grid;place-items:center}
+.cs small{font-size:11px;line-height:1.2;text-align:center;color:var(--mut);max-width:88px;opacity:.75}
+.cs.at small{color:var(--tinta);font-weight:800;opacity:1;font-size:12px}
+.cs:focus-visible .bola{outline:3px solid var(--chuva);outline-offset:3px}
+.volta{text-align:center;font-size:11px;color:var(--chuva);font-weight:600;margin-top:2px}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.prog{margin-left:auto;color:var(--mut);font-size:13px}
+.dado{width:44px;padding:0;justify-content:center;font-size:22px}
+.ficha{background:var(--papel);border:1px solid var(--linha);border-radius:14px;padding:18px;display:grid;gap:14px;break-inside:avoid}
+.fh{display:flex;gap:12px;align-items:center}.selo{flex:0 0 auto;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font:800 20px var(--f-txt)}
+.fh h2{margin:0;font:800 22px/1.15 var(--f-txt)}
+dl{margin:0}.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:10px}
+.w{border-top:2px solid var(--linha);padding-top:8px;min-width:0}.w dt{font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;color:var(--mut)}.w dd{margin:2px 0 0}
+.w.full{grid-column:1/-1}ol{margin:4px 0 0;padding-left:20px}
+.feito{display:flex;gap:8px;align-items:center;font-weight:600}.feito input{width:20px;height:20px;accent-color:var(--ok)}
+.nota{font-size:13px;color:var(--mut)}
+.todas{display:none}
+@media print{.trilho{transform:none!important;flex-wrap:wrap;justify-content:center}body{background:#fff;color:#000;font-size:11.5pt}.ctrl,#ficha,.feito,.tela{display:none!important}.todas{display:grid;gap:12px}
+ .ficha,.ac,.tab{border-color:#bbb;background:#fff}.wrap{padding:0}a.btn,button:not(.cs){display:none}.link code{background:#fff}.ficha{page-break-inside:avoid}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+:root{--nv:#2F6B4F}</style></head><body><div class="wrap">
+<header class="topo"><div class="eye">Estradas Sucuriú · Arauco · material do nível</div><h1>Técnico de campo</h1><p class="sub">Técnicos que acompanham as frentes nas fazendas: mapas, lançamentos, conferência e brita. Comece pela casa 1. Cada casa responde o 5W2H: o quê, por quê, quem, onde (link), quando, como e quanto.</p></header>
+<section><div class="eye" style="margin-bottom:6px">Seus acessos</div><div class="acs"><div class="ac"><b>App de mapas</b><div class="link"><code><a href="https://tarcisiometring-estradas.github.io/painel-campo/">https://tarcisiometring-estradas.github.io/painel-campo/</a></code><a class="btn tela" href="https://tarcisiometring-estradas.github.io/painel-campo/" target="_blank" rel="noopener">Abrir ↗</a><button type="button" class="tela" data-cp="https://tarcisiometring-estradas.github.io/painel-campo/">Copiar</button></div><small>Como entra: Senha da equipe para os mapas oficiais (pedir ao supervisor).</small></div><div class="ac"><b>Painel de Campo (online)</b><div class="link"><code><a href="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8">https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8</a></code><a class="btn tela" href="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8" target="_blank" rel="noopener">Abrir ↗</a><button type="button" class="tela" data-cp="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8">Copiar</button></div><small>Como entra: Conta claude.ai com a qual o painel foi compartilhado com você.</small></div><div class="ac"><b>Gestão da brita</b><div class="link"><code><a href="https://tarcisiometring-estradas.github.io/painel-campo/brita/gestao.html">https://tarcisiometring-estradas.github.io/painel-campo/brita/gestao.html</a></code><a class="btn tela" href="https://tarcisiometring-estradas.github.io/painel-campo/brita/gestao.html" target="_blank" rel="noopener">Abrir ↗</a><button type="button" class="tela" data-cp="https://tarcisiometring-estradas.github.io/painel-campo/brita/gestao.html">Copiar</button></div><small>Como entra: Senha da gestão (pedir ao supervisor).</small></div></div></section>
+<div class="fases"><span class="fase"><i style="background:var(--P)">P</i>Planejar</span><span class="fase"><i style="background:var(--D)">D</i>Fazer</span><span class="fase"><i style="background:var(--C)">C</i>Checar</span><span class="fase"><i style="background:var(--A)">A</i>Agir</span></div>
+<div class="tab" id="tabw"><div class="trilho" id="tab" role="list" aria-label="Casas deste nível"></div><div class="volta">↺ depois da última casa, o ciclo recomeça</div></div>
+<div class="ctrl"><button class="dado" id="dado" aria-label="Rolar o dado e andar uma casa">🎲</button><button class="pri" id="prox">Próxima casa</button><button id="ant">Voltar uma</button><span class="prog" id="prog"></span></div>
+<section class="ficha" id="ficha" aria-live="polite"></section>
+<div class="todas" id="todas"></div>
+<p class="nota">Senhas: pedir ao supervisor. Versão de 30/10/2026.</p>
+</div><script>const N={"id": "2-tecnico", "casas": [{"f": "P", "t": "Mapas no bolso", "que": "Instalar o app de mapas e guardar os mapas oficiais da Geoplant.", "pq": "Na fazenda não tem sinal: com os mapas guardados tudo funciona offline.", "quem": "Você, técnico.", "link": "https://tarcisiometring-estradas.github.io/painel-campo/", "quando": "Uma vez, com Wi-Fi. Atualiza sozinho quando pega sinal.", "como": ["Abrir no Chrome e tocar \"Instalar o app\".", "Tocar 🗂 e digitar a senha da equipe (pedir ao supervisor).", "\"⬇ Guardar mapas oficiais\" na tela inicial."], "quanto": "5 minutos."}, {"f": "P", "t": "Ler o mapa", "que": "Abrir a fazenda e entender cores e símbolos.", "pq": "Mostra onde você está e o que falta em cada trecho.", "quem": "Você, técnico.", "link": "https://tarcisiometring-estradas.github.io/painel-campo/", "quando": "Sempre que for a campo.", "como": ["Ao abrir o mapa, o GPS liga sozinho; ◉ volta para sua posição; dois dedos giram o mapa.", "Vermelho = nada feito · amarelo = em andamento · verde = atividade final concluída.", "Tracejado azul-marinho ao lado = rota para chuva (Preparo de leito com brita).", "Quadrado amarelo = ponto de módulo da fazenda."], "quanto": "—"}, {"f": "P", "t": "Chegar lá", "que": "Traçar rota pela região até a fazenda ou pedreira.", "pq": "Funciona sem internet e mostra o DMT das pedreiras.", "quem": "Você, técnico.", "link": "https://tarcisiometring-estradas.github.io/painel-campo/", "quando": "Antes de sair ou no caminho.", "como": ["Tela da região: escolher de onde sai e para onde vai.", "Saiu mais de 300 m da rota: refaz sozinho.", "Com sinal: \"🚗 Abrir no carro\" (Waze / Google Maps)."], "quanto": "—"}, {"f": "D", "t": "Marcar, medir e fotografar", "que": "Marcar pontos (buraco, poça, problema) e medir linha ou área.", "pq": "Registro com local exato e foto, para a equipe ou só para você.", "quem": "Você, técnico.", "link": "https://tarcisiometring-estradas.github.io/painel-campo/", "quando": "Em campo.", "como": ["📍 Marcar ponto: \"Geral (equipe)\" ou \"Só eu\"; várias fotos da câmera ou galeria.", "📏 Medir: arrastar o mapa até o alvo e \"＋ Marcar aqui\", ou ⏺ Gravar o caminho; escolher m, km, ha.", "💾 Salvar guarda o desenho só para você (☰ › Meus pontos e desenhos)."], "quanto": "—"}, {"f": "D", "t": "Lançar a produção", "que": "Colar a mensagem do encarregado no Acompanhamento de campo.", "pq": "A mensagem do WhatsApp vira linhas de dados (empresa, fazenda, trecho, atividade, metros).", "quem": "Você, técnico.", "link": "https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8", "quando": "Todo dia.", "como": ["Painel de Campo › Acompanhamento de campo.", "Colar a mensagem › conferir as linhas › OK.", "O que faltar, o painel pede em lista."], "quanto": "Poucos minutos por dia."}, {"f": "C", "t": "Conferir no campo", "que": "Confirmar o acumulado por trecho e atividade.", "pq": "Pega metragem maior que o trecho e lançamento repetido; é o que pinta o mapa.", "quem": "Você, técnico.", "link": "https://tarcisiometring-estradas.github.io/painel-campo/painel.html", "quando": "Quando visitar a frente (pode ser a cada 2–3 dias).", "como": ["App de mapas › 📋 Painel de Campo (funciona sem internet) › Conferir no campo › fazenda.", "Com sinal, o que você lançou vai para o painel.", "Confirmar \"até aqui tô liberando\" por trecho.", "Andamento dos trechos: marcar Pronto e a atividade final (nomes do escopo)."], "quanto": "—"}, {"f": "C", "t": "Brita: depósitos e cargas", "que": "Cadastrar depósitos e conferir as cargas dos motoristas.", "pq": "Garante que cada carga caiu no depósito certo antes de aprovar.", "quem": "Você, técnico.", "link": "https://tarcisiometring-estradas.github.io/painel-campo/brita/gestao.html", "quando": "Depósito: antes da 1ª carga. Cargas: todo dia.", "como": ["App de mapas › 🚚 Entrega de brita › senha da gestão (pedir ao supervisor).", "Segurar o dedo ~1 s no mapa ou \"📍 Cadastrar na minha posição\".", "Gestão: \"Só com alerta\" › 📍 Ver no mapa › ✓ Está certo ou corrigir."], "quanto": "1 min por depósito."}]};
+const FN={P:"Planejar",D:"Fazer",C:"Checar",A:"Agir"};let at=0,feitos={};const KEY="kit_"+N.id;
+try{feitos=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){}
+const C=N.casas,n=C.length,svg=document.getElementById("tab"),NS="http://www.w3.org/2000/svg";
+const FC={P:"var(--P)",D:"var(--D)",C:"var(--C)",A:"var(--A)"};
+svg.innerHTML=C.map((c,i)=>`<button type="button" class="cs" role="listitem" data-i="${i}" style="--fc:${FC[c.f]}" aria-label="Casa ${i+1}: ${c.t}"><span class="bola">${i+1}</span><small>${c.t}</small></button>`).join("");
+svg.querySelectorAll(".cs").forEach(b=>b.onclick=()=>ir(+b.dataset.i));
+function desenhar(){const W=document.getElementById("tabw").clientWidth;svg.querySelectorAll(".cs").forEach((b,i)=>{b.classList.toggle("at",i===at);b.classList.toggle("ok",!!feitos[i]);});
+  const it=svg.children[at];const x=it.offsetLeft+it.offsetWidth/2;const tot=svg.scrollWidth;let tx=W/2-x;tx=Math.min(0,Math.max(W-tot,tx));if(tot<=W)tx=(W-tot)/2;svg.style.transform=`translateX(${tx}px)`;}
+addEventListener("resize",desenhar);
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function fichaHTML(c,i,tela){return `<div class="fh"><div class="selo" style="background:var(--${c.f})">${c.f}</div><div><div class="eye">Casa ${i+1} de ${n} · ${FN[c.f]}</div><h2>${esc(c.t)}</h2></div></div>
+ <dl class="g"><div class="w"><dt>O quê</dt><dd>${esc(c.que)}</dd></div><div class="w"><dt>Por quê</dt><dd>${esc(c.pq)}</dd></div>
+ <div class="w"><dt>Quem</dt><dd>${esc(c.quem)}</dd></div><div class="w"><dt>Onde</dt><dd><div class="link"><code><a href="${c.link}">${esc(c.link)}</a></code>${tela?`<a class="btn" href="${c.link}" target="_blank" rel="noopener">Abrir ↗</a><button type="button" data-cp="${c.link}">Copiar</button>`:""}</div></dd></div>
+ <div class="w"><dt>Quando</dt><dd>${esc(c.quando)}</dd></div><div class="w"><dt>Quanto</dt><dd>${esc(c.quanto)}</dd></div>
+ <div class="w full"><dt>Como</dt><dd><ol>${c.como.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></dd></div></dl>
+ ${tela?`<label class="feito"><input type="checkbox" id="ck" ${feitos[i]?"checked":""}> Já fiz esta casa</label>`:""}`;}
+function copiar(root){root.querySelectorAll("[data-cp]").forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.cp);b.textContent="Copiado";}catch(e){const r=document.createRange();r.selectNodeContents(b.parentNode.querySelector("code"));const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent="Ctrl+C";}setTimeout(()=>b.textContent="Copiar",1600);});}
+function ir(i){at=(i+n)%n;desenhar();const f=document.getElementById("ficha");f.innerHTML=fichaHTML(C[at],at,true);copiar(f);
+  document.getElementById("ck").onchange=e=>{feitos[at]=e.target.checked;try{localStorage.setItem(KEY,JSON.stringify(feitos))}catch(x){}desenhar();prog();};prog();}
+function prog(){document.getElementById("prog").textContent=`${Object.values(feitos).filter(Boolean).length} de ${n} casas feitas`;}
+document.getElementById("todas").innerHTML=C.map((c,i)=>`<section class="ficha">${fichaHTML(c,i,false)}</section>`).join("");
+copiar(document);
+const FACES="⚀⚁⚂⚃⚄⚅";document.getElementById("dado").onclick=()=>{const b=document.getElementById("dado");let k=0;const t=setInterval(()=>{b.textContent=FACES[Math.floor(Math.random()*6)];if(++k>6){clearInterval(t);b.textContent="🎲";ir(at+1);}},70);};
+document.getElementById("prox").onclick=()=>ir(at+1);document.getElementById("ant").onclick=()=>ir(at-1);ir(0);
+</script></body></html>

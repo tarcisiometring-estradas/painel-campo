@@ -156,6 +156,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <div><span class="ok-chip">✓ Funciona sem internet</span> <span class="muted" id="h-ver"></span></div>
   <div class="temas" id="h-tema"><span class="muted" style="align-self:center">Tela:</span><button data-tema="escuro">Escuro</button><button data-tema="claro">Claro</button><button data-tema="sol">Sol (forte)</button></div>
   <button class="choice" id="h-inst" style="display:none;border:2px solid var(--ok)"><span class="ic">📲</span><span><strong>Instalar o app</strong><small>Fica na tela inicial e abre sem internet.</small></span><span class="seta">›</span></button>
+  <a class="choice" id="h-guia" href="guia/"><span class="ic">📘</span><span><strong>Guia de início</strong><small id="h-guias">Primeira vez? Comece aqui: o passo a passo do seu papel, com os links e como entrar.</small></span><span class="seta">›</span></a>
   <button class="choice" id="h-mapa"><span class="ic">🗺️</span><span><strong>Mapa das estradas</strong><small>Toque e escolha a fazenda. ⚙ para filtrar.</small></span><span class="seta">›</span></button>
   <button class="choice" id="h-cam"><span class="ic">⬇️</span><span><strong>Guardar mapas oficiais no celular</strong><small id="h-cams">Faça com Wi‑Fi antes de ir a campo. Depois os mapas oficiais (com legenda e quadros) abrem sem internet.</small></span><span class="seta">›</span></button>
   <button class="choice" id="h-pontos"><span class="ic">📍</span><span><strong>Pontos marcados</strong><small id="h-np">Buraco, erosão, bueiro… com foto. Enviar pelo WhatsApp.</small></span><span class="seta">›</span></button>
@@ -871,6 +872,7 @@ let instEv=null;const jaApp=matchMedia("(display-mode: standalone)").matches||na
 const UA=navigator.userAgent,iOS=/iPhone|iPad|iPod/i.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1),
   noZap=/WhatsApp|Instagram|FBAN|FBAV|; wv\)/i.test(UA),celular=iOS||/Android/i.test(UA);
 if(!jaApp&&(celular||noZap))$("#h-inst").style.display="grid";
+try{if(!localStorage.getItem("guia_visto")){$("#h-guia").style.border="2px solid var(--ok)";$("#h-guias").textContent="Primeira vez? Comece aqui: o passo a passo do seu papel, com os links e como entrar.";}$("#h-guia").addEventListener("click",()=>{try{localStorage.setItem("guia_visto","1")}catch(e){}});}catch(e){}
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();instEv=e;if(!jaApp)$("#h-inst").style.display="grid";});
 window.addEventListener("appinstalled",()=>{instEv=null;$("#h-inst").style.display="none";aviso("App instalado. Procure o ícone Estradas na tela inicial.");});
 $("#h-inst").onclick=async()=>{if(instEv){instEv.prompt();try{await instEv.userChoice;}catch(e){}instEv=null;return;}

@@ -1,8 +1,8 @@
 /* Estradas Sucuriú – funciona sem internet.
    Com internet: busca sempre a versão mais nova (app e mapas) e guarda no celular.
    Sem internet: abre o que está guardado. */
-const VERSAO="v1-2026-10-30a";
-const ARQS=["./","index.html","manifest.webmanifest","dados/mapas.json","dados/situacao.json","dados/rodovias/MS.json","dados/regiao.json","dados/estradas.json","painel.html","dados/painel_base.json","icones/icone-192.png","icones/icone-512.png","lib/xlsx.full.min.js","lib/jszip.min.js","lib/mapa.js"];
+const VERSAO="v1-2026-10-30b";
+const ARQS=["./","index.html","guia/","guia/index.html","guia/tecnico.html","guia/supervisor.html","guia/motorista.html","guia/visualizacao.html","manifest.webmanifest","dados/mapas.json","dados/situacao.json","dados/rodovias/MS.json","dados/regiao.json","dados/estradas.json","painel.html","dados/painel_base.json","icones/icone-192.png","icones/icone-512.png","lib/xlsx.full.min.js","lib/jszip.min.js","lib/mapa.js"];
 self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(VERSAO).then(c=>c.addAll(ARQS.map(u=>new Request(u,{cache:"reload"})))));});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSAO&&k!=="camadas-folha-2").map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener("message",e=>{if(e.data==="ativar")self.skipWaiting();});

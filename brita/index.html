@@ -150,7 +150,7 @@ function homog(P,Q){const A=[],b=[];for(let i=0;i<4;i++){const [x,y]=P[i],[u,v]=
 /* ---------- telas ---------- */
 const EU=()=>LS.get("motorista",null);
 function telaCadastro(){const e=EU()||{};
-  T.innerHTML=`<div class="card"><h2>Seus dados</h2><div class="muted">Só na primeira vez. Fica guardado neste celular.</div>
+  T.innerHTML=`<div class="card"><h2>Seus dados</h2><div class="muted">Só na primeira vez. Fica guardado neste celular.</div><a class="btn" href="../guia/motorista.html" style="text-decoration:none;min-height:40px">📘 Primeira vez? Veja o guia do motorista</a>
   <label class="f">Seu nome<input id="c-n" value="${esc(e.nome)}" autocomplete="name"></label>
   <label class="f">Telefone (WhatsApp)<input id="c-t" value="${esc(e.telefone)}" inputmode="tel"></label>
   ${pedrHTML("c-p",e.pedreira)}
