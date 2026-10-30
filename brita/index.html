@@ -197,20 +197,26 @@ function passo3(){
   const montar=()=>{const f=GPS.fix,el=$("#p3-l");if(!el)return;
     if(!f){el.innerHTML=`<div class="muted">Esperando o GPS para achar o depósito…</div>`;$("#p3-ok").disabled=true;return;}
     const O=BRITA.ordenar(f.lat,f.lon,DEPS);const perto=O.find(o=>o.dentro);
-    if(!N.deposito_id&&perto){N.deposito_id=perto.d.id;N.escolha="gps";}
-    const lista=N.verTodos||!perto?O:[perto];
-    el.innerHTML=(perto?`<div class="muted">Pelo GPS você está no depósito abaixo. Está certo?</div>`:DEPS.length?`<div class="muted" style="color:var(--dan);font-weight:600">Você não está perto de nenhum depósito cadastrado. Escolha para qual depósito é a carga e explique na observação.</div>`:`<div class="muted">Sem lista de depósitos no celular. A carga vai só com a coordenada.</div>`)+
+    if(!N.deposito_id&&!N.novo&&(perto||O[0])){N.deposito_id=(perto||O[0]).d.id;N.escolha=perto?"gps":"mais-perto";}
+    const lista=N.verTodos?O:[perto||O[0]].filter(Boolean);
+    el.innerHTML=(perto?`<div class="muted">Pelo GPS você está no depósito abaixo. Está certo?</div>`:DEPS.length?`<div class="muted" style="color:var(--dan);font-weight:600">Você não está dentro de nenhum depósito cadastrado. O mais perto é este. Se não for, toque em "outro depósito" ou cadastre o lugar novo.</div>`:`<div class="muted">Sem lista de depósitos no celular. A carga vai só com a coordenada.</div>`)+
       lista.slice(0,N.verTodos?50:1).map(o=>`<button class="dep" data-d="${esc(o.d.id)}" aria-pressed="${N.deposito_id===o.d.id}"><b>${esc(o.d.id)}${o.d.nome&&o.d.nome!==o.d.id?" – "+esc(o.d.nome):""}</b><span class="muted">${esc(o.d.projeto)}${o.d.referencia?" · "+esc(o.d.referencia):""}</span><span class="muted">a ${fM(o.m)}${o.dentro?" · você está aqui":""}</span></button>`).join("")+
-      (perto&&!N.verTodos?`<button class="btn" id="p3-out" style="min-height:44px">Não, é outro depósito</button>`:"");
-    el.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{N.deposito_id=b.dataset.d;N.escolha=perto&&perto.d.id===b.dataset.d?"gps":"motorista";montar();});
+      (!N.verTodos&&O.length>1?`<button class="btn" id="p3-out" style="min-height:44px">Não, é outro depósito</button>`:"")+
+      `<button class="dep" id="p3-novo" aria-pressed="${!!N.novo}"><b>➕ Lugar novo, sem depósito cadastrado</b><span class="muted">Carga desviada do pedido, emergência, depósito cheio… Cria um depósito provisório aqui, no seu GPS.</span></button>`+
+      (N.novo?`<label class="f">Motivo<select id="p3-mot">${["Carga desviada do pedido","Emergência (estrada ruim / atoleiro)","Depósito cheio","Ordem do encarregado","Outro"].map(x=>`<option ${N.novo.motivo===x?"selected":""}>${x}</option>`).join("")}</select></label>
+       <label class="f">Quem mandou descarregar aqui?<input id="p3-quem" value="${esc(N.novo.quem||"")}" placeholder="Nome / empresa"></label>`:"");
+    el.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{N.novo=null;N.deposito_id=b.dataset.d;N.escolha=perto&&perto.d.id===b.dataset.d?"gps":"motorista";montar();});
+    $("#p3-novo").onclick=()=>{N.novo=N.novo||{motivo:"Carga desviada do pedido",quem:""};N.deposito_id="";N.escolha="novo";montar();};
+    if(N.novo){$("#p3-mot").onchange=e=>N.novo.motivo=e.target.value;$("#p3-quem").oninput=e=>N.novo.quem=e.target.value;}
     const out=$("#p3-out");if(out)out.onclick=()=>{N.verTodos=true;N.deposito_id="";montar();};
-    const precisaObs=DEPS.length&&(!perto||N.deposito_id!==perto.d.id);$("#p3-ob").textContent=precisaObs?"(obrigatória: por que descarregou fora?)":"(opcional)";
-    const gpsOk=f.acc<=30||Date.now()-espera>45000;$("#p3-ok").disabled=!gpsOk||(DEPS.length&&!N.deposito_id);
+    const precisaObs=!N.novo&&DEPS.length&&(!perto||N.deposito_id!==perto.d.id);$("#p3-ob").textContent=precisaObs?"(obrigatória: por que descarregou fora?)":"(opcional)";
+    const gpsOk=f.acc<=30||Date.now()-espera>45000;$("#p3-ok").disabled=!gpsOk||(DEPS.length&&!N.deposito_id&&!N.novo);
     if(!gpsOk){clearTimeout(tm);tm=setTimeout(montar,3000);}};
   gpsMudou=montar;gpsMostrar();montar();
   $("#p3-ok").onclick=()=>{const f=GPS.fix;N.obs=$("#p3-o").value.trim();const O=f?BRITA.ordenar(f.lat,f.lon,DEPS):[];const perto=O.find(o=>o.dentro);
-    if(DEPS.length&&(!perto||N.deposito_id!==perto.d.id)&&N.obs.length<5){aviso("Escreva na observação por que descarregou fora do depósito.");$("#p3-o").focus();return;}
-    N.lat=f.lat;N.lon=f.lon;N.precisao_m=f.acc;const d=DEPS.find(x=>x.id===N.deposito_id);N.deposito_nome=d?(d.id+(d.nome&&d.nome!==d.id?" – "+d.nome:"")):"";gpsMudou=null;passo4();};}
+    if(N.novo&&(N.novo.quem||"").trim().length<2){aviso("Diga quem mandou descarregar aqui.");$("#p3-quem").focus();return;}
+    if(!N.novo&&DEPS.length&&(!perto||N.deposito_id!==perto.d.id)&&N.obs.length<5){aviso("Escreva na observação por que descarregou fora do depósito.");$("#p3-o").focus();return;}
+    N.lat=f.lat;N.lon=f.lon;N.precisao_m=f.acc;const d=DEPS.find(x=>x.id===N.deposito_id);N.deposito_nome=d?(d.id+(d.nome&&d.nome!==d.id?" – "+d.nome:"")):N.novo?"Novo (provisório) – "+N.novo.motivo:"";gpsMudou=null;passo4();};}
 function passo4(){gpsMudou=null;
   T.innerHTML=`${passos(4)}<div class="card"><h2>4. Foto da carga no chão</h2><div class="muted">Fotografe o monte de brita descarregado, com o lugar aparecendo em volta.</div>
   ${N.fotoCarga?`<img class="prev" id="p4-img"><button class="btn" id="p4-de">Tirar de novo</button>`:`<button class="btn pri big" id="p4-tir">📷 Fotografar a carga</button>`}
@@ -220,7 +226,7 @@ function passo4(){gpsMudou=null;
   if(N.fotoCarga){$("#p4-img").src=N.fotoCarga;$("#p4-de").onclick=tirar;}else $("#p4-tir").onclick=tirar;
   $("#p4-v").onclick=passo3;
   $("#p4-ok").onclick=async()=>{const o={id:N.id,descarga_em:new Date().toISOString(),motorista:N.motorista,telefone:N.telefone,pedreira:N.pedreira,placa:N.placa,nf:N.nf,toneladas:N.toneladas,
-      lat:N.lat,lon:N.lon,precisao_m:N.precisao_m,deposito_id:N.deposito_id,deposito_nome:N.deposito_nome,escolha:N.escolha,obs:N.obs,foto_nf:N.fotoNf,foto_carga:N.fotoCarga,enviado:false};
+      lat:N.lat,lon:N.lon,precisao_m:N.precisao_m,deposito_id:N.deposito_id,deposito_nome:N.deposito_nome,escolha:N.escolha,novo:N.novo||null,obs:N.obs,foto_nf:N.fotoNf,foto_carga:N.fotoCarga,enviado:false};
     try{await DB.por(o);}catch(e){aviso("Não consegui guardar no celular. Libere espaço e tente de novo.");return;}
     N=null;aviso("Entrega guardada. Enviando…");await inicio();enviarFila(false);};}
 

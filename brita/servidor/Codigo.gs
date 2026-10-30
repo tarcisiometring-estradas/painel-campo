@@ -127,12 +127,25 @@ function salvarEntrega(d) {
   if (ja) return { ok: true, id: d.id, repetida: true }; /* já recebida antes (o celular reenviou) */
 
   var deps = lerDepositos(), dep = d.deposito_id ? deps.filter(function (x) { return x.id === d.deposito_id; })[0] : null;
+  /* motorista descarregou num lugar sem depósito (desvio, emergência…): cria depósito PROVISÓRIO ali, ou usa um provisório a menos de 150 m */
+  var novoDep = false;
+  if (!dep && d.escolha === "novo" && isFinite(+d.lat) && isFinite(+d.lon)) {
+    var prov = deps.filter(function (x) { return /^PROVIS/i.test(x.obs) && distanciaAoDeposito(+d.lat, +d.lon, x) < RAIO_PADRAO; })[0];
+    if (prov) dep = prov;
+    else {
+      var nv = d.novo || {};
+      var r = salvarDeposito({ nome: "Provisório – " + (nv.motivo || "lugar novo"), projeto: "", referencia: "", lat: +d.lat, lon: +d.lon,
+        obs: "PROVISÓRIO – criado pelo motorista " + (d.motorista || "") + " (" + (d.placa || "") + "). Motivo: " + (nv.motivo || "") + ". Mandou: " + (nv.quem || "") + ". Aprovar ou vincular na gestão." }, "motorista " + (d.placa || ""));
+      dep = r.depositos.filter(function (x) { return x.id === r.id; })[0]; novoDep = true;
+    }
+  }
   var lat = +d.lat, lon = +d.lon, temGps = isFinite(lat) && isFinite(lon) && (lat || lon);
   var dist = dep && temGps ? distanciaAoDeposito(lat, lon, dep) : "";
   var alerta = [];
   if (!temGps) alerta.push("sem GPS");
   if (dep && temGps && dist > (dep.raio_m || RAIO_PADRAO)) alerta.push("longe do " + dep.id + " (" + Math.round(dist) + " m)");
   if (!dep) alerta.push("sem depósito – conferir");
+  if (d.escolha === "novo") alerta.push((novoDep ? "depósito novo criado pelo motorista" : "lugar provisório") + " – aprovar (" + ((d.novo && d.novo.motivo) || "") + ", mandou: " + ((d.novo && d.novo.quem) || "?") + ")");
   if (+d.precisao_m > 50) alerta.push("GPS fraco (±" + Math.round(+d.precisao_m) + " m)");
   var nfRep = d.nf ? linhas(sh, COL_ENT).filter(function (o) { return String(o.nf) === String(d.nf) && String(o.pedreira) === String(d.pedreira); })[0] : null;
   if (nfRep) alerta.push("NF repetida (já entregue em " + Utilities.formatDate(new Date(nfRep.descarga_em), "America/Campo_Grande", "dd/MM HH:mm") + ")");
