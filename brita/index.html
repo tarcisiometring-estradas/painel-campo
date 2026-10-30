@@ -153,10 +153,11 @@ function telaCadastro(){const e=EU()||{};
   T.innerHTML=`<div class="card"><h2>Seus dados</h2><div class="muted">Só na primeira vez. Fica guardado neste celular.</div>
   <label class="f">Seu nome<input id="c-n" value="${esc(e.nome)}" autocomplete="name"></label>
   <label class="f">Telefone (WhatsApp)<input id="c-t" value="${esc(e.telefone)}" inputmode="tel"></label>
-  <label class="f">Pedreira<input id="c-p" value="${esc(e.pedreira)}" list="pedr" placeholder="Nome da pedreira"></label><datalist id="pedr"></datalist>
+  ${pedrHTML("c-p",e.pedreira)}
   <label class="f">Placa do caminhão<input id="c-pl" value="${esc(e.placa)}" style="text-transform:uppercase" placeholder="ABC1D23"></label>
   <button class="btn pri big" id="c-ok">Salvar</button></div>`;
-  $("#c-ok").onclick=()=>{const o={nome:$("#c-n").value.trim(),telefone:$("#c-t").value.trim(),pedreira:$("#c-p").value.trim(),placa:$("#c-pl").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"")};
+  pedrLigar("c-p");
+  $("#c-ok").onclick=()=>{const o={nome:$("#c-n").value.trim(),telefone:$("#c-t").value.trim(),pedreira:pedrValor("c-p"),placa:$("#c-pl").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"")};
     if(!o.nome||!o.pedreira||o.placa.length<7){aviso("Preencha nome, pedreira e a placa completa.");return;}LS.set("motorista",o);inicio();};}
 
 async function inicio(){if(!EU()){telaCadastro();return;}const e=EU();const L=(await DB.todos()).sort((a,b)=>b.descarga_em.localeCompare(a.descarga_em));
@@ -180,13 +181,21 @@ function passo1(){gpsMudou=null;
   ${N.fotoNf?`<img class="prev" id="p1-img"><div class="row"><button class="btn" id="p1-de">Tirar de novo</button><button class="btn ok" id="p1-ok">Continuar</button></div>`:`<button class="btn pri big" id="p1-tir">📷 Fotografar a nota</button>`}</div>${sair}`;ligarSair();
   const tirar=async()=>{const c=await camera("Enquadre a nota inteira",true);if(!c)return;const r=await recortar(c);if(!r){tirar();return;}N.fotoNf=reduzir(r,1500).toDataURL("image/jpeg",.8);passo1();};
   if(N.fotoNf){$("#p1-img").src=N.fotoNf;$("#p1-de").onclick=tirar;$("#p1-ok").onclick=passo2;}else $("#p1-tir").onclick=tirar;}
+/* pedreira: lista suspensa + "Outra" (digita de onde é) */
+const PEDRS=["Coplan","Concreluz (Inocência)","Britasul"];
+function pedrHTML(id,v){const outra=v&&!PEDRS.includes(v);return `<label class="f">Pedreira<select id="${id}"><option value="" ${!v?"selected":""} disabled>Escolha a pedreira</option>${PEDRS.map(x=>`<option ${v===x?"selected":""}>${x}</option>`).join("")}<option value="__outra" ${outra?"selected":""}>Outra…</option></select></label>
+  <label class="f" id="${id}-ow" style="display:${outra?"grid":"none"}">Qual pedreira? (nome e cidade)<input id="${id}-o" value="${outra?esc(v):""}" placeholder="Ex.: Pedreira São José – Paranaíba"></label>`;}
+function pedrLigar(id){const s=$("#"+id);s.onchange=()=>{const o=s.value==="__outra";$("#"+id+"-ow").style.display=o?"grid":"none";if(o)$("#"+id+"-o").focus();};}
+function pedrValor(id){const v=$("#"+id).value;return v==="__outra"?$("#"+id+"-o").value.trim():v;}
 function passo2(){gpsMudou=null;
   T.innerHTML=`${passos(2)}<div class="card"><h2>2. Dados da nota</h2><img class="prev" id="p2-img" style="max-height:220px;object-fit:contain">
+  ${pedrHTML("p2-p",N.pedreira)}
   <label class="f">Número da nota fiscal<input id="p2-nf" inputmode="numeric" value="${esc(N.nf)}" placeholder="Ex.: 012345"></label>
   <label class="f">Toneladas (igual está na nota)<input id="p2-t" inputmode="decimal" value="${esc(N.toneladas)}" placeholder="Ex.: 37,5"></label>
   <button class="btn ok big" id="p2-ok">Continuar</button><button class="btn" id="p2-v">Voltar</button></div>${sair}`;ligarSair();$("#p2-img").src=N.fotoNf;
-  $("#p2-v").onclick=passo1;
+  $("#p2-v").onclick=passo1;pedrLigar("p2-p");
   $("#p2-ok").onclick=()=>{const nf=$("#p2-nf").value.trim(),t=parseFloat($("#p2-t").value.replace(/\./g,"").replace(",","."));
+    const pe=pedrValor("p2-p");if(!pe){aviso("Escolha a pedreira (ou Outra e escreva de onde é).");return;}N.pedreira=pe;
     if(!nf){aviso("Digite o número da nota.");return;}if(!(t>0)){aviso("Digite as toneladas da nota.");return;}
     if((t<3||t>80)&&!confirmar(`${fT(t)} está certo? Confira na nota.`))return;N.nf=nf;N.toneladas=t;passo3();};}
 function passo3(){
