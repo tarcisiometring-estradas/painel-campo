@@ -285,12 +285,12 @@ function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)
   [...s.querySelectorAll(".tl")].map(g=>({g,w:+g.dataset.w/uu,h:+g.dataset.h/uu})).sort((a,b)=>b.w-a.w).forEach(o=>{const g=o.g,wN=(+g.dataset.n)*7.2+6;const [x,y]=tela(g);
     if(o.w<wN*1.6||o.h<20||!dentro(x,y)){g.style.display="none";return;}tf(g,uu);const sub=g.querySelector(".ts");const cs=!!sub&&o.w>=60&&o.h>=46;if(sub)sub.style.display=cs?"":"none";
     g.style.display=livre(x,y+(cs?6:0),Math.max(wN,cs?50:0),cs?28:15)?"":"none";});
-  $("#pins").innerHTML=depMarcas(m,uu)+PONTOS.map(p=>{const [x,y]=g2n(m,p.lat,p.lon);if(x<-m.w||y<-m.h||x>2*m.w||y>2*m.h)return "";return alfinete(x,y,uu,`data-pt="${p.id}"`,p.vis==="pessoal"?"pess":"");}).join("")+verMarca(m,uu);
+  $("#pins").innerHTML=pmMarcas(m,uu)+depMarcas(m,uu)+PONTOS.map(p=>{const [x,y]=g2n(m,p.lat,p.lon);if(x<-m.w||y<-m.h||x>2*m.w||y>2*m.h)return "";return alfinete(x,y,uu,`data-pt="${p.id}"`,p.vis==="pessoal"?"pess":"");}).join("")+verMarca(m,uu);
   const gg=$("#gps");gg.innerHTML="";if(GPS.on&&GPS.fix){const q=GPS.pos||GPS.fix;const [x,y]=g2n(m,q.lat,q.lon);gg.innerHTML=`<circle cx="${x}" cy="${y}" r="${GPS.fix.acc/mpu(m)}" fill="#1A73E8" fill-opacity=".15"/>`+cursorGps(x,y,uu);}
   const mp=mpu(m)*uu,alvo=mp*100,p=Math.pow(10,Math.floor(Math.log10(alvo))),n=[1,2,5,10].map(k=>k*p).filter(k=>k<=alvo).pop()||p;$("#esc").innerHTML=`<i style="width:${Math.round(n/mp)}px"></i>${fM(n)}`;}
 /* alfinete: a ponta fica exatamente no lugar marcado; sempre em pé na tela, mesmo com o mapa girado */
 function alfinete(x,y,uu,attr,cls){return `<g class="pin${cls?" "+cls:""}" ${attr||""} transform="translate(${x} ${y}) rotate(${(-ANG).toFixed(1)}) scale(${uu})"><ellipse class="ps" cx="0" cy="0" rx="4" ry="1.6"/><path class="pc" d="M0 0C-1.6-5-8-10-8-17A8 8 0 1 1 8-17C8-10 1.6-5 0 0Z"/><circle class="pf" cx="0" cy="-17" r="3"/></g>`;}
-function info(){if(REG.on)return;const m=M();const t=sel!=null?m.trechos.find(x=>x.n===sel):null;let h="";
+function info(){if(REG.on||VER)return;const m=M();const t=sel!=null?m.trechos.find(x=>x.n===sel):null;let h="";
   if(t)h=`<b>Trecho ${t.n}${m.acesso?" do acesso":""}</b> · ${esc(t.tipo)} · ${fmt(t.m)} m<br><span class="pill p-${t.st}">${ST_N[t.st]||t.st}</span> ${t.partes&&t.partes.length?esc(t.partes.join(" · ")):""}`;
   if(GPS.on){const f=GPS.fix;let g=GPS.erro?esc(GPS.erro):!f?"Procurando o sinal do GPS…":"";
     if(f){let best=null;for(const tr of m.trechos)for(const p of tr.pts){const d=dist([f.lat,f.lon],n2g(m,p[0],p[1]));if(!best||d<best.d)best={d,n:tr.n};}
@@ -322,7 +322,7 @@ let rsz=0;window.addEventListener("resize",()=>{clearTimeout(rsz);rsz=setTimeout
 
 /* ================= GPS ================= */
 /* mapa aberto = navegação: liga o GPS e abre centrado em quem está usando */
-function gpsAbrir(){if(!GPS.on){GPS.primeiro=0;gpsLigar();return;}GPS.seguir=true;GPS.auto=false;gpsCentrar();}
+function gpsAbrir(){if(VER){if(!GPS.on){GPS.primeiro=1;gpsLigar();}GPS.seguir=false;GPS.auto=false;return;}if(!GPS.on){GPS.primeiro=0;gpsLigar();return;}GPS.seguir=true;GPS.auto=false;gpsCentrar();}
 function gpsCentrar(){if(!GPS.fix)return;if(!GPS.pos)GPS.pos={lat:GPS.fix.lat,lon:GPS.fix.lon};const q=GPS.pos;if(REG.on){if(!REG.VB)return;const [x,y]=RP(q.lon,q.lat);REG.VB={...REG.VB,x:x-REG.VB.w/2,y:y-REG.VB.h/2};rAplicar();return;}
   const m=M();if(!m||!VB)return;const [x,y]=g2n(m,q.lat,q.lon);VB={...VB,x:x-VB.w/2,y:y-VB.h/2};aplicar();}
 function gpsLigar(){if(!navigator.geolocation){GPS.on=true;GPS.erro="Este aparelho não tem GPS disponível no navegador.";info();return;}
@@ -528,8 +528,17 @@ function depMarcas(m,uu){const dentro=([x,y])=>x>-m.w&&y>-m.h&&x<2*m.w&&y<2*m.h;
     (d.extensoes||[]).forEach((e,i)=>{const E=g2n(m,+e.lat,+e.lon);if(dentro(E))h+=q(E[0],E[1],e.nome||d.id+"-"+String.fromCharCode(66+i),"ext",`data-dep="${esc(d.id)}"`);});});
   BR.fila.forEach(o=>{const d=o.a==="deposito"?o.dep:o.ext;if(!d)return;const P=g2n(m,+d.lat,+d.lon);if(dentro(P))h+=q(P[0],P[1],o.a==="deposito"?"novo":"ext.","pend","");});
   return h;}
+/* pontos de módulo: tirados dos mapas "Ponto de módulo e área de empréstimo" da Geoplant (centro dos círculos).
+   O mesmo ponto atende fazendas vizinhas. Conferido: Hemas bate a ~50 m com a coordenada impressa na NF da Concreluz. */
+const PMOD=[{c:[-19.869455,-51.596306],f:["72295","72341"]},{c:[-19.896852,-51.615988],f:["72302"]},
+  {c:[-19.898427,-51.634530],f:["72309","72342","72347"]},{c:[-19.920121,-51.649847],f:["72297","72342","72343"]},
+  {c:[-19.926316,-51.665529],f:["72343","72349"]},{c:[-20.083487,-51.523185],f:["72369"]}];
+const PMNOME=cod=>{const m=LISTA.find(x=>String(x.cod)===String(cod));return m?m.nome:cod;};
+function pmDe(m){return PMOD.filter(p=>p.f.includes(String(m.cod)));}
+function pmMais(lat,lon,m){const L=(m&&pmDe(m).length?pmDe(m):PMOD).map(p=>({p,d:dist([lat,lon],p.c)}));return L.sort((a,b)=>a.d-b.d)[0]||null;}
+function pmMarcas(m,uu){return pmDe(m).map(p=>{const [x,y]=g2n(m,p.c[0],p.c[1]);return `<g class="pmod" transform="translate(${x} ${y}) rotate(${(-ANG).toFixed(1)}) scale(${uu})"><rect x="-6" y="-6" width="12" height="12" fill="#F2D21B" stroke="#2A2723" stroke-width="1.5"/><text x="-8" y="20" font-size="10" font-weight="700" fill="#2A2723" stroke="#fff" stroke-width="3" paint-order="stroke">Ponto de módulo</text></g>`;}).join("");}
 /* ponto vindo da gestão (📍 Ver no mapa): alfinete azul-marinho */
-let VER=null;
+var VER=null;
 function verMarca(m,uu){if(!VER)return "";const P=g2n(m,VER.lat,VER.lon);return alfinete(P[0],P[1],uu,"","verp");}
 function verAbrir(){const h=decodeURIComponent(location.hash||"");const mt=/^#ver=(-?[\d.]+),(-?[\d.]+)(?:,(.*))?$/.exec(h);if(!mt||!DADOS)return;
   VER={lat:+mt[1],lon:+mt[2],rot:mt[3]||"Local da descarga"};let best=-1,bd=Infinity;
@@ -537,9 +546,11 @@ function verAbrir(){const h=decodeURIComponent(location.hash||"");const mt=/^#ve
   const D0=depOrdenar(VER.lat,VER.lon)[0];if(D0&&D0.m<5000&&D0.d.mapa){const k=LISTA.findIndex(m=>m.nome+" · "+m.mapa===D0.d.mapa);if(k>=0){best=k;bd=-1;}}
   if(bd>=0)LISTA.forEach((m,i)=>{const bb=bbCont(m);const [a,c]=g2n(m,VER.lat,VER.lon);const pad=bb.w*0.3;if(a<bb.x-pad||c<bb.y-pad||a>bb.x+bb.w+pad||c>bb.y+bb.h+pad)return;const d=distTrecho(m,VER.lat,VER.lon);if(d<bd){bd=d;best=i;}});
   if(best<0){aviso("Esse ponto está fora dos mapas das fazendas.");best=I;}
-  abrirMapa(best);requestAnimationFrame(()=>{const m=M();const [x,y]=g2n(m,VER.lat,VER.lon);const w=1200/mpu(m);VB={x:x-w/2,y:y-w*raz()/2,w,h:w*raz()};aplicar();
+  abrirMapa(best);requestAnimationFrame(()=>{const m=M();const [x,y]=g2n(m,VER.lat,VER.lon);let w=1200/mpu(m),cx=x,cy=y;const PM=pmMais(VER.lat,VER.lon,m);
+    if(PM){const [px,py]=g2n(m,PM.p.c[0],PM.p.c[1]);cx=(x+px)/2;cy=(y+py)/2;w=Math.max(w,Math.abs(px-x)*1.5,Math.abs(py-y)*1.5/raz());}
+    GPS.seguir=false;VB={x:cx-w/2,y:cy-w*raz()/2,w,h:w*raz()};aplicar();
     const D=BR.deps.map(d=>{let mm=Infinity;[{lat:d.lat,lon:d.lon}].concat(d.extensoes||[]).forEach(p=>{mm=Math.min(mm,dist([VER.lat,VER.lon],[+p.lat,+p.lon]));});return {d,mm};}).sort((a,b)=>a.mm-b.mm)[0];
-    $("#info").innerHTML=`<b>📍 ${esc(VER.rot)}</b><br>${VER.lat.toFixed(6)}, ${VER.lon.toFixed(6)}${D?` · depósito mais perto: <b>${esc(depNome(D.d))}</b> a ${fM(Math.round(D.mm))}`:""} <button class="btn" id="ver-x" style="min-height:34px;padding:0 10px">Fechar</button>`;$("#info").style.display="block";
+    $("#info").innerHTML=`<b>📍 ${esc(VER.rot)}</b><br>${VER.lat.toFixed(6)}, ${VER.lon.toFixed(6)}${PM?`<br>🟨 Ponto de módulo (${esc(PM.p.f.map(PMNOME).join(" / "))}): a <b>${fM(Math.round(PM.d))}</b>`:""}${D?` · depósito mais perto: <b>${esc(depNome(D.d))}</b> a ${fM(Math.round(D.mm))}`:""} <button class="btn" id="ver-x" style="min-height:34px;padding:0 10px">Fechar</button>`;$("#info").style.display="block";
     $("#ver-x").onclick=()=>{VER=null;history.replaceState(null,"",location.pathname+location.search);info();aplicar();};});}
 addEventListener("hashchange",verAbrir);
 /* segurar o dedo no mapa ~0,7 s: cadastrar depósito ali (só com a senha da gestão) */
