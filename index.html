@@ -44,6 +44,7 @@ body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 .rf{stroke:var(--r-ln);stroke-width:.6px;vector-effect:non-scaling-stroke;fill-opacity:.85;cursor:pointer}.rf.colh{fill:var(--r-colh)}.rf.meio{fill:var(--r-meio)}.rf.novo{fill:var(--r-novo)}.rf.sem{fill:var(--r-sem)}
 .rf{fill:var(--r-sem)}.rf.cad{fill:var(--r-meio);stroke:var(--r-cad);stroke-width:1.6px}
 .rota{fill:none;stroke:var(--r-rota);stroke-width:4px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.rota-b{fill:none;stroke:var(--bg);stroke-width:8px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.9}
+.pd.lug rect{fill:#2E6B8A}.pd.lug text{fill:#7FB0C9}
 .pd rect{fill:var(--r-pd);stroke:var(--bg);stroke-width:2px}.pd text{font:700 11.5px system-ui,sans-serif;fill:var(--r-pd);dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px}.pd{cursor:pointer}.rf.sel{stroke:var(--r-sel);stroke-width:3px}
 .rt{fill:none;stroke:var(--r-ln);stroke-width:.7px;vector-effect:non-scaling-stroke;pointer-events:none}
 .rtl text{font:600 10px system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
@@ -580,9 +581,11 @@ async function enviarPontos(){const txt=PONTOS.map(p=>`• ${p.tipo} – ${p.faz
    Afastado: região inteira. Aproximando numa fazenda do painel, entra sozinho no mapa detalhado dos trechos.
    Afastando o mapa detalhado, volta para a região. */
 const REG={on:false,dados:null,tal:null,VB:null,sel:null,carregandoTal:false};
-const PEDR=[{n:"Coplan (Construtora Planalto)",l:"MS-377, Inocência/Água Clara",c:[-52.14954,-19.97624]},{n:"Concreluz",l:"MS-112, Inocência",c:[-51.91670,-19.76751]},
-  {n:"Mineradora Britasul",l:"MS-306 km 148, Indaiá do Sul (Cassilândia)",c:[-52.36217,-18.91016]},{n:"Pedreira Três Barras",l:"BR-158, Aparecida do Taboado",c:[-51.11501,-19.82021]},
-  {n:"Mineração Fortaleza (Pedreira Cassilândia)",l:"BR-158 km 6, Cassilândia",c:[-51.69640,-19.12608]}];
+/* pedreiras: coordenadas passadas pelo Tarcisio em 29/10/2026 (Coplan, Concreluz). Britasul: posição pelo endereço, aguardando coordenada. */
+const PEDR=[{n:"Coplan (Construtora Planalto)",l:"MS-377, Inocência/Água Clara",c:[-52.150528,-19.977911]},{n:"Concreluz – pedreira",l:"Inocência (não é a usina de concreto do trevo)",c:[-52.209629,-19.953339]},
+  {n:"Mineradora Britasul",l:"MS-306 km 148 + 235, Cassilândia · posição pelo endereço, falta confirmar",c:[-52.36217,-18.91016]}];
+/* outros pontos de referência no mapa da região */
+const LUGS=[{n:"Fábrica Arauco",l:"Fábrica de celulose · Inocência/MS",c:[-52.172277,-19.954558]}];
 const kmR=(a,b)=>dist([a[1],a[0]],[b[1],b[0]])/1000;
 const RK=Math.cos(19.5*Math.PI/180),RU=111.32;/* 1 unidade = 111,32 m */
 const RP=(lon,lat)=>[lon*RK*1000,-lat*1000];const RG=(x,y)=>[-y/1000,x/(RK*1000)];/* -> [lat,lon] */
@@ -598,7 +601,7 @@ const rPath=rs=>rs.map(r=>"M"+r.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join("
 function rDesenhar(){const D=REG.dados;const s=rsv();if(!D){s.innerHTML="";return;}
   let h=`<g id="r-rod">${ROD?ROD.rod.map(([c,n,t,pts])=>`<polyline class="rod ${c}${t?" t":""}" points="${pts.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join(" ")}"/>`).join(""):""}</g><g id="r-fz">`;
   D.faz.forEach((f,i)=>{h+=`<path class="rf${f.cod?" cad":""}" data-f="${i}" d="${rPath(f.r)}"/>`;});
-  h+=`</g><g id="r-rede"></g><g id="r-ac"></g><g id="r-det"></g><g id="r-rota"></g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-med"></g><g id="r-gps"></g>`;s.innerHTML=`<g id="rotr">`+h+`</g>`;REG.detK="";rtDesenhar();rAplicar();}
+  h+=`</g><g id="r-rede"></g><g id="r-ac"></g><g id="r-det"></g><g id="r-rota"></g><g id="r-lug">${LUGS.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd lug" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-8" y="-8" width="16" height="16" rx="3"/><text x="12" y="0">${esc(p.n)}</text></g>`;}).join("")}</g><g id="r-pd">${PEDR.map((p,i)=>{const P=RP(p.c[0],p.c[1]);return `<g class="pd" data-p="${i}" data-x="${P[0]}" data-y="${P[1]}"><circle r="22" fill="transparent"/><rect x="-7" y="-7" width="14" height="14" rx="2"/><text x="11" y="0">${esc(p.n.split(" (")[0])}</text></g>`;}).join("")}</g><g id="r-lab"></g><g id="r-med"></g><g id="r-gps"></g>`;s.innerHTML=`<g id="rotr">`+h+`</g>`;REG.detK="";rtDesenhar();rAplicar();}
 function rTudo(){const D=REG.dados;const fs=D.faz.filter(f=>f.cod);const L=fs.length?fs:D.faz;
   return [Math.min(...L.map(f=>f.bb[0])),Math.min(...L.map(f=>f.bb[1])),Math.max(...L.map(f=>f.bb[2])),Math.max(...L.map(f=>f.bb[3]))];}
 function rIrPara(b,m=.25){const w=Math.max(b[2]-b[0],(b[3]-b[1])/raz())*(1+2*m)+2;const h=w*raz();REG.VB={x:(b[0]+b[2])/2-w/2,y:(b[1]+b[3])/2-h/2,w,h};rAplicar();}
@@ -641,7 +644,7 @@ function rGps(){const g=$("#r-gps");if(!g)return;g.innerHTML="";if(!(GPS.on&&GPS
 function cursorGps(x,y,u){if(GPS.hd==null)return `<circle cx="${x}" cy="${y}" r="${12*u}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${8*u}" fill="#1A73E8"/>`;
   const a=GPS.hd,k=u*1.25;return `<g transform="translate(${x} ${y}) rotate(${a.toFixed(1)}) scale(${k})"><path d="M0,-15 L11,12 L0,6 L-11,12 Z" fill="#1A73E8" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></g>`;}
 function rEscala(){const r=rsv().getBoundingClientRect();const mp=REG.VB.w/r.width*RU,alvo=mp*100,p=Math.pow(10,Math.floor(Math.log10(alvo))),n=[1,2,5,10].map(k=>k*p).filter(k=>k<=alvo).pop()||p;$("#esc").innerHTML=`<i style="width:${Math.round(n/mp)}px"></i>${fM(n)}`;}
-function rLegenda(){$("#leg").innerHTML=`<span><i style="background:#C08A2E"></i>Acesso da fazenda</span><span><i style="background:#B9AE9C"></i>Estrada de terra</span><span><i style="background:var(--r-meio)"></i>Fazenda no painel</span><span><i style="background:var(--r-sem)"></i>Outras fazendas</span><span><i style="background:var(--r-pd);height:8px;width:8px"></i>Pedreira</span><span><i style="background:#8A7E73"></i>Rodovia</span>`;}
+function rLegenda(){$("#leg").innerHTML=`<span><i style="background:#C08A2E"></i>Acesso da fazenda</span><span><i style="background:#B9AE9C"></i>Estrada de terra</span><span><i style="background:var(--r-meio)"></i>Fazenda no painel</span><span><i style="background:var(--r-sem)"></i>Outras fazendas</span><span><i style="background:var(--r-pd);height:8px;width:8px"></i>Pedreira</span><span><i style="background:#2E6B8A;height:8px;width:8px"></i>Fábrica</span><span><i style="background:#8A7E73"></i>Rodovia</span>`;}
 /* entrar e sair do mapa detalhado */
 function rMapaDe(f){return LISTA.findIndex(m=>m.cod===f.cod&&!m.acesso)>=0?LISTA.findIndex(m=>m.cod===f.cod&&!m.acesso):LISTA.findIndex(m=>m.cod===f.cod);}
 function rEntrar(f,manterVista){const i=rMapaDe(f);if(i<0)return;const V=REG.VB;REG.on=false;document.body.classList.remove("regiao");I=i;desenhar();
@@ -688,10 +691,10 @@ function rtCaminho(a,b,R){const G=RT.G;const pts=[],ed=[];let u=b;if(!isFinite(R
     for(let k=seq.length-1;k>=1;k--)pts.push(seq[k]);u=v;}
   pts.push([G.X[a],G.Y[a]]);pts.reverse();ed.reverse();let km=0,asf=0,t=0;for(const ei of ed){const e=G.E[ei];km+=e[2];if(e[3]<=2)asf+=e[2];t+=e[2]/(VEL[e[3]]/3.6);}
   return {pts,km:km/1000,asf:asf/1000,h:t/3600};}
-function rtLugares(){const L=[["gps","📍 Minha posição (GPS)"]];CIDADES.forEach((c,i)=>L.push(["c"+i,"🏙 "+c[0]]));PEDR.forEach((p,i)=>L.push(["p"+i,"⛰ "+p.n.split(" (")[0]]));
+function rtLugares(){const L=[["gps","📍 Minha posição (GPS)"]];LUGS.forEach((p,i)=>L.push(["x"+i,"🏭 "+p.n]));CIDADES.forEach((c,i)=>L.push(["c"+i,"🏙 "+c[0]]));PEDR.forEach((p,i)=>L.push(["p"+i,"⛰ "+p.n.split(" (")[0]]));
   if(REG.dados)REG.dados.faz.filter(f=>f.cod).forEach(f=>L.push(["f"+f.id,"🌳 "+f.n]));if(REG.dados&&RT.ate&&RT.ate[0]==="f"&&!L.some(x=>x[0]===RT.ate)){const f=REG.dados.faz[+RT.ate.slice(1)];if(f)L.push([RT.ate,"🌳 "+f.n]);}return L;}
 function rtNo(k){if(!k)return -1;if(k==="gps"){if(!(GPS.on&&GPS.fix))return -2;return rtPerto(GPS.fix.lon,GPS.fix.lat);}
-  const t=k[0],i=+k.slice(1);if(t==="c")return rtPerto(CIDADES[i][1],CIDADES[i][2]);if(t==="p")return rtPerto(PEDR[i].c[0],PEDR[i].c[1]);if(t==="f")return rtEntrada(REG.dados.faz[i]);return -1;}
+  const t=k[0],i=+k.slice(1);if(t==="c")return rtPerto(CIDADES[i][1],CIDADES[i][2]);if(t==="p")return PEDR[i]?rtPerto(PEDR[i].c[0],PEDR[i].c[1]):-1;if(t==="x")return LUGS[i]?rtPerto(LUGS[i].c[0],LUGS[i].c[1]):-1;if(t==="f")return rtEntrada(REG.dados.faz[i]);return -1;}
 function rtNome(k){const L=rtLugares().find(x=>x[0]===k);return L?L[1].replace(/^\S+\s/,""):"";}
 function rtFolha(){const L=rtLugares();const op=(sel,vazio)=>(vazio?`<option value="">${vazio}</option>`:"")+L.map(([k,n])=>`<option value="${k}" ${k===sel?"selected":""}>${esc(n)}</option>`).join("");
   abrirFolha("🛣 Rota pelas estradas",`<label class="box card"><b>Sair de</b><select id="rt-de" class="btn" style="width:100%">${op(RT.de)}</select></label>
@@ -768,7 +771,7 @@ function rInfo(){const el=$("#info");
   const fimR=e=>{if(!P.has(e.pointerId))return;const pinça=P.size===2;P.delete(e.pointerId);if(P.size)R0();else gestoFim();if(pinça&&REG.on)rChecarEntrada();};
   window.addEventListener("pointerup",fimR);window.addEventListener("pointercancel",fimR);
   s.addEventListener("wheel",e=>{e.preventDefault();const r=s.getBoundingClientRect(),V=REG.VB;rZoom((e=>{let d=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?400:1);d=Math.max(-120,Math.min(120,d));return Math.exp(d*(e.ctrlKey?0.012:0.0022));})(e),...s2m(V,r,e.clientX,e.clientY));},{passive:false});
-  s.addEventListener("click",e=>{if(mv){mv=false;return;}const pd=e.target.closest(".pd");if(pd){REG.pd=+pd.dataset.p;REG.sel=null;rRotulos();rInfo();return;}REG.pd=null;const t=e.target.closest(".rf");if(t){const i=+t.dataset.f;REG.sel=REG.sel===i?null:i;}else{
+  s.addEventListener("click",e=>{if(mv){mv=false;return;}const pd=e.target.closest(".pd:not(.lug)");if(pd){REG.pd=+pd.dataset.p;REG.sel=null;rRotulos();rInfo();return;}REG.pd=null;const t=e.target.closest(".rf");if(t){const i=+t.dataset.f;REG.sel=REG.sel===i?null:i;}else{
       /* toque perto de uma fazenda pequena também vale */
       const r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.width,[x,y]=s2m(V,r,e.clientX,e.clientY);let best=null,bd=1e9;
       REG.dados.faz.forEach((f,i)=>{const d=Math.hypot(Math.max(f.bb[0]-x,0,x-f.bb[2]),Math.max(f.bb[1]-y,0,y-f.bb[3]))/u;if(d<bd){bd=d;best=i;}});REG.sel=bd<=24?best:null;}
