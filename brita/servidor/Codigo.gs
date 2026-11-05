@@ -36,6 +36,9 @@ function doPost(e) {
     var d = JSON.parse(e.postData.contents);
     if (d.a === "entrega") return json(salvarEntrega(d));
     if (d.a === "entrar") return json(entrar(d));
+    if (d.a === "cadastrar") return json(cadastrar(d));
+    if (d.a === "senha_esqueci") return json(senhaEsqueci(d));
+    if (d.a === "senha_nova") return json(senhaNova(d));
     if (d.a === "sessao") return json(sessao(d));
     if (d.a === "usuarios") { exigirChave(d.chave); return json(listarUsuarios()); }
     if (d.a === "usuario_salvar") { exigirChave(d.chave); return json(salvarUsuario(d.u)); }
@@ -219,7 +222,13 @@ function vincular(d) {
 /* ---------------- utilidades ---------------- */
 /* ================= usuários do app (cada um com usuário e senha; 1 celular por usuário) ================= */
 var ABA_USU = "Usuarios";
-var COL_USU = ["id", "nome", "papel", "salt", "hash", "perms", "aparelho", "aparelho_nome", "pedido_aparelho", "bloqueado", "criado_em", "ultimo_acesso"];
+var COL_USU = ["id", "nome", "papel", "salt", "hash", "perms", "aparelho", "aparelho_nome", "pedido_aparelho", "bloqueado", "criado_em", "ultimo_acesso", "email", "status", "reset_codigo", "reset_ate", "reset_tent"];
+var PADRAO = { tecnico: { mapas: true, meus: true, painel: true, brita: true, depositos: true }, supervisor: { mapas: true, meus: true, painel: true, micro: true, corrigir: true, brita: true, depositos: true, rdo: true } };
+/* aba de usuários sempre com todas as colunas (acrescenta as que faltarem no cabeçalho) */
+function abaUsu() { var sh = aba(ABA_USU, COL_USU); var h = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), 1)).getValues()[0];
+  if (h.length < COL_USU.length || COL_USU.some(function (c, i) { return h[i] !== c; })) sh.getRange(1, 1, 1, COL_USU.length).setValues([COL_USU]).setFontWeight("bold"); return sh; }
+function emailAdmin() { var e = prop("EMAIL_ADMIN"); if (!e) { try { e = Session.getEffectiveUser().getEmail(); if (e) setProp("EMAIL_ADMIN", e); } catch (x) {} } return e || ""; }
+function mandarEmail(para, assunto, texto) { try { if (para) MailApp.sendEmail({ to: para, subject: assunto, body: texto, name: "Estradas Sucuriú" }); } catch (x) {} }
 var PERMS = ["mapas", "meus", "painel", "micro", "corrigir", "brita", "depositos", "rdo"];
 function prop(k) { return PropertiesService.getScriptProperties().getProperty(k) || ""; }
 function setProp(k, v) { PropertiesService.getScriptProperties().setProperty(k, String(v)); }
@@ -228,9 +237,9 @@ function b64(bytes) { return Utilities.base64EncodeWebSafe(bytes).replace(/=+$/,
 function hashSenha(senha, salt) { var h = salt + "|" + senha; for (var i = 0; i < 300; i++) h = b64(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, h + salt)); return h; }
 function assinar(txt) { return b64(Utilities.computeHmacSha256Signature(txt, segredo())); }
 function normUsu(u) { return String(u || "").trim().toLowerCase().replace(/\s+/g, "."); }
-function lerUsuarios() { return linhas(aba(ABA_USU, COL_USU), COL_USU).filter(function (o) { return String(o.id) !== ""; }); }
+function lerUsuarios() { return linhas(abaUsu(), COL_USU).filter(function (o) { return String(o.id) !== ""; }); }
 function permsDe(o) { var p = {}; try { p = JSON.parse(o.perms || "{}"); } catch (x) {} return p; }
-function publico(o) { return { usuario: String(o.id), nome: String(o.nome), papel: String(o.papel || "tecnico"), perms: permsDe(o), aparelho: String(o.aparelho_nome || (o.aparelho ? "1 celular" : "")), pedido: String(o.pedido_aparelho || ""), bloqueado: String(o.bloqueado) === "SIM", ultimo: o.ultimo_acesso ? String(o.ultimo_acesso) : "" }; }
+function publico(o) { return { usuario: String(o.id), nome: String(o.nome), email: String(o.email || ""), status: String(o.status || "ativo"), papel: String(o.papel || "tecnico"), perms: permsDe(o), aparelho: String(o.aparelho_nome || (o.aparelho ? "1 celular" : "")), pedido: String(o.pedido_aparelho || ""), bloqueado: String(o.bloqueado) === "SIM", ultimo: o.ultimo_acesso ? String(o.ultimo_acesso) : "" }; }
 function resposta(o, aparelho) {
   var tok = String(o.id) + "|" + aparelho + "|" + Date.now();
   return { ok: true, token: tok + "." + assinar(tok), usuario: String(o.id), nome: String(o.nome), papel: String(o.papel || "tecnico"), perms: permsDe(o), chaveMapas: prop("CHAVE_MAPAS") };
@@ -240,9 +249,11 @@ function entrar(d) {
   if (!usu || !senha || !ap) throw new Error("Preencha usuário e senha.");
   /* administrador: usuário "admin" + senha da gestão */
   if (usu === "admin") { if (senha !== CHAVE_GESTAO) throw new Error("Usuário ou senha errados."); var a = { id: "admin", nome: "Administrador", papel: "admin", perms: JSON.stringify(PERMS.reduce(function (m, k) { m[k] = true; return m; }, {})) }; var r = resposta(a, ap); r.admin = true; return r; }
-  var sh = aba(ABA_USU, COL_USU), o = lerUsuarios().filter(function (x) { return String(x.id) === usu; })[0];
+  var sh = abaUsu(), o = lerUsuarios().filter(function (x) { return String(x.id) === usu; })[0];
   if (!o || hashSenha(senha, String(o.salt)) !== String(o.hash)) throw new Error("Usuário ou senha errados.");
   if (String(o.bloqueado) === "SIM") throw new Error("Seu acesso está bloqueado. Fale com o supervisor.");
+  if (String(o.status) === "aguardando") throw new Error("Seu cadastro está aguardando a liberação do supervisor.");
+  if (String(o.status) === "recusado") throw new Error("Seu cadastro não foi liberado. Fale com o supervisor.");
   if (!o.aparelho) { o.aparelho = ap; o.aparelho_nome = String(d.nomeAparelho || "celular"); o.pedido_aparelho = ""; }
   else if (String(o.aparelho) !== ap) { o.pedido_aparelho = String(d.nomeAparelho || "outro celular") + " · " + new Date().toLocaleString("pt-BR"); gravar(sh, COL_USU, o._linha, o);
     throw new Error("Este usuário já está liberado em outro celular. Peça ao supervisor para liberar este aparelho."); }
@@ -255,31 +266,70 @@ function sessao(d) {
   var partes = corpo.split("|"), usu = partes[0], ap = partes[1];
   if (usu === "admin") return { ok: true, valido: true, admin: true, papel: "admin", perms: PERMS.reduce(function (m, k) { m[k] = true; return m; }, {}), chaveMapas: prop("CHAVE_MAPAS"), exigir: prop("EXIGIR_LOGIN") === "1" };
   var o = lerUsuarios().filter(function (x) { return String(x.id) === usu; })[0];
-  if (!o || String(o.bloqueado) === "SIM" || String(o.aparelho) !== ap) return { ok: true, valido: false, motivo: !o ? "removido" : String(o.bloqueado) === "SIM" ? "bloqueado" : "aparelho" };
+  if (!o || String(o.bloqueado) === "SIM" || String(o.status) === "aguardando" || String(o.status) === "recusado" || String(o.aparelho) !== ap) return { ok: true, valido: false, motivo: !o ? "removido" : String(o.bloqueado) === "SIM" ? "bloqueado" : "aparelho" };
   return { ok: true, valido: true, nome: String(o.nome), papel: String(o.papel || "tecnico"), perms: permsDe(o), chaveMapas: prop("CHAVE_MAPAS"), exigir: prop("EXIGIR_LOGIN") === "1" };
 }
-function listarUsuarios() { return { ok: true, usuarios: lerUsuarios().map(publico), exigir: prop("EXIGIR_LOGIN") === "1", temChaveMapas: !!prop("CHAVE_MAPAS"), perms: PERMS }; }
+function listarUsuarios() { return { ok: true, usuarios: lerUsuarios().map(publico), exigir: prop("EXIGIR_LOGIN") === "1", auto: prop("AUTO_APROVAR") === "1", temChaveMapas: !!prop("CHAVE_MAPAS"), emailAdmin: emailAdmin(), perms: PERMS }; }
+/* a própria pessoa se cadastra; fica AGUARDANDO até o administrador liberar (ou libera sozinho se "liberar automático" estiver ligado) */
+function cadastrar(d) {
+  var usu = normUsu(d.usuario), senha = String(d.senha || ""), email = String(d.email || "").trim().toLowerCase(), papel = d.funcao === "supervisor" ? "supervisor" : "tecnico";
+  if (!usu || usu === "admin" || !/^[a-z0-9._-]{3,30}$/.test(usu)) throw new Error("Usuário: de 3 a 30 letras ou números, sem espaço.");
+  if (senha.length < 6) throw new Error("A senha precisa ter pelo menos 6 caracteres.");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Digite um e-mail válido (é por ele que você recupera a senha).");
+  if (!String(d.nome || "").trim()) throw new Error("Digite seu nome.");
+  var L = lerUsuarios();
+  if (L.some(function (x) { return String(x.id) === usu; })) throw new Error("Esse usuário já existe. Escolha outro.");
+  if (L.some(function (x) { return String(x.email).toLowerCase() === email; })) throw new Error("Esse e-mail já tem cadastro. Use Esqueci a senha.");
+  var auto = prop("AUTO_APROVAR") === "1", salt = Utilities.getUuid();
+  var o = { id: usu, nome: String(d.nome).trim(), papel: papel, email: email, salt: salt, hash: hashSenha(senha, salt), perms: JSON.stringify(auto ? PADRAO[papel] : {}), status: auto ? "ativo" : "aguardando",
+    aparelho: String(d.aparelho || ""), aparelho_nome: String(d.nomeAparelho || "celular"), bloqueado: "NAO", criado_em: new Date().toISOString() };
+  gravar(abaUsu(), COL_USU, 0, o);
+  mandarEmail(emailAdmin(), "Estradas Sucuriú: novo cadastro " + (auto ? "liberado" : "aguardando liberação"), o.nome + " (" + usu + ", " + email + ") se cadastrou como " + papel + ".\nAbra o app › Usuários e acessos para " + (auto ? "conferir." : "liberar ou recusar."));
+  return { ok: true, status: o.status };
+}
+/* esqueci a senha: manda um código de 6 números para o e-mail cadastrado (vale 30 min, 5 tentativas) */
+function senhaEsqueci(d) {
+  var q = String(d.quem || "").trim().toLowerCase(), sh = abaUsu();
+  var o = lerUsuarios().filter(function (x) { return String(x.id) === normUsu(q) || String(x.email).toLowerCase() === q; })[0];
+  if (o && o.email) { var c = String(Math.floor(100000 + Math.random() * 900000)); o.reset_codigo = c; o.reset_ate = Date.now() + 30 * 60000; o.reset_tent = 0; gravar(sh, COL_USU, o._linha, o);
+    mandarEmail(String(o.email), "Estradas Sucuriú: código para trocar a senha", "Seu código: " + c + "\nVale por 30 minutos. Seu usuário: " + o.id + "\nSe não foi você, ignore este e-mail."); }
+  return { ok: true, msg: "Se o usuário existir, mandamos um código para o e-mail cadastrado." };
+}
+function senhaNova(d) {
+  var q = String(d.quem || "").trim().toLowerCase(), sh = abaUsu();
+  var o = lerUsuarios().filter(function (x) { return String(x.id) === normUsu(q) || String(x.email).toLowerCase() === q; })[0];
+  if (!o || !o.reset_codigo || Date.now() > +o.reset_ate) throw new Error("Código vencido. Peça um novo.");
+  if (+o.reset_tent >= 5) { o.reset_codigo = ""; gravar(sh, COL_USU, o._linha, o); throw new Error("Muitas tentativas. Peça um novo código."); }
+  if (String(d.codigo || "").trim() !== String(o.reset_codigo)) { o.reset_tent = (+o.reset_tent || 0) + 1; gravar(sh, COL_USU, o._linha, o); throw new Error("Código errado."); }
+  if (String(d.senha || "").length < 6) throw new Error("A senha precisa ter pelo menos 6 caracteres.");
+  o.salt = Utilities.getUuid(); o.hash = hashSenha(String(d.senha), o.salt); o.reset_codigo = ""; o.reset_ate = ""; o.reset_tent = 0; gravar(sh, COL_USU, o._linha, o);
+  return { ok: true, usuario: String(o.id) };
+}
 function salvarUsuario(u) {
   var usu = normUsu(u.usuario); if (!usu || usu === "admin") throw new Error("Usuário inválido.");
-  var sh = aba(ABA_USU, COL_USU), o = lerUsuarios().filter(function (x) { return String(x.id) === usu; })[0];
+  var sh = abaUsu(), o = lerUsuarios().filter(function (x) { return String(x.id) === usu; })[0];
   var novo = !o; if (novo) o = { id: usu, criado_em: new Date().toISOString(), bloqueado: "NAO" };
   if (u.nome !== undefined) o.nome = String(u.nome);
   if (u.papel !== undefined) o.papel = String(u.papel);
   if (u.perms !== undefined) o.perms = JSON.stringify(u.perms);
   if (u.bloqueado !== undefined) o.bloqueado = u.bloqueado ? "SIM" : "NAO";
+  if (u.email !== undefined) o.email = String(u.email).trim().toLowerCase();
+  if (u.status !== undefined) { o.status = String(u.status); if (u.status === "ativo" && u.perms === undefined && (!o.perms || o.perms === "{}")) o.perms = JSON.stringify(PADRAO[o.papel === "supervisor" ? "supervisor" : "tecnico"]); }
+  if (novo && !o.status) o.status = "ativo";
   if (u.senha) { o.salt = Utilities.getUuid(); o.hash = hashSenha(String(u.senha), o.salt); }
   if (novo && !o.hash) throw new Error("Usuário novo precisa de senha.");
   gravar(sh, COL_USU, novo ? 0 : o._linha, o);
   return listarUsuarios();
 }
 function liberarAparelho(usuario) {
-  var sh = aba(ABA_USU, COL_USU), o = lerUsuarios().filter(function (x) { return String(x.id) === normUsu(usuario); })[0];
+  var sh = abaUsu(), o = lerUsuarios().filter(function (x) { return String(x.id) === normUsu(usuario); })[0];
   if (!o) throw new Error("Usuário não encontrado.");
   o.aparelho = ""; o.aparelho_nome = ""; o.pedido_aparelho = ""; gravar(sh, COL_USU, o._linha, o); return listarUsuarios();
 }
 function salvarConfigAcesso(d) {
   if (d.exigir !== undefined) setProp("EXIGIR_LOGIN", d.exigir ? "1" : "0");
   if (d.chaveMapas) setProp("CHAVE_MAPAS", String(d.chaveMapas));
+  if (d.auto !== undefined) setProp("AUTO_APROVAR", d.auto ? "1" : "0");
   return listarUsuarios();
 }
 
@@ -288,6 +338,8 @@ function json(o) { return ContentService.createTextOutput(JSON.stringify(o)).set
 
 /* Rode UMA vez pelo editor (botão ▶ Executar) para criar as abas e liberar o acesso ao Drive. */
 function instalar() {
-  aba(ABA_DEP, COL_DEP); aba(ABA_ENT, COL_ENT); aba(ABA_USU, COL_USU); segredo(); pastaRaiz();
+  aba(ABA_DEP, COL_DEP); aba(ABA_ENT, COL_ENT); abaUsu(); segredo(); emailAdmin(); pastaRaiz();
+  /* pede a permissão de mandar e-mail (código de recuperação de senha e aviso de cadastro novo) */
+  MailApp.getRemainingDailyQuota();
   Logger.log("Pronto. Agora: Implantar > Nova implantação > App da Web.");
 }

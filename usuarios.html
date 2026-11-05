@@ -28,6 +28,7 @@ label.f{display:grid;gap:4px;font-weight:600}
   <div id="tudo" style="display:none;gap:14px">
     <div class="card"><h2>Regras gerais</h2>
       <label class="ch"><input type="checkbox" id="c-ex"><span><b>Exigir login</b><br><span class="muted">Ligado: só entra quem tem usuário. Desligado: o app funciona como antes (para os testes).</span></span></label>
+      <label class="ch"><input type="checkbox" id="c-au"><span><b>Liberar automático pela função</b><br><span class="muted">Desligado (recomendado no começo): todo cadastro novo espera você liberar. Ligado: quem se cadastra já entra com os acessos padrão da função.</span></span></label>
       <label class="f">Senha dos mapas oficiais da equipe<input id="c-km" type="password" placeholder="Digite só para trocar"><span class="muted" id="c-kms"></span></label>
       <div class="muted">Com isso, quem entra com usuário recebe a senha dos mapas sozinho — ninguém precisa saber ela.</div>
       <button class="btn pri" id="c-sv">Salvar regras</button></div>
@@ -35,6 +36,7 @@ label.f{display:grid;gap:4px;font-weight:600}
       <div class="row"><label class="f" style="flex:1 1 180px">Nome<input id="n-nome" placeholder="Ex.: João Silva"></label><label class="f" style="flex:1 1 140px">Usuário<input id="n-usu" autocapitalize="none" placeholder="Ex.: joao"></label></div>
       <div class="row"><label class="f" style="flex:1 1 140px">Senha inicial<input id="n-sen" placeholder="mín. 4 caracteres"></label><label class="f" style="flex:1 1 140px">Papel<select id="n-pap"><option value="tecnico">Técnico</option><option value="supervisor">Supervisor</option></select></label></div>
       <button class="btn pri" id="n-ok">Criar usuário</button></div>
+    <div id="pend"></div>
     <div id="lista" style="display:grid;gap:10px"></div>
   </div>
 </div>
@@ -52,10 +54,17 @@ const srv=()=>{try{return localStorage.getItem("brita_servidor")||window.BRITA_S
 async function post(o){const r=await fetch(srv(),{method:"POST",body:JSON.stringify(Object.assign({chave:K},o))});const j=await r.json();if(!j.ok)throw new Error(j.erro||"Erro");return j;}
 async function carregar(){try{const j=await post({a:"usuarios"});$("#pede").style.display="none";$("#tudo").style.display="grid";try{localStorage.setItem("brita_chave",JSON.stringify(K));}catch(e){}montar(j);}
   catch(e){$("#pede").style.display="grid";$("#tudo").style.display="none";if(K)av(/senha/.test(e.message)?"Senha do administrador errada.":"Sem resposta do servidor: precisa de internet.");}}
-function montar(j){$("#c-ex").checked=!!j.exigir;$("#c-kms").textContent=j.temChaveMapas?"✓ Já cadastrada.":"Ainda não cadastrada.";
+function montar(j){$("#c-ex").checked=!!j.exigir;$("#c-au").checked=!!j.auto;
+  const pend=j.usuarios.filter(u=>u.status==="aguardando");
+  $("#pend").innerHTML=pend.length?`<div class="card" style="border-color:var(--and)"><h2>Aguardando liberação · ${pend.length}</h2>${pend.map(u=>`<div style="display:grid;gap:6px;border-top:1px solid var(--ln);padding-top:8px" data-pd="${esc(u.usuario)}"><div><b>${esc(u.nome)}</b> <span class="muted">· ${esc(u.usuario)} · ${esc(u.email)} · diz ser ${u.papel==="supervisor"?"Supervisor":"Técnico"} · ${esc(u.aparelho)}</span></div>
+    <div class="row"><select data-pp style="width:auto"><option value="tecnico" ${u.papel!=="supervisor"?"selected":""}>Liberar como Técnico</option><option value="supervisor" ${u.papel==="supervisor"?"selected":""}>Liberar como Supervisor</option></select><button class="btn pri" data-ok>Liberar</button><button class="btn dan" data-no>Recusar</button></div></div>`).join("")}</div>`:"";
+  document.querySelectorAll("[data-pd]").forEach(c=>{const usu=c.dataset.pd;
+    c.querySelector("[data-ok]").onclick=async()=>{const papel=c.querySelector("[data-pp]").value;try{montar(await post({a:"usuario_salvar",u:{usuario:usu,papel,status:"ativo",perms:PADRAO[papel]}}));av("Liberado.");}catch(e){av(e.message);}};
+    c.querySelector("[data-no]").onclick=async()=>{try{montar(await post({a:"usuario_salvar",u:{usuario:usu,status:"recusado"}}));av("Cadastro recusado.");}catch(e){av(e.message);}};});
+  j={...j,usuarios:j.usuarios.filter(u=>u.status!=="aguardando")};$("#c-kms").textContent=j.temChaveMapas?"✓ Já cadastrada.":"Ainda não cadastrada.";
   $("#lista").innerHTML=j.usuarios.length?j.usuarios.map(u=>`<div class="card" data-u="${esc(u.usuario)}">
-    <div class="row"><b style="flex:1">${esc(u.nome||u.usuario)}</b><span class="tag">${u.papel==="supervisor"?"Supervisor":"Técnico"}</span>${u.bloqueado?`<span class="tag blk">Bloqueado</span>`:""}${u.pedido?`<span class="tag ped">Pediu outro celular</span>`:""}</div>
-    <div class="muted">Usuário: <b>${esc(u.usuario)}</b> · Celular: ${esc(u.aparelho||"ainda não entrou")}${u.ultimo?" · último acesso "+new Date(u.ultimo).toLocaleString("pt-BR"):""}${u.pedido?`<br>Tentou entrar em: ${esc(u.pedido)}`:""}</div>
+    <div class="row"><b style="flex:1">${esc(u.nome||u.usuario)}</b><span class="tag">${u.papel==="supervisor"?"Supervisor":"Técnico"}</span>${u.status==="recusado"?`<span class="tag blk">Recusado</span>`:""}${u.bloqueado?`<span class="tag blk">Bloqueado</span>`:""}${u.pedido?`<span class="tag ped">Pediu outro celular</span>`:""}</div>
+    <div class="muted">Usuário: <b>${esc(u.usuario)}</b>${u.email?" · "+esc(u.email):""} · Celular: ${esc(u.aparelho||"ainda não entrou")}${u.ultimo?" · último acesso "+new Date(u.ultimo).toLocaleString("pt-BR"):""}${u.pedido?`<br>Tentou entrar em: ${esc(u.pedido)}`:""}</div>
     <div class="chs">${j.perms.map(p=>`<label class="ch"><input type="checkbox" data-p="${p}" ${u.perms&&u.perms[p]?"checked":""}><span>${NOMES[p]||p}</span></label>`).join("")}</div>
     <div class="row"><button class="btn pri" data-a="salvar">Salvar acessos</button><button class="btn" data-a="senha">Trocar senha</button><button class="btn" data-a="aparelho">${u.pedido?"Liberar o celular novo":"Liberar outro celular"}</button><button class="btn dan" data-a="bloq">${u.bloqueado?"Desbloquear":"Bloquear"}</button></div><div data-cf></div></div>`).join(""):`<div class="muted">Nenhum usuário ainda. Crie acima.</div>`;
   document.querySelectorAll("[data-u]").forEach(c=>{const u=j.usuarios.find(x=>x.usuario===c.dataset.u);
@@ -67,7 +76,7 @@ function montar(j){$("#c-ex").checked=!!j.exigir;$("#c-kms").textContent=j.temCh
     c.querySelector('[data-a="bloq"]').onclick=()=>{c.querySelector("[data-cf]").innerHTML=`<div class="row"><span class="muted" style="flex:1">${u.bloqueado?"Desbloquear":"Bloquear"} ${esc(u.nome)}?${u.bloqueado?"":" Ele sai do app na próxima vez que pegar internet."}</span><button class="btn ${u.bloqueado?"pri":"dan"}" data-ok>Sim</button></div>`;
       c.querySelector("[data-ok]").onclick=async()=>{try{montar(await post({a:"usuario_salvar",u:{usuario:u.usuario,bloqueado:!u.bloqueado}}));}catch(e){av(e.message);}};};});}
 $("#k-ok").onclick=()=>{K=$("#k").value.trim();carregar();};
-$("#c-sv").onclick=async()=>{try{montar(await post({a:"acesso_config",exigir:$("#c-ex").checked,chaveMapas:$("#c-km").value.trim()}));$("#c-km").value="";av("Regras salvas.");}catch(e){av(e.message);}};
+$("#c-sv").onclick=async()=>{try{montar(await post({a:"acesso_config",exigir:$("#c-ex").checked,auto:$("#c-au").checked,chaveMapas:$("#c-km").value.trim()}));$("#c-km").value="";av("Regras salvas.");}catch(e){av(e.message);}};
 $("#n-ok").onclick=async()=>{const p=$("#n-pap").value,u={nome:$("#n-nome").value.trim(),usuario:$("#n-usu").value.trim(),senha:$("#n-sen").value.trim(),papel:p,perms:PADRAO[p]};
   if(!u.nome||!u.usuario||u.senha.length<4){av("Preencha nome, usuário e senha (mín. 4).");return;}
   try{montar(await post({a:"usuario_salvar",u}));["#n-nome","#n-usu","#n-sen"].forEach(s=>$(s).value="");av("Usuário criado. Passe o usuário e a senha para ele.");}catch(e){av(e.message);}};
