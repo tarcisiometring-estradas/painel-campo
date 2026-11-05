@@ -387,7 +387,7 @@ async function exportar(){const nome=(M.nome.replace(/[^\w\- ]+/g,"").trim()||"m
 addEventListener("resize",()=>{if(M&&VB)aplicar();});
 (async()=>{try{await abrirDB();}catch(e){aviso("Não consegui abrir o armazenamento do celular.",6000);return;}
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
-  if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").then(reg=>{document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&navigator.onLine)reg.update().catch(()=>{});});}).catch(()=>{});let rc=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(rc||$("#visor").classList.contains("on"))return;rc=true;location.reload();});}
+  if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});let rc=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(rc||$("#visor").classList.contains("on"))return;rc=true;location.reload();});}
   /* PDFs que chegaram pelo app Android (WhatsApp › Abrir com / Compartilhar) */
   if(window.EstradasApp){try{const A=window.EstradasApp,n=A.quantos(),fs=[];
       for(let k=0;k<n;k++){const tam=A.tamanho(k),partes=[];prog(true,"Recebendo o mapa…",A.nome(k));
