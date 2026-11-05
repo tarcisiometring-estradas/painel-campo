@@ -26,6 +26,10 @@ button,.btn,input,select,textarea{font:inherit;color:inherit}
 .cm{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:8px;cursor:pointer;text-align:left;width:100%}
 .cm img{width:96px;height:68px;object-fit:cover;border-radius:8px;background:#fff}
 .cm b{display:block;font-size:15px}.cm small{color:var(--mut)}
+.cw{display:grid;grid-template-columns:1fr 48px;align-items:stretch;gap:0;background:var(--sf);border:1px solid var(--ln);border-radius:14px;overflow:hidden}
+.cw .cm{border:0;border-radius:0;background:none}
+.cw .tp{border:0;border-left:1px solid var(--ln);background:none;font-size:24px;line-height:1;cursor:pointer;color:var(--mut)}
+.mn{display:grid;gap:6px}.mn .btn{justify-content:flex-start;width:100%}
 .vazio{background:var(--sf);border:1px dashed var(--ln);border-radius:14px;padding:16px;display:grid;gap:8px}
 .vazio ol{margin:0;padding-left:20px}
 /* ---- visor ---- */
@@ -47,7 +51,7 @@ button,.btn,input,select,textarea{font:inherit;color:inherit}
 /* ---- folha ---- */
 #scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:8}#scrim.on{display:block}
 #sheet{position:fixed;left:0;right:0;bottom:0;max-height:85vh;overflow:auto;background:var(--sf);border-radius:16px 16px 0 0;z-index:9;transform:translateY(105%);transition:transform .2s;padding:14px max(16px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:grid;gap:10px}
-#sheet.on{transform:none}
+#sheet.on{transform:none}#sheet{overflow-x:hidden;grid-template-columns:minmax(0,1fr)}#sheet>*{min-width:0}#sheet h2>span{flex:1;min-width:0}#sheet h2 .btn{flex:0 0 auto}
 #sheet h2{margin:0;font-size:18px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 label.f{display:grid;gap:4px;font-weight:600}
 label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--ln);background:var(--bg)}
@@ -163,10 +167,31 @@ $("#imp").onchange=e=>{importar(e.target.files);e.target.value="";};
 
 /* ================= lista ================= */
 async function listar(){const L=(await dbTodos("mapas")).sort((a,b)=>b.em-a.em);const N=await dbTodos("notas");
-  $("#cards").innerHTML=L.map(m=>{const n=N.filter(x=>x.mapa===m.id).length;return `<button class="cm" data-m="${m.id}"><img src="${m.thumb}" alt=""><span><b>${esc(m.nome)}</b><small>${m.geo?"GPS ✓":"sem GPS"} · ${n} anotação(ões) · ${quando(m.em)}</small></span></button>`;}).join("");
+  $("#cards").innerHTML=L.map(m=>{const n=N.filter(x=>x.mapa===m.id).length;return `<div class="cw"><button class="cm" data-m="${m.id}"><img src="${m.thumb}" alt=""><span><b>${esc(m.nome)}</b><small>${m.geo?"GPS ✓":"sem GPS"} · ${n} anotação(ões) · ${quando(m.em)}</small></span></button><button class="tp" data-op="${m.id}" aria-label="Opções do mapa">⋮</button></div>`;}).join("");
   $("#como").style.display=L.length?"none":"grid";
   document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>abrir(b.dataset.m));
+  document.querySelectorAll("[data-op]").forEach(b=>b.onclick=()=>opcoes(b.dataset.op));
   if(L.length)$("#cards").insertAdjacentHTML("afterend","");}
+
+/* menu ⋮ de cada mapa */
+async function opcoes(id){const m=await dbPor("mapas",id);if(!m)return;const ns=await notasDe(id);
+  folha(`<h2><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.nome)}</span><button class="btn" onclick="fechar()">Fechar</button></h2>
+   <div class="muted">${m.geo?"Com GPS":"Sem GPS"} · ${ns.length} anotação(ões) · guardado em ${quando(m.em)}</div>
+   <div class="mn" id="o-mn">
+    <button class="btn" id="o-ab">🗺️ Abrir</button>
+    <button class="btn" id="o-rn">✏️ Renomear</button>
+    <button class="btn" id="o-ex" ${ns.length?"":"disabled"}>📤 Exportar anotações (WhatsApp / e-mail)</button>
+    <button class="btn" id="o-ln" ${ns.length?"":"disabled"}>🧹 Apagar só as anotações</button>
+    <button class="btn dan" id="o-del">🗑️ Excluir mapa</button>
+   </div><div id="o-cf"></div>`);
+  $("#o-ab").onclick=()=>{fechar();abrir(id);};
+  $("#o-rn").onclick=()=>{$("#o-cf").innerHTML=`<label class="f">Novo nome<input id="o-nm" value="${esc(m.nome)}"></label><button class="btn pri" id="o-sv">Salvar nome</button>`;const i=$("#o-nm");i.focus();i.select();
+    $("#o-sv").onclick=async()=>{const v=$("#o-nm").value.trim();if(!v)return;m.nome=v;await dbPut("mapas",m);fechar();listar();aviso("Nome trocado.");};};
+  $("#o-ex").onclick=async()=>{M=m;NOTAS=ns;await exportar();};
+  const confirmar=(txt,acao)=>{$("#o-mn").style.display="none";$("#o-cf").innerHTML=`<div style="display:grid;gap:8px;border:1px solid var(--danger);border-radius:12px;padding:12px"><b>${txt}</b><div class="muted">Não tem como desfazer.</div><button class="btn dan" id="o-sim" style="border-color:var(--danger)">Sim, excluir</button><button class="btn" id="o-nao">Não, voltar</button></div>`;
+    $("#o-nao").onclick=()=>{$("#o-cf").innerHTML="";$("#o-mn").style.display="grid";};$("#o-sim").onclick=acao;};
+  $("#o-ln").onclick=()=>confirmar(`Apagar as ${ns.length} anotação(ões) de "${esc(m.nome)}"? O mapa continua.`,async()=>{for(const n of ns)await dbDel("notas",n.id);fechar();listar();aviso("Anotações apagadas.");});
+  $("#o-del").onclick=()=>confirmar(`Excluir o mapa "${esc(m.nome)}"${ns.length?` e as ${ns.length} anotação(ões) dele`:""}?`,async()=>{for(const n of ns)await dbDel("notas",n.id);await dbDel("mapas",id);fechar();listar();aviso("Mapa excluído.");});}
 
 /* ================= visor ================= */
 let M=null,URLIMG=null,VB=null,NOTAS=[];
