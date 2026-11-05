@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+  <uses-permission android:name="android.permission.CAMERA"/>
+  <application android:label="Estradas Sucuriú" android:icon="@mipmap/ic_launcher" android:usesCleartextTraffic="false" android:hardwareAccelerated="true">
+    <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboardHidden|screenLayout">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+      <!-- tocar no PDF no WhatsApp › "Abrir com" › Estradas Sucuriú -->
+      <intent-filter android:label="Abrir em Meus mapas">
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="content" android:mimeType="application/pdf"/>
+        <data android:scheme="file" android:mimeType="application/pdf"/>
+      </intent-filter>
+      <!-- Compartilhar › Estradas Sucuriú -->
+      <intent-filter android:label="Guardar em Meus mapas">
+        <action android:name="android.intent.action.SEND"/>
+        <action android:name="android.intent.action.SEND_MULTIPLE"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <data android:mimeType="application/pdf"/>
+      </intent-filter>
+    </activity>
+    <provider android:name="androidx.core.content.FileProvider" android:authorities="br.sucuriu.estradas.arquivos" android:exported="false" android:grantUriPermissions="true">
+      <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/arquivos"/>
+    </provider>
+  </application>
+</manifest>

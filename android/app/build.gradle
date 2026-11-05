@@ -1,0 +1,10 @@
+plugins { id 'com.android.application' }
+android {
+  namespace 'br.sucuriu.estradas'
+  compileSdk 34
+  defaultConfig { applicationId 'br.sucuriu.estradas'; minSdk 24; targetSdk 34; versionCode 1; versionName '1.0' }
+  signingConfigs { fixo { storeFile file('estradas.keystore'); storePassword 'estradas'; keyAlias 'estradas'; keyPassword 'estradas' } }
+  buildTypes { release { minifyEnabled false; signingConfig signingConfigs.fixo } debug { signingConfig signingConfigs.fixo } }
+  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+dependencies { implementation 'androidx.core:core:1.13.1' }

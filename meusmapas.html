@@ -337,6 +337,7 @@ function texto(){return `${M.nome} – minhas anotações\n\n`+NOTAS.map(n=>`${I
 async function exportar(){const nome=(M.nome.replace(/[^\w\- ]+/g,"").trim()||"mapa")+" - anotacoes";const arq=new File([kml()],nome+".kml",{type:"application/vnd.google-earth.kml+xml"});
   const fotos=NOTAS.filter(n=>n.foto).map((n,i)=>new File([n.foto],`${(n.nome||"ponto").replace(/[^\w\- ]+/g,"")}_${i+1}.jpg`,{type:"image/jpeg"}));
   const files=[arq,...fotos];
+  if(window.EstradasApp){const b64=await new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.readAsDataURL(arq);});window.EstradasApp.compartilhar(arq.name,b64,"application/vnd.google-earth.kml+xml",texto());return;}
   try{if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:nome,text:texto()});return;}}catch(e){if(e&&e.name==="AbortError")return;}
   try{if(navigator.share){await navigator.share({title:nome,text:texto()});return;}}catch(e){if(e&&e.name==="AbortError")return;}
   const a=document.createElement("a");a.href=URL.createObjectURL(arq);a.download=arq.name;document.body.appendChild(a);a.click();a.remove();aviso("Arquivo .kml baixado. Mande pelo WhatsApp ou e-mail.",5000);}
@@ -346,6 +347,12 @@ addEventListener("resize",()=>{if(M&&VB)aplicar();});
 (async()=>{try{await abrirDB();}catch(e){aviso("Não consegui abrir o armazenamento do celular.",6000);return;}
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
   if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").then(reg=>{document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&navigator.onLine)reg.update().catch(()=>{});});}).catch(()=>{});let rc=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(rc||$("#visor").classList.contains("on"))return;rc=true;location.reload();});}
+  /* PDFs que chegaram pelo app Android (WhatsApp › Abrir com / Compartilhar) */
+  if(window.EstradasApp){try{const A=window.EstradasApp,n=A.quantos(),fs=[];
+      for(let k=0;k<n;k++){const tam=A.tamanho(k),partes=[];prog(true,"Recebendo o mapa…",A.nome(k));
+        for(let i=0;i<tam;i+=524288){const b=atob(A.pedaco(k,i,524288));const u=new Uint8Array(b.length);for(let j=0;j<b.length;j++)u[j]=b.charCodeAt(j);partes.push(u);}
+        fs.push(new File(partes,A.nome(k),{type:"application/pdf"}));}
+      A.limpar();prog(false);if(fs.length){history.replaceState(null,"",location.pathname);await importar(fs);}}catch(e){prog(false);aviso("Não consegui receber o arquivo do WhatsApp.");}}
   /* PDFs que chegaram pelo "Compartilhar" do WhatsApp */
   if(/compartilhado|fila/.test(location.search)){try{const c=await caches.open("importar-fila");const ks=await c.keys();const fs=[];
       for(const k of ks){const r=await c.match(k);const b=await r.blob();fs.push(new File([b],decodeURIComponent(r.headers.get("x-nome")||"Mapa.pdf"),{type:"application/pdf"}));await c.delete(k);}
