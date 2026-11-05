@@ -103,7 +103,7 @@ label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-rad
 <div id="aviso"></div><div id="prog"><div><b id="prog-t">Abrindo o mapa…</b><div class="muted" style="color:#ddd" id="prog-s"></div></div></div>
 <input id="foto" type="file" accept="image/*" capture="environment" hidden><input id="foto2" type="file" accept="image/*" hidden>
 
-<script src="lib/atualizar.js"></script><script src="lib/pdf-lib.min.js"></script>
+<script src="brita/config.js"></script><script src="lib/atualizar.js"></script><script src="lib/acesso.js"></script><script src="lib/pdf-lib.min.js"></script>
 <script src="lib/pdfjs.min.js"></script>
 <script>
 "use strict";
@@ -396,7 +396,8 @@ async function exportar(){const nome=(M.nome.replace(/[^\w\- ]+/g,"").trim()||"m
 
 /* ================= iniciar ================= */
 addEventListener("resize",()=>{if(M&&VB)aplicar();});
-(async()=>{try{await abrirDB();}catch(e){aviso("Não consegui abrir o armazenamento do celular.",6000);return;}
+(async()=>{if(window.ACESSO&&!ACESSO.pode("meus")){$("#lista").innerHTML='<div class="topo"><a class="btn" href="./">‹ Início</a><h1>Meus mapas</h1></div><div class="vazio">Meus mapas não está liberado para o seu usuário. Fale com o supervisor.</div>';return;}
+  try{await abrirDB();}catch(e){aviso("Não consegui abrir o armazenamento do celular.",6000);return;}
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
   if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});let rc=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(rc||$("#visor").classList.contains("on"))return;rc=true;location.reload();});}
   /* PDFs que chegaram pelo app Android (WhatsApp › Abrir com / Compartilhar) */

@@ -24,6 +24,7 @@ function doGet(e) {
     if (p.a === "depositos") return json({ ok: true, depositos: lerDepositos(), em: new Date().toISOString() });
     if (p.a === "entregas") { exigirChave(p.chave); return json({ ok: true, entregas: lerEntregas(p.de, p.ate) }); }
     if (p.a === "teste") return json({ ok: true, msg: "Servidor da entrega de brita funcionando." });
+    if (p.a === "acesso_cfg") return json({ ok: true, exigir: prop("EXIGIR_LOGIN") === "1" });
     return json({ ok: false, erro: "acao desconhecida" });
   } catch (x) { return json({ ok: false, erro: String(x.message || x) }); }
 }
@@ -34,6 +35,12 @@ function doPost(e) {
     lock.waitLock(25000);
     var d = JSON.parse(e.postData.contents);
     if (d.a === "entrega") return json(salvarEntrega(d));
+    if (d.a === "entrar") return json(entrar(d));
+    if (d.a === "sessao") return json(sessao(d));
+    if (d.a === "usuarios") { exigirChave(d.chave); return json(listarUsuarios()); }
+    if (d.a === "usuario_salvar") { exigirChave(d.chave); return json(salvarUsuario(d.u)); }
+    if (d.a === "aparelho_liberar") { exigirChave(d.chave); return json(liberarAparelho(d.usuario)); }
+    if (d.a === "acesso_config") { exigirChave(d.chave); return json(salvarConfigAcesso(d)); }
     exigirChave(d.chave);
     if (d.a === "deposito") return json(salvarDeposito(d.dep, d.por));
     if (d.a === "extensao") return json(addExtensao(d.id, d.ext, d.por));
@@ -210,11 +217,77 @@ function vincular(d) {
 }
 
 /* ---------------- utilidades ---------------- */
+/* ================= usuários do app (cada um com usuário e senha; 1 celular por usuário) ================= */
+var ABA_USU = "Usuarios";
+var COL_USU = ["id", "nome", "papel", "salt", "hash", "perms", "aparelho", "aparelho_nome", "pedido_aparelho", "bloqueado", "criado_em", "ultimo_acesso"];
+var PERMS = ["mapas", "meus", "painel", "micro", "corrigir", "brita", "depositos", "rdo"];
+function prop(k) { return PropertiesService.getScriptProperties().getProperty(k) || ""; }
+function setProp(k, v) { PropertiesService.getScriptProperties().setProperty(k, String(v)); }
+function segredo() { var s = prop("SEGREDO"); if (!s) { s = Utilities.getUuid() + Utilities.getUuid(); setProp("SEGREDO", s); } return s; }
+function b64(bytes) { return Utilities.base64EncodeWebSafe(bytes).replace(/=+$/, ""); }
+function hashSenha(senha, salt) { var h = salt + "|" + senha; for (var i = 0; i < 300; i++) h = b64(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, h + salt)); return h; }
+function assinar(txt) { return b64(Utilities.computeHmacSha256Signature(txt, segredo())); }
+function normUsu(u) { return String(u || "").trim().toLowerCase().replace(/\s+/g, "."); }
+function lerUsuarios() { return linhas(aba(ABA_USU, COL_USU), COL_USU).filter(function (o) { return String(o.id) !== ""; }); }
+function permsDe(o) { var p = {}; try { p = JSON.parse(o.perms || "{}"); } catch (x) {} return p; }
+function publico(o) { return { usuario: String(o.id), nome: String(o.nome), papel: String(o.papel || "tecnico"), perms: permsDe(o), aparelho: String(o.aparelho_nome || (o.aparelho ? "1 celular" : "")), pedido: String(o.pedido_aparelho || ""), bloqueado: String(o.bloqueado) === "SIM", ultimo: o.ultimo_acesso ? String(o.ultimo_acesso) : "" }; }
+function resposta(o, aparelho) {
+  var tok = String(o.id) + "|" + aparelho + "|" + Date.now();
+  return { ok: true, token: tok + "." + assinar(tok), usuario: String(o.id), nome: String(o.nome), papel: String(o.papel || "tecnico"), perms: permsDe(o), chaveMapas: prop("CHAVE_MAPAS") };
+}
+function entrar(d) {
+  var usu = normUsu(d.usuario), senha = String(d.senha || ""), ap = String(d.aparelho || "");
+  if (!usu || !senha || !ap) throw new Error("Preencha usuário e senha.");
+  /* administrador: usuário "admin" + senha da gestão */
+  if (usu === "admin") { if (senha !== CHAVE_GESTAO) throw new Error("Usuário ou senha errados."); var a = { id: "admin", nome: "Administrador", papel: "admin", perms: JSON.stringify(PERMS.reduce(function (m, k) { m[k] = true; return m; }, {})) }; var r = resposta(a, ap); r.admin = true; return r; }
+  var sh = aba(ABA_USU, COL_USU), o = lerUsuarios().filter(function (x) { return String(x.id) === usu; })[0];
+  if (!o || hashSenha(senha, String(o.salt)) !== String(o.hash)) throw new Error("Usuário ou senha errados.");
+  if (String(o.bloqueado) === "SIM") throw new Error("Seu acesso está bloqueado. Fale com o supervisor.");
+  if (!o.aparelho) { o.aparelho = ap; o.aparelho_nome = String(d.nomeAparelho || "celular"); o.pedido_aparelho = ""; }
+  else if (String(o.aparelho) !== ap) { o.pedido_aparelho = String(d.nomeAparelho || "outro celular") + " · " + new Date().toLocaleString("pt-BR"); gravar(sh, COL_USU, o._linha, o);
+    throw new Error("Este usuário já está liberado em outro celular. Peça ao supervisor para liberar este aparelho."); }
+  o.ultimo_acesso = new Date().toISOString(); gravar(sh, COL_USU, o._linha, o);
+  return resposta(o, ap);
+}
+function sessao(d) {
+  var t = String(d.token || ""), i = t.lastIndexOf("."); if (i < 0) return { ok: true, valido: false };
+  var corpo = t.slice(0, i); if (assinar(corpo) !== t.slice(i + 1)) return { ok: true, valido: false };
+  var partes = corpo.split("|"), usu = partes[0], ap = partes[1];
+  if (usu === "admin") return { ok: true, valido: true, admin: true, papel: "admin", perms: PERMS.reduce(function (m, k) { m[k] = true; return m; }, {}), chaveMapas: prop("CHAVE_MAPAS"), exigir: prop("EXIGIR_LOGIN") === "1" };
+  var o = lerUsuarios().filter(function (x) { return String(x.id) === usu; })[0];
+  if (!o || String(o.bloqueado) === "SIM" || String(o.aparelho) !== ap) return { ok: true, valido: false, motivo: !o ? "removido" : String(o.bloqueado) === "SIM" ? "bloqueado" : "aparelho" };
+  return { ok: true, valido: true, nome: String(o.nome), papel: String(o.papel || "tecnico"), perms: permsDe(o), chaveMapas: prop("CHAVE_MAPAS"), exigir: prop("EXIGIR_LOGIN") === "1" };
+}
+function listarUsuarios() { return { ok: true, usuarios: lerUsuarios().map(publico), exigir: prop("EXIGIR_LOGIN") === "1", temChaveMapas: !!prop("CHAVE_MAPAS"), perms: PERMS }; }
+function salvarUsuario(u) {
+  var usu = normUsu(u.usuario); if (!usu || usu === "admin") throw new Error("Usuário inválido.");
+  var sh = aba(ABA_USU, COL_USU), o = lerUsuarios().filter(function (x) { return String(x.id) === usu; })[0];
+  var novo = !o; if (novo) o = { id: usu, criado_em: new Date().toISOString(), bloqueado: "NAO" };
+  if (u.nome !== undefined) o.nome = String(u.nome);
+  if (u.papel !== undefined) o.papel = String(u.papel);
+  if (u.perms !== undefined) o.perms = JSON.stringify(u.perms);
+  if (u.bloqueado !== undefined) o.bloqueado = u.bloqueado ? "SIM" : "NAO";
+  if (u.senha) { o.salt = Utilities.getUuid(); o.hash = hashSenha(String(u.senha), o.salt); }
+  if (novo && !o.hash) throw new Error("Usuário novo precisa de senha.");
+  gravar(sh, COL_USU, novo ? 0 : o._linha, o);
+  return listarUsuarios();
+}
+function liberarAparelho(usuario) {
+  var sh = aba(ABA_USU, COL_USU), o = lerUsuarios().filter(function (x) { return String(x.id) === normUsu(usuario); })[0];
+  if (!o) throw new Error("Usuário não encontrado.");
+  o.aparelho = ""; o.aparelho_nome = ""; o.pedido_aparelho = ""; gravar(sh, COL_USU, o._linha, o); return listarUsuarios();
+}
+function salvarConfigAcesso(d) {
+  if (d.exigir !== undefined) setProp("EXIGIR_LOGIN", d.exigir ? "1" : "0");
+  if (d.chaveMapas) setProp("CHAVE_MAPAS", String(d.chaveMapas));
+  return listarUsuarios();
+}
+
 function exigirChave(c) { if (String(c || "") !== CHAVE_GESTAO) throw new Error("senha da gestão errada"); }
 function json(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 
 /* Rode UMA vez pelo editor (botão ▶ Executar) para criar as abas e liberar o acesso ao Drive. */
 function instalar() {
-  aba(ABA_DEP, COL_DEP); aba(ABA_ENT, COL_ENT); pastaRaiz();
+  aba(ABA_DEP, COL_DEP); aba(ABA_ENT, COL_ENT); aba(ABA_USU, COL_USU); segredo(); pastaRaiz();
   Logger.log("Pronto. Agora: Implantar > Nova implantação > App da Web.");
 }

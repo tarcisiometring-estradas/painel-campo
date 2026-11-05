@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Usuários e acessos · Estradas Sucuriú</title>
+<style>
+:root{--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--ok:#2E8B57;--danger:#F08A80;--and:#E0A100}
+:root[data-tema="claro"],:root[data-tema="sol"]{--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--danger:#B0402A}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.w{max-width:760px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 60px max(16px,env(safe-area-inset-left));display:grid;gap:14px}
+h1{margin:0;font-size:24px}h2{margin:0;font-size:17px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--ln);background:var(--sf);color:inherit;font:inherit;cursor:pointer;text-decoration:none}
+.btn.pri{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700}.btn.dan{color:var(--danger)}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:14px;display:grid;gap:10px;min-width:0}
+.muted{color:var(--mut);font-size:13px}
+input,select{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:10px;width:100%}
+label.f{display:grid;gap:4px;font-weight:600}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.ch{display:flex;gap:8px;align-items:center;border:1px solid var(--ln);border-radius:10px;padding:8px;cursor:pointer}
+.ch input{width:20px;height:20px;accent-color:var(--ok)}
+.tag{font-size:12px;font-weight:700;border-radius:999px;padding:2px 8px;border:1px solid var(--ln)}
+.tag.blk{color:var(--danger);border-color:var(--danger)}.tag.ped{color:var(--and);border-color:var(--and)}
+#av{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%);background:#000c;color:#fff;padding:10px 14px;border-radius:12px;display:none;z-index:9;max-width:90vw;text-align:center}
+</style></head><body>
+<div class="w">
+  <div class="row"><a class="btn" href="./">‹ Início</a><h1 style="flex:1">Usuários e acessos</h1></div>
+  <div id="pede" class="card"><h2>Senha do administrador</h2><div class="muted">A senha da gestão (a mesma do Codigo.gs).</div>
+    <input id="k" type="password" autocomplete="current-password"><button class="btn pri" id="k-ok">Entrar</button></div>
+  <div id="tudo" style="display:none;gap:14px">
+    <div class="card"><h2>Regras gerais</h2>
+      <label class="ch"><input type="checkbox" id="c-ex"><span><b>Exigir login</b><br><span class="muted">Ligado: só entra quem tem usuário. Desligado: o app funciona como antes (para os testes).</span></span></label>
+      <label class="f">Senha dos mapas oficiais da equipe<input id="c-km" type="password" placeholder="Digite só para trocar"><span class="muted" id="c-kms"></span></label>
+      <div class="muted">Com isso, quem entra com usuário recebe a senha dos mapas sozinho — ninguém precisa saber ela.</div>
+      <button class="btn pri" id="c-sv">Salvar regras</button></div>
+    <div class="card"><h2>Novo usuário</h2>
+      <div class="row"><label class="f" style="flex:1 1 180px">Nome<input id="n-nome" placeholder="Ex.: João Silva"></label><label class="f" style="flex:1 1 140px">Usuário<input id="n-usu" autocapitalize="none" placeholder="Ex.: joao"></label></div>
+      <div class="row"><label class="f" style="flex:1 1 140px">Senha inicial<input id="n-sen" placeholder="mín. 4 caracteres"></label><label class="f" style="flex:1 1 140px">Papel<select id="n-pap"><option value="tecnico">Técnico</option><option value="supervisor">Supervisor</option></select></label></div>
+      <button class="btn pri" id="n-ok">Criar usuário</button></div>
+    <div id="lista" style="display:grid;gap:10px"></div>
+  </div>
+</div>
+<div id="av"></div>
+<script src="brita/config.js"></script>
+<script>
+"use strict";
+try{const t=JSON.parse(localStorage.getItem("tema")||'"escuro"');document.documentElement.setAttribute("data-tema",t);}catch(e){}
+const $=s=>document.querySelector(s),esc=t=>String(t==null?"":t).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function av(t,ms){const a=$("#av");a.textContent=t;a.style.display="block";clearTimeout(av.t);av.t=setTimeout(()=>a.style.display="none",ms||3500);}
+const NOMES={mapas:"Mapas da empresa",meus:"Meus mapas",painel:"Painel de Campo",micro:"Microplanejamento",corrigir:"Corrigir lançamentos",brita:"Brita (conferir)",depositos:"Brita (depósitos)",rdo:"RDO / Planejado × Executado"};
+const PADRAO={tecnico:{mapas:1,meus:1,painel:1,brita:1,depositos:1},supervisor:{mapas:1,meus:1,painel:1,micro:1,corrigir:1,brita:1,depositos:1,rdo:1}};
+let K="";try{K=JSON.parse(localStorage.getItem("brita_chave")||'""');}catch(e){}
+const srv=()=>{try{return localStorage.getItem("brita_servidor")||window.BRITA_SERVIDOR||"";}catch(e){return window.BRITA_SERVIDOR||"";}};
+async function post(o){const r=await fetch(srv(),{method:"POST",body:JSON.stringify(Object.assign({chave:K},o))});const j=await r.json();if(!j.ok)throw new Error(j.erro||"Erro");return j;}
+async function carregar(){try{const j=await post({a:"usuarios"});$("#pede").style.display="none";$("#tudo").style.display="grid";try{localStorage.setItem("brita_chave",JSON.stringify(K));}catch(e){}montar(j);}
+  catch(e){$("#pede").style.display="grid";$("#tudo").style.display="none";if(K)av(/senha/.test(e.message)?"Senha do administrador errada.":"Sem resposta do servidor: precisa de internet.");}}
+function montar(j){$("#c-ex").checked=!!j.exigir;$("#c-kms").textContent=j.temChaveMapas?"✓ Já cadastrada.":"Ainda não cadastrada.";
+  $("#lista").innerHTML=j.usuarios.length?j.usuarios.map(u=>`<div class="card" data-u="${esc(u.usuario)}">
+    <div class="row"><b style="flex:1">${esc(u.nome||u.usuario)}</b><span class="tag">${u.papel==="supervisor"?"Supervisor":"Técnico"}</span>${u.bloqueado?`<span class="tag blk">Bloqueado</span>`:""}${u.pedido?`<span class="tag ped">Pediu outro celular</span>`:""}</div>
+    <div class="muted">Usuário: <b>${esc(u.usuario)}</b> · Celular: ${esc(u.aparelho||"ainda não entrou")}${u.ultimo?" · último acesso "+new Date(u.ultimo).toLocaleString("pt-BR"):""}${u.pedido?`<br>Tentou entrar em: ${esc(u.pedido)}`:""}</div>
+    <div class="chs">${j.perms.map(p=>`<label class="ch"><input type="checkbox" data-p="${p}" ${u.perms&&u.perms[p]?"checked":""}><span>${NOMES[p]||p}</span></label>`).join("")}</div>
+    <div class="row"><button class="btn pri" data-a="salvar">Salvar acessos</button><button class="btn" data-a="senha">Trocar senha</button><button class="btn" data-a="aparelho">${u.pedido?"Liberar o celular novo":"Liberar outro celular"}</button><button class="btn dan" data-a="bloq">${u.bloqueado?"Desbloquear":"Bloquear"}</button></div><div data-cf></div></div>`).join(""):`<div class="muted">Nenhum usuário ainda. Crie acima.</div>`;
+  document.querySelectorAll("[data-u]").forEach(c=>{const u=j.usuarios.find(x=>x.usuario===c.dataset.u);
+    c.querySelector('[data-a="salvar"]').onclick=async()=>{const perms={};c.querySelectorAll("[data-p]").forEach(i=>{if(i.checked)perms[i.dataset.p]=true;});try{montar(await post({a:"usuario_salvar",u:{usuario:u.usuario,perms}}));av("Acessos de "+u.nome+" salvos. Valem quando o celular dele pegar internet.");}catch(e){av(e.message);}};
+    c.querySelector('[data-a="senha"]').onclick=()=>{c.querySelector("[data-cf]").innerHTML=`<div class="row"><input data-ns placeholder="Nova senha" style="flex:1 1 160px"><button class="btn pri" data-ok>Salvar senha</button></div>`;
+      c.querySelector("[data-ok]").onclick=async()=>{const v=c.querySelector("[data-ns]").value.trim();if(v.length<4){av("Mínimo 4 caracteres.");return;}try{montar(await post({a:"usuario_salvar",u:{usuario:u.usuario,senha:v}}));av("Senha trocada.");}catch(e){av(e.message);}};};
+    c.querySelector('[data-a="aparelho"]').onclick=()=>{c.querySelector("[data-cf]").innerHTML=`<div class="row"><span class="muted" style="flex:1">O celular atual de ${esc(u.nome)} sai do app na próxima vez que pegar internet, e o próximo celular em que ele entrar fica liberado.</span><button class="btn pri" data-ok>Confirmar</button></div>`;
+      c.querySelector("[data-ok]").onclick=async()=>{try{montar(await post({a:"aparelho_liberar",usuario:u.usuario}));av("Pronto: ele pode entrar no celular novo.");}catch(e){av(e.message);}};};
+    c.querySelector('[data-a="bloq"]').onclick=()=>{c.querySelector("[data-cf]").innerHTML=`<div class="row"><span class="muted" style="flex:1">${u.bloqueado?"Desbloquear":"Bloquear"} ${esc(u.nome)}?${u.bloqueado?"":" Ele sai do app na próxima vez que pegar internet."}</span><button class="btn ${u.bloqueado?"pri":"dan"}" data-ok>Sim</button></div>`;
+      c.querySelector("[data-ok]").onclick=async()=>{try{montar(await post({a:"usuario_salvar",u:{usuario:u.usuario,bloqueado:!u.bloqueado}}));}catch(e){av(e.message);}};};});}
+$("#k-ok").onclick=()=>{K=$("#k").value.trim();carregar();};
+$("#c-sv").onclick=async()=>{try{montar(await post({a:"acesso_config",exigir:$("#c-ex").checked,chaveMapas:$("#c-km").value.trim()}));$("#c-km").value="";av("Regras salvas.");}catch(e){av(e.message);}};
+$("#n-ok").onclick=async()=>{const p=$("#n-pap").value,u={nome:$("#n-nome").value.trim(),usuario:$("#n-usu").value.trim(),senha:$("#n-sen").value.trim(),papel:p,perms:PADRAO[p]};
+  if(!u.nome||!u.usuario||u.senha.length<4){av("Preencha nome, usuário e senha (mín. 4).");return;}
+  try{montar(await post({a:"usuario_salvar",u}));["#n-nome","#n-usu","#n-sen"].forEach(s=>$(s).value="");av("Usuário criado. Passe o usuário e a senha para ele.");}catch(e){av(e.message);}};
+if(K)carregar();
+</script>
+</body></html>
