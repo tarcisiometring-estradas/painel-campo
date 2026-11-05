@@ -210,9 +210,9 @@ async function opcoes(id){const m=await dbPor("mapas",id);if(!m)return;const ns=
 let M=null,URLIMG=null,VB=null,NOTAS=[];
 const sv=()=>$("#mp");
 /* geo ⇄ pixel da imagem */
-function g2p(lat,lon){const g=M.geo;const [a0,a1,a2]=g.A,[b0,b1,b2]=g.B;const det=a1*b2-a2*b1;const u=((lat-a0)*b2-a2*(lon-b0))/det,v=(a1*(lon-b0)-(lat-a0)*b1)/det;
+function g2p(lat,lon){const g=M.geo;if(g.px){const [a0,a1,a2]=g.px.A,[b0,b1,b2]=g.px.B;const det=a1*b2-a2*b1;return [((lat-a0)*b2-a2*(lon-b0))/det,(a1*(lon-b0)-(lat-a0)*b1)/det];}const [a0,a1,a2]=g.A,[b0,b1,b2]=g.B;const det=a1*b2-a2*b1;const u=((lat-a0)*b2-a2*(lon-b0))/det,v=(a1*(lon-b0)-(lat-a0)*b1)/det;
   const x=g.bb[0]+u*(g.bb[2]-g.bb[0]),y=g.bb[1]+v*(g.bb[3]-g.bb[1]);return [x*M.s,(M.vh-y)*M.s];}
-function p2g(px,py){const g=M.geo;const x=px/M.s,y=M.vh-py/M.s;const u=(x-g.bb[0])/(g.bb[2]-g.bb[0]),v=(y-g.bb[1])/(g.bb[3]-g.bb[1]);return [g.A[0]+g.A[1]*u+g.A[2]*v,g.B[0]+g.B[1]*u+g.B[2]*v];}
+function p2g(px,py){const g=M.geo;if(g.px)return [g.px.A[0]+g.px.A[1]*px+g.px.A[2]*py,g.px.B[0]+g.px.B[1]*px+g.px.B[2]*py];const x=px/M.s,y=M.vh-py/M.s;const u=(x-g.bb[0])/(g.bb[2]-g.bb[0]),v=(y-g.bb[1])/(g.bb[3]-g.bb[1]);return [g.A[0]+g.A[1]*u+g.A[2]*v,g.B[0]+g.B[1]*u+g.B[2]*v];}
 const mpp=()=>{if(!M.geo)return 0;const a=p2g(0,0),b=p2g(100,0);return dist(a,b)/100;};
 function dist(a,b){const R=6371008.8,r=Math.PI/180,dl=(b[0]-a[0])*r,dn=(b[1]-a[1])*r;const h=Math.sin(dl/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
 function areaG(P){if(P.length<3)return 0;const r=Math.PI/180,R=6371008.8,lat0=P.reduce((s,p)=>s+p[0],0)/P.length*r;let a=0;for(let i=0;i<P.length;i++){const p=P[i],q=P[(i+1)%P.length];a+=(p[1]*r*Math.cos(lat0)*R)*(q[0]*r*R)-(q[1]*r*Math.cos(lat0)*R)*(p[0]*r*R);}return Math.abs(a/2);}

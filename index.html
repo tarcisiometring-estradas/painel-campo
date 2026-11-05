@@ -400,10 +400,30 @@ function camFolha(){const m=M();if(!m)return;const at=CAMS[m.id]||"";
   abrirFolha("Mapas oficiais da Geoplant · "+m.nome,`<div class="muted">Escolha o mapa da Geoplant para ver por baixo dos trechos.</div>
    <button class="fzb" data-ck="" style="${!at?"border:2px solid var(--ok)":""}"><span>${!at?"✓ ":""}Nenhum (só o nosso mapa)</span></button>
    ${(m.camadas||[]).map(c=>`<button class="fzb" data-ck="${esc(c.k)}" style="${at===c.k?"border:2px solid var(--ok)":""}"><span>${at===c.k?"✓ ":""}${esc(c.nome)}</span></button>`).join("")}
-   <label class="box card"><b>Transparência</b><input id="cam-op" type="range" min="0.3" max="1" step="0.1" value="${op}" style="width:100%"></label>`);
+   <label class="box card"><b>Transparência</b><input id="cam-op" type="range" min="0.3" max="1" step="0.1" value="${op}" style="width:100%"></label>
+   <div class="box card" style="display:grid;gap:6px"><b>🗒️ Levar para Meus mapas</b><div class="muted">Copia o mapa oficial para Meus mapas, para você anotar e medir. Fica só no seu celular.</div>
+   ${(m.camadas||[]).map(c=>`<button class="btn" data-mm="${esc(c.k)}" style="justify-content:flex-start">＋ ${esc(c.nome)}</button>`).join("")}</div>`);
+  $("#sh-b").querySelectorAll("[data-mm]").forEach(b=>b.onclick=()=>paraMeusMapas(m,(m.camadas||[]).find(c=>c.k===b.dataset.mm),b));
   $("#sh-b").querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{if(b.dataset.ck)CAMS[m.id]=b.dataset.ck;else delete CAMS[m.id];LS.set("camadas",CAMS);fecharFolha();desenharMantendo();});
   $("#cam-op").oninput=e=>{CAMS._op=+e.target.value;LS.set("camadas",CAMS);const im=sv().querySelector("image");if(im)im.setAttribute("opacity",e.target.value);};}
 $("#b-cam").onclick=camFolha;$("#b-cam2").onclick=camFolha;
+/* copia um mapa oficial (já guardado no celular) para Meus mapas, com a georreferência pronta */
+function mmDB(){return new Promise((ok,er)=>{const r=indexedDB.open("meusmapas",1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore("mapas",{keyPath:"id"});const n=d.createObjectStore("notas",{keyPath:"id"});n.createIndex("mapa","mapa");};r.onsuccess=()=>ok(r.result);r.onerror=()=>er(r.error);});}
+async function paraMeusMapas(m,c,btn){if(!c)return;const tx0=btn.textContent;btn.disabled=true;btn.textContent="Copiando…";
+  try{const db=await mmDB();const chave="oficial:"+c.arq;
+    const ja=await new Promise(ok=>{const q=db.transaction("mapas").objectStore("mapas").getAll();q.onsuccess=()=>ok(q.result.find(x=>x.hash===chave));q.onerror=()=>ok(null);});
+    if(ja){btn.textContent="✓ Já está em Meus mapas";aviso("Esse mapa já está em Meus mapas.");return;}
+    const u=await camAbrir(c,senhaEquipe());const blob=await (await fetch(u)).blob();
+    const im=new Image();await new Promise((ok,er)=>{im.onload=ok;im.onerror=er;im.src=u;});const W=im.naturalWidth,H=im.naturalHeight;
+    const t=document.createElement("canvas");t.width=220;t.height=Math.round(H*220/W);t.getContext("2d").drawImage(im,0,0,t.width,t.height);
+    /* pixel da imagem → lat/lon: ajusta um plano em 25 pontos (matriz da camada + georreferência do mapa) */
+    const [a,b,cc,d,e,f]=c.m,P=[];for(let i=0;i<=4;i++)for(let j=0;j<=4;j++){const uu=i/4,vv=j/4,X=a*uu+cc*vv+e,Y=b*uu+d*vv+f;const g=n2g(m,X,Y);P.push([uu*W,vv*H,g[0],g[1]]);}
+    const fit=k=>{const S=[[0,0,0],[0,0,0],[0,0,0]],r=[0,0,0];P.forEach(p=>{const x=[1,p[0],p[1]];for(let q=0;q<3;q++){r[q]+=x[q]*p[k];for(let z=0;z<3;z++)S[q][z]+=x[q]*x[z];}});
+      const A=S.map((l,q)=>[...l,r[q]]);for(let q=0;q<3;q++){let pv=q;for(let z=q+1;z<3;z++)if(Math.abs(A[z][q])>Math.abs(A[pv][q]))pv=z;[A[q],A[pv]]=[A[pv],A[q]];for(let z=0;z<3;z++){if(z===q)continue;const k2=A[z][q]/A[q][q];for(let w=q;w<4;w++)A[z][w]-=k2*A[q][w];}}return A.map((l,q)=>l[3]/l[q]);};
+    const rec={id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),nome:`${m.nome}${m.acesso?" acesso":""} – ${c.nome}`,arq:c.arq,hash:chave,em:Date.now(),img:blob,thumb:t.toDataURL("image/jpeg",0.7),w:W,h:H,geo:{px:{A:fit(2),B:fit(3)}},oficial:1};
+    await new Promise((ok,er)=>{const q=db.transaction("mapas","readwrite").objectStore("mapas").put(rec);q.onsuccess=ok;q.onerror=()=>er(q.error);});
+    btn.textContent="✓ Copiado para Meus mapas";aviso("Copiado. Abra em 🗒️ Meus mapas para anotar.");}
+  catch(e){btn.textContent=tx0;btn.disabled=false;aviso(e&&e.rede?"Esse mapa ainda não está guardado no celular. Com Wi‑Fi, toque em ⬇️ Guardar mapas oficiais.":"Não consegui copiar. Confira a senha da equipe.");}}
 /* ===== medir distância e área (linha ou área), funciona na fazenda e na região, sem internet ===== */
 const MED={on:false,tipo:"linha",pts:[],un:LS.get("med_un","auto"),grav:false};
 const fDist=m=>MED.un==="m"?fmt(Math.round(m))+" m":MED.un==="km"||MED.un==="ha"?fmt(Math.round(m/10)/100)+" km":fM(m);
