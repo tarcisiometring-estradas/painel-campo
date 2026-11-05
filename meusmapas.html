@@ -17,6 +17,10 @@ button,.btn,input,select,textarea{font:inherit;color:inherit}
 /* ---- lista ---- */
 #lista{max-width:720px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left));display:grid;gap:12px}
 #lista h1{margin:0;font-size:24px}
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(20px + env(safe-area-inset-bottom));z-index:5;display:grid;justify-items:center;gap:4px;cursor:pointer}
+.fab .mais{width:62px;height:62px;border-radius:50%;background:var(--ok);color:#fff;font:400 38px/62px system-ui;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.fab small{font-size:11px;font-weight:700;background:var(--sf);border:1px solid var(--ln);border-radius:8px;padding:2px 6px}
+#lista{padding-bottom:120px}
 .topo{display:flex;gap:8px;align-items:center}
 .cards{display:grid;gap:10px}
 .cm{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:8px;cursor:pointer;text-align:left;width:100%}
@@ -58,7 +62,7 @@ label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-rad
 <section id="lista">
   <div class="topo"><a class="btn" href="./">‹ Início</a><h1 style="flex:1">Meus mapas</h1></div>
   <div class="muted">Mapas em PDF (os que chegam pelo WhatsApp) com as <b>suas</b> anotações. Fica só neste celular e não vai para o painel da empresa.</div>
-  <label class="btn pri" style="min-height:52px">📥 Importar mapa (PDF) do celular<input id="imp" type="file" accept="application/pdf,.pdf" multiple hidden></label>
+  <label class="fab" aria-label="Importar mapa (PDF)"><span class="mais">+</span><small>Importar mapa</small><input id="imp" type="file" accept="application/pdf,.pdf,*/*" multiple hidden></label>
   <div class="cards" id="cards"></div>
   <div class="vazio" id="como">
     <b>Como trazer um mapa do WhatsApp</b>
@@ -67,7 +71,7 @@ label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-rad
       <li>Toque em <b>Compartilhar</b> (⋮ › Compartilhar ou o ícone ↗).</li>
       <li>Escolha <b>Estradas</b> (este app). Ele abre aqui e guarda o mapa.</li>
     </ol>
-    <div class="muted">Se "Estradas" não aparecer na lista: instale o app (tela inicial › Instalar o app). Ou baixe o PDF no WhatsApp e use o botão 📥 Importar acima.</div>
+    <div class="muted">Ou toque no <b>+ verde</b> (embaixo, à direita) e procure o PDF: ☰ › Armazenamento interno › Android › media › com.whatsapp › WhatsApp › Media › <b>WhatsApp Documents</b>.</div>
   </div>
 </section>
 
@@ -341,7 +345,7 @@ async function exportar(){const nome=(M.nome.replace(/[^\w\- ]+/g,"").trim()||"m
 addEventListener("resize",()=>{if(M&&VB)aplicar();});
 (async()=>{try{await abrirDB();}catch(e){aviso("Não consegui abrir o armazenamento do celular.",6000);return;}
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
-  if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+  if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js").then(reg=>{document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&navigator.onLine)reg.update().catch(()=>{});});}).catch(()=>{});let rc=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(rc||$("#visor").classList.contains("on"))return;rc=true;location.reload();});}
   /* PDFs que chegaram pelo "Compartilhar" do WhatsApp */
   if(/compartilhado|fila/.test(location.search)){try{const c=await caches.open("importar-fila");const ks=await c.keys();const fs=[];
       for(const k of ks){const r=await c.match(k);const b=await r.blob();fs.push(new File([b],decodeURIComponent(r.headers.get("x-nome")||"Mapa.pdf"),{type:"application/pdf"}));await c.delete(k);}
