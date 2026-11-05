@@ -68,6 +68,9 @@ label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-rad
   <div class="muted">Mapas em PDF (os que chegam pelo WhatsApp) com as <b>suas</b> anotações. Fica só neste celular e não vai para o painel da empresa.</div>
   <label class="fab" aria-label="Importar mapa (PDF)"><span class="mais">+</span><small>Importar mapa</small><input id="imp" type="file" accept="application/pdf,.pdf,*/*" multiple hidden></label>
   <div class="cards" id="cards"></div>
+  <div id="zera" style="display:none;margin-top:18px;border-top:1px solid var(--ln);padding-top:12px;gap:6px">
+    <div class="muted">Seus mapas e anotações ficam guardados neste celular e <b>não somem quando o app atualiza</b>. Só saem se você excluir aqui.</div>
+    <button class="btn dan" id="z-bt">🗑️ Zerar Meus mapas deste celular</button><div id="z-cf"></div></div>
   <div class="vazio" id="como">
     <b>Como trazer um mapa do WhatsApp</b>
     <ol>
@@ -181,10 +184,18 @@ $("#imp").onchange=e=>{importar(e.target.files);e.target.value="";};
 /* ================= lista ================= */
 async function listar(){const L=(await dbTodos("mapas")).sort((a,b)=>b.em-a.em);const N=await dbTodos("notas");
   $("#cards").innerHTML=L.map(m=>{const n=N.filter(x=>x.mapa===m.id).length;return `<div class="cw"><button class="cm" data-m="${m.id}"><img src="${m.thumb}" alt=""><span><b>${esc(m.nome)}</b><small>${m.geo?"GPS ✓":"sem GPS"} · ${n} anotação(ões) · ${quando(m.em)}</small></span></button><button class="tp" data-op="${m.id}" aria-label="Opções do mapa">⋮</button></div>`;}).join("");
-  $("#como").style.display=L.length?"none":"grid";
+  $("#como").style.display=L.length?"none":"grid";$("#zera").style.display=L.length?"grid":"none";
   document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>abrir(b.dataset.m));
   document.querySelectorAll("[data-op]").forEach(b=>b.onclick=()=>opcoes(b.dataset.op));
   if(L.length)$("#cards").insertAdjacentHTML("afterend","");}
+
+/* zerar tudo: só por escolha da pessoa, com duas confirmações */
+document.addEventListener("click",async e=>{if(!e.target.closest)return;
+  if(e.target.closest("#z-bt")){const L=await dbTodos("mapas"),N=await dbTodos("notas");
+    $("#z-cf").innerHTML=`<div style="display:grid;gap:8px;border:1px solid var(--danger);border-radius:12px;padding:12px"><b>Apagar os ${L.length} mapa(s) e as ${N.length} anotação(ões) deste celular?</b><div class="muted">Não tem como desfazer. Se quiser guardar as anotações, exporte antes (⋮ › Exportar).</div><label class="f">Para confirmar, digite APAGAR<input id="z-tx" autocapitalize="characters"></label><button class="btn dan" id="z-sim">Zerar tudo</button><button class="btn" id="z-nao">Não, voltar</button></div>`;}
+  if(e.target.closest("#z-nao"))$("#z-cf").innerHTML="";
+  if(e.target.closest("#z-sim")){if(($("#z-tx").value||"").trim().toUpperCase()!=="APAGAR"){aviso("Digite APAGAR para confirmar.");return;}
+    await pr(tx("notas","readwrite").clear());await pr(tx("mapas","readwrite").clear());$("#z-cf").innerHTML="";await listar();aviso("Meus mapas zerado neste celular.");}});
 
 /* menu ⋮ de cada mapa */
 async function opcoes(id){const m=await dbPor("mapas",id);if(!m)return;const ns=await notasDe(id);

@@ -891,6 +891,8 @@ $("#selm").onchange=e=>{if(e.target.value==="R"){irRegiao(false);setTimeout(gpsA
 async function buscarDados(forcar){try{const r=await fetch("dados/mapas.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)throw 0;const d=await r.json();
     const mudou=!DADOS||d.versao!==DADOS.versao;if(mudou){const id=LISTA[I]&&LISTA[I].id;DADOS=d;aplicarSit();montarLista();const k=LISTA.findIndex(m=>m.id===(id||LS.get("mapa","")));I=k>=0?k:0;desenhar();}const ms=await buscarSit(forcar);if(ms&&!mudou)desenhar();if($("#home").classList.contains("on")&&!$("#sheet").classList.contains("on"))home();return (mudou||ms)&&forcar;}catch(e){return false;}}
 let swNovo=null;
+/* pede ao celular para não apagar os dados guardados (mapas oficiais, Meus mapas) quando faltar espaço */
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(reg=>{
   const ver=w=>{if(!w)return;w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller){swNovo=w;$("#upd").style.display="flex";}});};
   ver(reg.installing);reg.addEventListener("updatefound",()=>ver(reg.installing));}).catch(()=>{});
