@@ -20,7 +20,7 @@
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
 button,select,input,textarea{font:inherit;color:inherit}
 svg#mapa{position:fixed;inset:0;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;background:var(--bg)}
-.comcam .tal{fill:transparent!important;stroke:transparent!important}.comcam .tt,.comcam .ts{opacity:0}#b-cam.on{background:var(--ok);color:#fff}
+.comcam .tal{fill:transparent!important;stroke:transparent!important}.comcam .tt,.comcam .ts{opacity:0}#b-cam.on{background:var(--ok);color:#fff}.campill{margin-top:6px;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:4px 12px;border-radius:999px;border:1.5px solid var(--ok);background:var(--card,rgba(0,0,0,.55));color:inherit;font:600 13px inherit;pointer-events:auto;cursor:pointer}.campill.on{background:var(--ok);color:#fff}.campill b{font-size:11px}
 .tal{fill:var(--tal);stroke:var(--tall);stroke-width:1;vector-effect:non-scaling-stroke}
 .tr{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:var(--tw,3px);vector-effect:non-scaling-stroke}
 .s-pronto,.s-g-ok{stroke:var(--ok)}.s-agulhado,.s-g-and{stroke:var(--and)}.s-preparo{stroke:var(--and)}.s-falta,.s-g-zero{stroke:var(--zero)}
@@ -128,13 +128,13 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 </head>
 <body>
 <svg id="mapa" role="img" aria-label="Mapa da fazenda"></svg><svg id="reg" role="img" aria-label="Mapa da região"></svg>
-<div class="top"><div class="toprow"><button id="b-home" aria-label="Voltar ao início" title="Voltar ao início">← Início</button><select id="selm" aria-label="Fazenda"></select></div><div id="sub"></div></div>
+<div class="top"><div class="toprow"><button id="b-home" aria-label="Voltar ao início" title="Voltar ao início">← Início</button><select id="selm" aria-label="Fazenda"></select></div><div id="sub"></div><button id="b-cam2" class="campill" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5" opacity=".55"/></svg><span id="b-cam2t">Ver mapa oficial da Geoplant</span><b aria-hidden="true">▾</b></button></div>
 <div class="ctl">
   <button id="b-norte" aria-label="Voltar o norte para cima" title="Voltar o norte para cima" hidden><i style="display:block;font-style:normal;font-size:15px;line-height:1;color:#B5483B">▲<br><b style="font-size:11px;color:var(--ink)">N</b></i></button>
   <button id="b-in" aria-label="Zoom +" title="Zoom +">＋</button>
   <button id="b-out" aria-label="Zoom −" title="Zoom −">－</button>
   <button id="b-fit" aria-label="Ver a fazenda inteira" title="Ver a fazenda inteira">⤢<span class="lb">Ver a fazenda inteira</span></button>
-  <button id="b-cam" aria-label="Mapas oficiais (camadas)" title="Mapas oficiais (camadas)" hidden>🗂<span class="lb">Mapas oficiais</span></button>
+  <button id="b-cam" aria-label="Mapas oficiais (camadas)" title="Mapas oficiais (camadas)" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5" opacity=".55"/></svg><span class="lb">Mapas oficiais</span></button>
   <button id="b-gps" aria-label="Onde estou (GPS)" title="Onde estou (GPS)">◉<span class="lb">Onde estou (GPS)</span></button>
   <button id="b-med" aria-label="Medir distância ou área" title="Medir distância ou área">📏<span class="lb">Medir</span></button>
   <button id="b-pt" aria-label="Marcar ponto" title="Marcar ponto">📍<span class="lb">Marcar ponto</span></button>
@@ -257,7 +257,7 @@ function rtMapa(m){if(!RT.res)return "";if(m._rt!=null)return m._rt;const P=RT.r
 function desenhar(){const m=M();sel=null;VB=null;
   if(!REG.on)$("#selm").value=String(I);
   $("#sub").textContent=`${m.mapa} · mapas de ${DADOS.versao}`;
-  const cA=camAt(m);sv().classList.toggle("comcam",!!cA);$("#b-cam").hidden=!(m.camadas||[]).length;$("#b-cam").classList.toggle("on",!!cA);
+  const cA=camAt(m);sv().classList.toggle("comcam",!!cA);$("#b-cam").hidden=!(m.camadas||[]).length;$("#b-cam").classList.toggle("on",!!cA);$("#b-cam2").hidden=!(m.camadas||[]).length;$("#b-cam2").classList.toggle("on",!!cA);$("#b-cam2t").textContent=cA?"Mapa oficial: "+cA.nome:"Ver mapa oficial da Geoplant";
   sv().innerHTML=`<g id="rotf">`+camImg(m)+`<g id="vic">${vicMapa(m)}</g>`+rodMapa(m)+rtMapa(m)+m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
     m.trechos.map(t=>`<polyline class="tr s-${t.st}${t.n%2?"":" alt"}" data-n="${t.n}" points="${t.pts.join(" ")}"/><polyline class="hit" data-n="${t.n}" points="${t.pts.join(" ")}"/>`).join("")+
     m.talhoes.filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fx tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${Math.max(...xs)-Math.min(...xs)}" data-h="${Math.max(...ys)-Math.min(...ys)}" data-n="${String(t.id).length}"><text class="tt" x="${t.lab[0]}" y="${t.lab[1]}">${esc(t.id)}</text>${t.ha?`<text class="ts" x="${t.lab[0]}" y="${t.lab[1]+12}">${fmt(Math.round(t.ha*10)/10)} ha</text>`:""}</g>`;}).join("")+
@@ -387,20 +387,20 @@ function olhoSenha(b){const i=b.previousElementSibling;const mostrar=i.type==="p
 const senhaLimpa=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g,"");
 function senhaEquipe(){try{return localStorage.getItem("painel_senha")||"";}catch(e){return "";}}
 function camImg(m){const c=camAt(m);if(!c)return "";const u=CAMB[c.arq];
-  if(u===undefined){CAMB[c.arq]=null;camAbrir(c,senhaEquipe()).then(x=>{CAMB[c.arq]=x;desenharMantendo();}).catch(er=>{CAMB[c.arq]=undefined;delete CAMS[m.id];if(navigator.onLine&&!(er&&er.rede))try{localStorage.removeItem("painel_senha");}catch(e){}LS.set("camadas",CAMS);aviso(navigator.onLine?"Senha da equipe errada ou faltando. Toque em 🗂 de novo.":"Esse mapa oficial ainda não está guardado no celular. Com Wi‑Fi, toque em ⬇ Guardar mapas oficiais no início.");desenharMantendo();});return "";}
+  if(u===undefined){CAMB[c.arq]=null;camAbrir(c,senhaEquipe()).then(x=>{CAMB[c.arq]=x;desenharMantendo();}).catch(er=>{CAMB[c.arq]=undefined;delete CAMS[m.id];if(navigator.onLine&&!(er&&er.rede))try{localStorage.removeItem("painel_senha");}catch(e){}LS.set("camadas",CAMS);aviso(navigator.onLine?"Senha da equipe errada ou faltando. Toque em “Ver mapa oficial” de novo.":"Esse mapa oficial ainda não está guardado no celular. Com Wi‑Fi, toque em ⬇ Guardar mapas oficiais no início.");desenharMantendo();});return "";}
   if(!u)return "";const op=CAMS._op!=null?CAMS._op:0.9;return `<image href="${u}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(${c.m.join(" ")})" opacity="${op}" style="pointer-events:none"/>`;}
 function desenharMantendo(){const v=VB;desenhar();if(v){VB=v;aplicar();}}
 function camFolha(){const m=M();if(!m)return;const at=CAMS[m.id]||"";
-  if(!senhaEquipe()){abrirFolha("🗂 Mapas oficiais",`<div class="muted">Digite a senha da equipe (só na primeira vez).</div><div style="position:relative"><input id="cam-senha" class="btn" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Senha da equipe" style="width:100%;text-align:left;padding-right:56px"><button type="button" class="btn" aria-label="Mostrar a senha" onclick="olhoSenha(this)" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);min-height:38px;padding:0 10px;border:0;background:transparent">${OLHO_A}</button></div><button class="btn pri" id="cam-ok" style="min-height:50px">Entrar</button>`);
+  if(!senhaEquipe()){abrirFolha("Mapas oficiais da Geoplant",`<div class="muted">Digite a senha da equipe (só na primeira vez).</div><div style="position:relative"><input id="cam-senha" class="btn" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Senha da equipe" style="width:100%;text-align:left;padding-right:56px"><button type="button" class="btn" aria-label="Mostrar a senha" onclick="olhoSenha(this)" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);min-height:38px;padding:0 10px;border:0;background:transparent">${OLHO_A}</button></div><button class="btn pri" id="cam-ok" style="min-height:50px">Entrar</button>`);
     $("#cam-ok").onclick=()=>{const v=senhaLimpa($("#cam-senha").value);if(!v)return;try{localStorage.setItem("painel_senha",v);}catch(e){}camFolha();};return;}
   const op=CAMS._op!=null?CAMS._op:0.9;
-  abrirFolha("🗂 Mapas oficiais · "+m.nome,`<div class="muted">Escolha o mapa da Geoplant para ver por baixo dos trechos.</div>
+  abrirFolha("Mapas oficiais da Geoplant · "+m.nome,`<div class="muted">Escolha o mapa da Geoplant para ver por baixo dos trechos.</div>
    <button class="fzb" data-ck="" style="${!at?"border:2px solid var(--ok)":""}"><span>${!at?"✓ ":""}Nenhum (só o nosso mapa)</span></button>
    ${(m.camadas||[]).map(c=>`<button class="fzb" data-ck="${esc(c.k)}" style="${at===c.k?"border:2px solid var(--ok)":""}"><span>${at===c.k?"✓ ":""}${esc(c.nome)}</span></button>`).join("")}
    <label class="box card"><b>Transparência</b><input id="cam-op" type="range" min="0.3" max="1" step="0.1" value="${op}" style="width:100%"></label>`);
   $("#sh-b").querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{if(b.dataset.ck)CAMS[m.id]=b.dataset.ck;else delete CAMS[m.id];LS.set("camadas",CAMS);fecharFolha();desenharMantendo();});
   $("#cam-op").oninput=e=>{CAMS._op=+e.target.value;LS.set("camadas",CAMS);const im=sv().querySelector("image");if(im)im.setAttribute("opacity",e.target.value);};}
-$("#b-cam").onclick=camFolha;
+$("#b-cam").onclick=camFolha;$("#b-cam2").onclick=camFolha;
 /* ===== medir distância e área (linha ou área), funciona na fazenda e na região, sem internet ===== */
 const MED={on:false,tipo:"linha",pts:[],un:LS.get("med_un","auto"),grav:false};
 const fDist=m=>MED.un==="m"?fmt(Math.round(m))+" m":MED.un==="km"||MED.un==="ha"?fmt(Math.round(m/10)/100)+" km":fM(m);
@@ -710,7 +710,7 @@ function rMapaDe(f){return LISTA.findIndex(m=>m.cod===f.cod&&!m.acesso)>=0?LISTA
 function rEntrar(f,manterVista){const i=rMapaDe(f);if(i<0)return;const V=REG.VB;REG.on=false;document.body.classList.remove("regiao");I=i;desenhar();
   if(manterVista&&V){const m=M();const c=RG(V.x+V.w/2,V.y+V.h/2);const [x,y]=g2n(m,c[0],c[1]);const w=V.w*RU/mpu(m);const h=w*raz();VB={x:x-w/2,y:y-h/2,w,h};aplicar();}
   aviso(f.n);LS.set("modo","fazenda");}
-function irRegiao(centro){REG.on=true;$("#b-cam").hidden=true;document.body.classList.add("regiao");$("#info").style.display="none";$("#selm").value="R";$("#sub").textContent="Região · "+(REG.dados?REG.dados.faz.length+" fazendas":"carregando…");
+function irRegiao(centro){REG.on=true;$("#b-cam").hidden=true;$("#b-cam2").hidden=true;document.body.classList.add("regiao");$("#info").style.display="none";$("#selm").value="R";$("#sub").textContent="Região · "+(REG.dados?REG.dados.faz.length+" fazendas":"carregando…");
   if(!rsv().innerHTML)rDesenhar();
   if(centro){const m=M();const c=[VB.x+VB.w/2,VB.y+VB.h/2];const [lat,lon]=n2g(m,c[0],c[1]);const [x,y]=RP(lon,lat);const w=VB.w*mpu(m)/RU;const h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};}
   rLegenda();rAplicar();rInfo();LS.set("modo","regiao");}
