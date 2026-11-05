@@ -69,6 +69,8 @@ public class MainActivity extends Activity {
             @Override public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams p) {
                 if (escolha != null) escolha.onReceiveValue(null);
                 escolha = cb;
+                /* campo de foto com "capture": abre a CÂMERA direto */
+                if (p.isCaptureEnabled()) { abrirCamera(); return true; }
                 try { startActivityForResult(p.createIntent(), 2); } catch (Exception e) { escolha = null; return false; }
                 return true;
             }
@@ -80,12 +82,29 @@ public class MainActivity extends Activity {
         else web.loadUrl(chegou ? BASE + "meusmapas.html?app=1" : BASE);
     }
 
+    Uri fotoUri;
+    void abrirCamera() {
+        if (Build.VERSION.SDK_INT >= 23 && checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, 4); return;
+        }
+        try {
+            File dir = new File(getCacheDir(), "fotos"); dir.mkdirs();
+            File f = new File(dir, "foto_" + System.currentTimeMillis() + ".jpg");
+            fotoUri = FileProvider.getUriForFile(this, "br.sucuriu.estradas.arquivos", f);
+            Intent i = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            i.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, fotoUri);
+            i.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivityForResult(i, 3);
+        } catch (Exception e) { if (escolha != null) { escolha.onReceiveValue(null); escolha = null; } }
+    }
+
     boolean temLocal() {
         return Build.VERSION.SDK_INT < 23 || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     @Override public void onRequestPermissionsResult(int req, String[] p, int[] g) {
         if (req == 1 && geoCb != null) { geoCb.invoke(geoOrigem, temLocal(), true); geoCb = null; }
+        if (req == 4) { if (g.length > 0 && g[0] == PackageManager.PERMISSION_GRANTED) abrirCamera(); else if (escolha != null) { escolha.onReceiveValue(null); escolha = null; } }
     }
 
     @Override protected void onNewIntent(Intent i) {
@@ -126,6 +145,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onActivityResult(int req, int res, Intent d) {
+        if (req == 3 && escolha != null) { escolha.onReceiveValue(res == RESULT_OK && fotoUri != null ? new Uri[]{fotoUri} : null); escolha = null; return; }
         if (req == 2 && escolha != null) {
             Uri[] r = null;
             if (res == RESULT_OK && d != null) {

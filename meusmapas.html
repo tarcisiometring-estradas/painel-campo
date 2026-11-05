@@ -93,7 +93,7 @@ label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-rad
 
 <div id="scrim"></div><div id="sheet"></div>
 <div id="aviso"></div><div id="prog"><div><b id="prog-t">Abrindo o mapa…</b><div class="muted" style="color:#ddd" id="prog-s"></div></div></div>
-<input id="foto" type="file" accept="image/*" capture="environment" hidden>
+<input id="foto" type="file" accept="image/*" capture="environment" hidden><input id="foto2" type="file" accept="image/*" hidden>
 
 <script src="lib/pdf-lib.min.js"></script>
 <script src="lib/pdfjs.min.js"></script>
@@ -294,10 +294,11 @@ $("#b-pt").onclick=()=>{if(!M.geo){aviso("Este mapa não tem georreferência.");
   const montar=()=>folha(`<h2>Marcar ponto<button class="btn" id="f-x">Cancelar</button></h2>
    <div class="linha" style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn ${onde==="gps"?"pri":""}" id="f-g" ${temGps?"":"disabled"}>Na minha posição</button><button class="btn ${onde==="centro"?"pri":""}" id="f-c">No centro da tela</button></div>
    <label class="f">Nome<input id="f-n" placeholder="Ex.: Buraco, bueiro, erosão"></label><label class="f">Observação<textarea id="f-o" rows="2"></textarea></label>
-   <button class="btn" id="f-f">📷 ${foto?"Foto anexada ✓ (trocar)":"Foto (opcional)"}</button><button class="btn pri" id="f-ok">Salvar ponto</button>`,0);
+   <div style="display:flex;gap:6px;flex-wrap:wrap">${foto?`<span class="muted" style="align-self:center">Foto anexada ✓</span>`:""}<button class="btn" id="f-f">📷 Tirar foto</button><button class="btn" id="f-g2">🖼 Da galeria</button></div><button class="btn pri" id="f-ok">Salvar ponto</button>`,0);
   const ligar=()=>{$("#f-x").onclick=fechar;const g=$("#f-g");if(g)g.onclick=()=>{const n=$("#f-n").value,o=$("#f-o").value;onde="gps";montar();ligar();$("#f-n").value=n;$("#f-o").value=o;};
     $("#f-c").onclick=()=>{const n=$("#f-n").value,o=$("#f-o").value;onde="centro";montar();ligar();$("#f-n").value=n;$("#f-o").value=o;};
-    $("#f-f").onclick=()=>{const n=$("#f-n").value,o=$("#f-o").value;$("#foto").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(f){foto=await reduzir(f);}montar();ligar();$("#f-n").value=n;$("#f-o").value=o;};$("#foto").click();};
+    const pegar=id=>{const n=$("#f-n").value,o=$("#f-o").value;$(id).onchange=async e=>{const f=e.target.files[0];e.target.value="";if(f){foto=await reduzir(f);}montar();ligar();$("#f-n").value=n;$("#f-o").value=o;};$(id).click();};
+    $("#f-f").onclick=()=>pegar("#foto");$("#f-g2").onclick=()=>pegar("#foto2");
     $("#f-ok").onclick=async()=>{const p=onde==="gps"&&GPS.fix?[GPS.fix.lat,GPS.fix.lon]:c;const n={id:uid(),mapa:M.id,tipo:"ponto",pts:[p],nome:$("#f-n").value.trim(),obs:$("#f-o").value.trim(),foto,em:Date.now()};
       await dbPut("notas",n);NOTAS.push(n);fechar();aplicar();aviso("Ponto salvo.");};};
   montar();ligar();};
