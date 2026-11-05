@@ -897,7 +897,10 @@ if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(
   const ver=w=>{if(!w)return;w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller){swNovo=w;$("#upd").style.display="flex";}});};
   ver(reg.installing);reg.addEventListener("updatefound",()=>ver(reg.installing));
   setInterval(()=>{if(navigator.onLine)reg.update().catch(()=>{});},30*60*1000);}).catch(()=>{});
-  let recarregou=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(recarregou)return;recarregou=true;location.reload();});}
+  let recarregou=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(recarregou||window.__atualizando)return;
+    /* versão nova chegou sozinha: na tela inicial recarrega; dentro de um mapa NÃO tira a pessoa do mapa — só avisa */
+    if(document.getElementById("home").classList.contains("on")){recarregou=true;location.reload();}
+    else{const u=document.getElementById("upd");if(u){u.querySelector("span").textContent="Versão nova pronta.";u.style.display="flex";}}});}
 /* botão Instalar o app: Chrome/Edge usam o aviso do navegador; iPhone e navegador do WhatsApp recebem o passo a passo */
 let instEv=null;const jaApp=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
 const UA=navigator.userAgent,iOS=/iPhone|iPad|iPod/i.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1),
