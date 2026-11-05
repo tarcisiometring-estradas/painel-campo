@@ -77,7 +77,10 @@ public class MainActivity extends Activity {
         });
         if (Build.VERSION.SDK_INT >= 23 && !temLocal())
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
-        boolean chegou = receber(getIntent());
+        /* só lê o arquivo numa abertura nova; voltar de outro app (ou o Android recriar a tela) não importa de novo */
+        boolean deHistorico = (getIntent().getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0;
+        boolean chegou = b == null && !deHistorico && receber(getIntent());
+        setIntent(new Intent(Intent.ACTION_MAIN));
         if (b != null) web.restoreState(b);
         else web.loadUrl(chegou ? BASE + "meusmapas.html?app=1" : BASE);
     }
@@ -110,6 +113,7 @@ public class MainActivity extends Activity {
     @Override protected void onNewIntent(Intent i) {
         super.onNewIntent(i);
         if (receber(i)) web.loadUrl(BASE + "meusmapas.html?app=1");
+        setIntent(new Intent(Intent.ACTION_MAIN));
     }
 
     /** lê o(s) PDF(s) que vieram do WhatsApp */
