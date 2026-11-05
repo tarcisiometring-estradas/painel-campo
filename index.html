@@ -461,7 +461,13 @@ async function camBaixar(lista,atualizar,prog){const c=await caches.open(CAMC);l
       const r=await fetch(u+"?atualizar="+Date.now(),{cache:"no-store"});if(r.ok){await c.put(u,r);ok++;}else falha++;}catch(e){falha++;}prog&&prog(i+1,lista.length);}
   return {ok,falha};}
 $("#h-cam").onclick=async()=>{if(CAMBX)return;if(!navigator.onLine){aviso("Sem internet agora. Faça isso com Wi‑Fi, antes de ir a campo.");return;}
-  if(!senhaEquipe()){aviso("Primeiro abra uma fazenda e toque em 🗂 para digitar a senha da equipe.");return;}
+  /* confere a senha da equipe ANTES de baixar (abre um mapa de teste); se faltar ou estiver velha, pede aqui mesmo */
+  const T0=camTodas();const teste=(()=>{for(const f of DADOS.fazendas)for(const m of f.mapas)for(const c of (m.camadas||[]))return c;})();
+  const ok=async v=>{if(!v||!teste)return !!v;try{await camAbrir(teste,v);return true;}catch(e){if(e&&e.rede)throw e;return false;}};
+  let v=senhaEquipe();try{if(!(await ok(v)))v="";}catch(e){aviso("A internet caiu. Tente de novo com Wi‑Fi.");return;}
+  if(!v){abrirFolha("⬇️ Guardar mapas oficiais",`<div class="muted">Digite a senha da equipe.</div><div style="position:relative"><input id="hc-s" class="btn" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Senha da equipe" style="width:100%;text-align:left;padding-right:56px"><button type="button" class="btn" aria-label="Mostrar a senha" onclick="olhoSenha(this)" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);min-height:38px;padding:0 10px;border:0;background:transparent">${OLHO_A}</button></div><button class="btn pri" id="hc-ok" style="min-height:50px">Guardar os mapas</button><div class="muted" id="hc-m"></div>`);
+    $("#hc-ok").onclick=async()=>{const x=senhaLimpa($("#hc-s").value);if(!x)return;$("#hc-m").textContent="Conferindo a senha…";let bom=false;try{bom=await ok(x);}catch(e){$("#hc-m").textContent="A internet caiu. Tente de novo.";return;}
+      if(!bom){$("#hc-m").textContent="Senha errada. Confira com o supervisor.";return;}try{localStorage.setItem("painel_senha",x);}catch(e){}Object.keys(CAMB).forEach(k=>delete CAMB[k]);fecharFolha();$("#h-cam").onclick();};return;}
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
   const T=camTodas(),cv0=LS.get("cam_ver",""),atual=!!cv0&&cv0!==DADOS.versao;CAMBX=true;const el=$("#h-cams");
   const r=await camBaixar(T,atual,(i,n)=>{el.innerHTML=`Guardando ${i} de ${n}… não feche o app.`;});CAMBX=false;
