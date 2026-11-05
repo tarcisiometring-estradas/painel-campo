@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#1F2420">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Meus mapas · Estradas Sucuriú</title>
+<style>
+:root{--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--ok:#2E8B57;--gps:#1A73E8;--mk:#C0492F;--and:#E0A100;--danger:#F08A80}
+:root[data-tema="claro"],:root[data-tema="sol"]{--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--danger:#B0402A}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+button,.btn,input,select,textarea{font:inherit;color:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--ln);background:var(--sf);cursor:pointer;text-decoration:none}
+.btn.pri{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700}
+.btn.dan{color:var(--danger)}
+.muted{color:var(--mut);font-size:13px}
+/* ---- lista ---- */
+#lista{max-width:720px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left));display:grid;gap:12px}
+#lista h1{margin:0;font-size:24px}
+.topo{display:flex;gap:8px;align-items:center}
+.cards{display:grid;gap:10px}
+.cm{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:8px;cursor:pointer;text-align:left;width:100%}
+.cm img{width:96px;height:68px;object-fit:cover;border-radius:8px;background:#fff}
+.cm b{display:block;font-size:15px}.cm small{color:var(--mut)}
+.vazio{background:var(--sf);border:1px dashed var(--ln);border-radius:14px;padding:16px;display:grid;gap:8px}
+.vazio ol{margin:0;padding-left:20px}
+/* ---- visor ---- */
+#visor{position:fixed;inset:0;display:none;background:#ddd;touch-action:none}
+#visor.on{display:block}
+#mp{position:absolute;inset:0;width:100%;height:100%;touch-action:none;background:#e8e6df}
+.barra{position:fixed;top:calc(8px + env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));display:flex;gap:6px;align-items:center;z-index:3}
+.barra .nome{flex:1;min-width:0;background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:6px 10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctl{position:fixed;right:max(8px,env(safe-area-inset-right));top:calc(64px + env(safe-area-inset-top));display:grid;gap:8px;z-index:3}
+.ctl .btn{width:48px;height:48px;min-height:48px;padding:0;font-size:20px}
+.ctl .btn.on{background:var(--gps);border-color:var(--gps);color:#fff}
+#info{position:fixed;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:calc(8px + env(safe-area-inset-bottom));z-index:3;background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;display:grid;gap:8px}
+#info .linha{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#alvo{position:fixed;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;pointer-events:none;z-index:2;display:none}
+#alvo.on{display:block}
+#alvo::before,#alvo::after{content:"";position:absolute;background:rgba(192,73,47,.85)}
+#alvo::before{left:21px;top:0;width:2px;height:44px}#alvo::after{top:21px;left:0;height:2px;width:44px}
+#alvo i{position:absolute;inset:12px;border:2px solid rgba(192,73,47,.85);border-radius:50%;background:rgba(255,255,255,.25)}
+/* ---- folha ---- */
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:8}#scrim.on{display:block}
+#sheet{position:fixed;left:0;right:0;bottom:0;max-height:85vh;overflow:auto;background:var(--sf);border-radius:16px 16px 0 0;z-index:9;transform:translateY(105%);transition:transform .2s;padding:14px max(16px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:grid;gap:10px}
+#sheet.on{transform:none}
+#sheet h2{margin:0;font-size:18px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+label.f{display:grid;gap:4px;font-weight:600}
+label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--ln);background:var(--bg)}
+.nota{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;border-top:1px solid var(--ln);padding-top:8px}
+.nota b{display:block}
+#aviso{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top));transform:translateX(-50%);background:#000c;color:#fff;padding:10px 14px;border-radius:12px;z-index:20;display:none;max-width:90vw;text-align:center}
+#prog{position:fixed;inset:0;background:#000a;color:#fff;z-index:30;display:none;place-items:center;text-align:center;padding:24px}
+#prog.on{display:grid}
+@media (prefers-reduced-motion:reduce){#sheet{transition:none}}
+</style></head>
+<body>
+<section id="lista">
+  <div class="topo"><a class="btn" href="./">‹ Início</a><h1 style="flex:1">Meus mapas</h1></div>
+  <div class="muted">Mapas em PDF (os que chegam pelo WhatsApp) com as <b>suas</b> anotações. Fica só neste celular e não vai para o painel da empresa.</div>
+  <label class="btn pri" style="min-height:52px">📥 Importar mapa (PDF) do celular<input id="imp" type="file" accept="application/pdf,.pdf" multiple hidden></label>
+  <div class="cards" id="cards"></div>
+  <div class="vazio" id="como">
+    <b>Como trazer um mapa do WhatsApp</b>
+    <ol>
+      <li>No WhatsApp, abra a conversa e <b>segure o dedo</b> no PDF do mapa.</li>
+      <li>Toque em <b>Compartilhar</b> (⋮ › Compartilhar ou o ícone ↗).</li>
+      <li>Escolha <b>Estradas</b> (este app). Ele abre aqui e guarda o mapa.</li>
+    </ol>
+    <div class="muted">Se "Estradas" não aparecer na lista: instale o app (tela inicial › Instalar o app). Ou baixe o PDF no WhatsApp e use o botão 📥 Importar acima.</div>
+  </div>
+</section>
+
+<section id="visor" aria-label="Mapa">
+  <svg id="mp"><g id="cam"><image id="img" x="0" y="0" preserveAspectRatio="none"/><g id="ns"></g><g id="med"></g><g id="gps"></g></g></svg>
+  <div class="barra"><button class="btn" id="v-x">‹ Mapas</button><div class="nome" id="v-n"></div></div>
+  <div class="ctl">
+    <button class="btn" id="b-in" aria-label="Aproximar">＋</button>
+    <button class="btn" id="b-out" aria-label="Afastar">－</button>
+    <button class="btn" id="b-fit" aria-label="Ver o mapa inteiro">⤢</button>
+    <button class="btn" id="b-gps" aria-label="Onde estou">◉</button>
+    <button class="btn" id="b-med" aria-label="Medir">📏</button>
+    <button class="btn" id="b-pt" aria-label="Marcar ponto">📍</button>
+    <button class="btn" id="b-lst" aria-label="Minhas anotações">☰</button>
+  </div>
+  <div id="alvo"><i></i></div>
+  <div id="info"></div>
+</section>
+
+<div id="scrim"></div><div id="sheet"></div>
+<div id="aviso"></div><div id="prog"><div><b id="prog-t">Abrindo o mapa…</b><div class="muted" style="color:#ddd" id="prog-s"></div></div></div>
+<input id="foto" type="file" accept="image/*" capture="environment" hidden>
+
+<script src="lib/pdf-lib.min.js"></script>
+<script src="lib/pdfjs.min.js"></script>
+<script>
+"use strict";
+try{const t=JSON.parse(localStorage.getItem("tema")||'"escuro"');document.documentElement.setAttribute("data-tema",t);}catch(e){}
+const $=s=>document.querySelector(s),esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function aviso(t,ms){const a=$("#aviso");a.textContent=t;a.style.display="block";clearTimeout(aviso.t);aviso.t=setTimeout(()=>a.style.display="none",ms||3500);}
+function prog(on,t,s){$("#prog").classList.toggle("on",on);if(t)$("#prog-t").textContent=t;$("#prog-s").textContent=s||"";}
+function folha(h){$("#sheet").innerHTML=h;$("#sheet").classList.add("on");$("#scrim").classList.add("on");}
+function fechar(){$("#sheet").classList.remove("on");$("#scrim").classList.remove("on");}
+$("#scrim").onclick=fechar;
+const fmt=(v,d)=>(+v).toLocaleString("pt-BR",{maximumFractionDigits:d==null?0:d,minimumFractionDigits:0});
+const fM=m=>m>=1000?fmt(m/1000,2)+" km":fmt(m)+" m";
+const fA=a=>a>=10000?fmt(a/10000,2)+" ha":fmt(a)+" m²";
+const quando=t=>new Date(t).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"});
+
+/* ================= banco do celular (IndexedDB) ================= */
+let DB;
+function abrirDB(){return new Promise((ok,er)=>{const r=indexedDB.open("meusmapas",1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore("mapas",{keyPath:"id"});const n=d.createObjectStore("notas",{keyPath:"id"});n.createIndex("mapa","mapa");};r.onsuccess=()=>ok(DB=r.result);r.onerror=()=>er(r.error);});}
+const tx=(st,m)=>DB.transaction(st,m||"readonly").objectStore(st);
+const pr=r=>new Promise((ok,er)=>{r.onsuccess=()=>ok(r.result);r.onerror=()=>er(r.error);});
+const dbTodos=st=>pr(tx(st).getAll());
+const dbPor=(st,id)=>pr(tx(st).get(id));
+const dbPut=(st,o)=>pr(tx(st,"readwrite").put(o));
+const dbDel=(st,id)=>pr(tx(st,"readwrite").delete(id));
+const notasDe=id=>pr(tx("notas").index("mapa").getAll(id));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+/* ================= importar PDF georreferenciado ================= */
+pdfjsLib.GlobalWorkerOptions.workerSrc="lib/pdfjs.worker.min.js";
+function num(o){return o&&o.asNumber?o.asNumber():+o;}
+function arr(o){if(!o)return null;const a=[];for(let i=0;i<o.size();i++)a.push(o.get(i));return a;}
+/* lê a georreferência (ISO 32000: /VP › /Measure /GEO, usada por QGIS/ArcGIS/Geoplant) */
+async function lerGeo(buf){const {PDFDocument,PDFName,PDFArray,PDFDict}=PDFLib;
+  const doc=await PDFDocument.load(buf,{ignoreEncryption:true,updateMetadata:false});const pg=doc.getPages()[0];const nd=pg.node;
+  const look=(d,k)=>{const v=d.get(PDFName.of(k));return v?doc.context.lookup(v):null;};
+  const box=pg.getMediaBox();let vp=look(nd,"VP");let best=null;
+  if(vp instanceof PDFArray){for(let i=0;i<vp.size();i++){const v=doc.context.lookup(vp.get(i));if(!(v instanceof PDFDict))continue;const ms=look(v,"Measure");if(!ms)continue;
+    const st=look(ms,"Subtype");if(!st||String(st)!=="/GEO")continue;const bb=arr(look(v,"BBox")).map(x=>num(doc.context.lookup(x)));
+    const g=arr(look(ms,"GPTS")).map(x=>num(doc.context.lookup(x)));const lp=look(ms,"LPTS");const l=lp?arr(lp).map(x=>num(doc.context.lookup(x))):[0,0,0,1,1,1,1,0];
+    const area=Math.abs((bb[2]-bb[0])*(bb[3]-bb[1]));if(!best||area>best.area)best={bb,g,l,area};}}
+  if(!best)return {pw:box.width,ph:box.height,geo:null};
+  /* ajuste u,v (0–1 dentro do BBox) → lat,lon por mínimos quadrados */
+  const P=[];for(let i=0;i+1<best.g.length&&i/2<best.l.length/2;i+=2)P.push([best.l[i],best.l[i+1],best.g[i],best.g[i+1]]);
+  const fit=k=>{let S=[[0,0,0],[0,0,0],[0,0,0]],b=[0,0,0];P.forEach(p=>{const x=[1,p[0],p[1]];for(let r=0;r<3;r++){b[r]+=x[r]*p[k];for(let c=0;c<3;c++)S[r][c]+=x[r]*x[c];}});return resolver(S,b);};
+  const A=fit(2),B=fit(3);const bb=best.bb;const x0=Math.min(bb[0],bb[2]),x1=Math.max(bb[0],bb[2]),y0=Math.min(bb[1],bb[3]),y1=Math.max(bb[1],bb[3]);
+  return {pw:box.width,ph:box.height,geo:{A,B,bb:[x0,y0,x1,y1]}};}
+function resolver(M,b){const n=3,a=M.map((r,i)=>[...r,b[i]]);for(let i=0;i<n;i++){let p=i;for(let r=i+1;r<n;r++)if(Math.abs(a[r][i])>Math.abs(a[p][i]))p=r;[a[i],a[p]]=[a[p],a[i]];for(let r=0;r<n;r++){if(r===i)continue;const f=a[r][i]/a[i][i];for(let c=i;c<=n;c++)a[r][c]-=f*a[i][c];}}return a.map((r,i)=>r[n]/r[i]);}
+async function renderizar(buf){const pdf=await pdfjsLib.getDocument({data:buf,isEvalSupported:false}).promise;const pg=await pdf.getPage(1);const v1=pg.getViewport({scale:1});
+  const lado=Math.max(v1.width,v1.height);let s=Math.min(3.2,4200/lado);const vp=pg.getViewport({scale:s});
+  const cv=document.createElement("canvas");cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);const cx=cv.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);
+  await pg.render({canvasContext:cx,viewport:vp}).promise;
+  const img=await new Promise(ok=>cv.toBlob(ok,"image/jpeg",0.85));const t=document.createElement("canvas");const k=220/cv.width;t.width=220;t.height=Math.round(cv.height*k);t.getContext("2d").drawImage(cv,0,0,t.width,t.height);
+  const out={img,thumb:t.toDataURL("image/jpeg",0.7),w:cv.width,h:cv.height,s,vw:v1.width,vh:v1.height,rot:pg.rotate||0};cv.width=cv.height=0;pdf.destroy();return out;}
+async function importar(files){let ok=0,sem=0;const lista=[...files].filter(f=>/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name||""));
+  if(!lista.length){aviso("Escolha um arquivo PDF.");return;}
+  for(let i=0;i<lista.length;i++){const f=lista[i];prog(true,`Guardando o mapa ${i+1} de ${lista.length}…`,f.name||"");
+    try{const buf=await f.arrayBuffer();let g={geo:null};try{g=await lerGeo(buf.slice(0));}catch(e){}
+      const r=await renderizar(buf);const nome=(f.name||"Mapa").replace(/\.pdf$/i,"").replace(/_/g," ");
+      await dbPut("mapas",{id:uid(),nome,arq:f.name||"",em:Date.now(),img:r.img,thumb:r.thumb,w:r.w,h:r.h,s:r.s,vh:r.vh,geo:g.geo});ok++;if(!g.geo)sem++;}
+    catch(e){console.error(e);aviso("Não consegui abrir "+(f.name||"o arquivo")+".",5000);}}
+  prog(false);await listar();if(ok)aviso(`${ok} mapa(s) guardado(s) no celular.`+(sem?` ${sem} sem georreferência (sem GPS).`:""),5000);}
+$("#imp").onchange=e=>{importar(e.target.files);e.target.value="";};
+
+/* ================= lista ================= */
+async function listar(){const L=(await dbTodos("mapas")).sort((a,b)=>b.em-a.em);const N=await dbTodos("notas");
+  $("#cards").innerHTML=L.map(m=>{const n=N.filter(x=>x.mapa===m.id).length;return `<button class="cm" data-m="${m.id}"><img src="${m.thumb}" alt=""><span><b>${esc(m.nome)}</b><small>${m.geo?"GPS ✓":"sem GPS"} · ${n} anotação(ões) · ${quando(m.em)}</small></span></button>`;}).join("");
+  $("#como").style.display=L.length?"none":"grid";
+  document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>abrir(b.dataset.m));
+  if(L.length)$("#cards").insertAdjacentHTML("afterend","");}
+
+/* ================= visor ================= */
+let M=null,URLIMG=null,VB=null,NOTAS=[];
+const sv=()=>$("#mp");
+/* geo ⇄ pixel da imagem */
+function g2p(lat,lon){const g=M.geo;const [a0,a1,a2]=g.A,[b0,b1,b2]=g.B;const det=a1*b2-a2*b1;const u=((lat-a0)*b2-a2*(lon-b0))/det,v=(a1*(lon-b0)-(lat-a0)*b1)/det;
+  const x=g.bb[0]+u*(g.bb[2]-g.bb[0]),y=g.bb[1]+v*(g.bb[3]-g.bb[1]);return [x*M.s,(M.vh-y)*M.s];}
+function p2g(px,py){const g=M.geo;const x=px/M.s,y=M.vh-py/M.s;const u=(x-g.bb[0])/(g.bb[2]-g.bb[0]),v=(y-g.bb[1])/(g.bb[3]-g.bb[1]);return [g.A[0]+g.A[1]*u+g.A[2]*v,g.B[0]+g.B[1]*u+g.B[2]*v];}
+const mpp=()=>{if(!M.geo)return 0;const a=p2g(0,0),b=p2g(100,0);return dist(a,b)/100;};
+function dist(a,b){const R=6371008.8,r=Math.PI/180,dl=(b[0]-a[0])*r,dn=(b[1]-a[1])*r;const h=Math.sin(dl/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+function areaG(P){if(P.length<3)return 0;const r=Math.PI/180,R=6371008.8,lat0=P.reduce((s,p)=>s+p[0],0)/P.length*r;let a=0;for(let i=0;i<P.length;i++){const p=P[i],q=P[(i+1)%P.length];a+=(p[1]*r*Math.cos(lat0)*R)*(q[0]*r*R)-(q[1]*r*Math.cos(lat0)*R)*(p[0]*r*R);}return Math.abs(a/2);}
+function compr(P){let s=0;for(let i=1;i<P.length;i++)s+=dist(P[i-1],P[i]);return s;}
+const raz=()=>{const r=sv().getBoundingClientRect();return r.height/r.width||1.6;};
+function inteiro(){const w=M.w,h=M.h,rz=raz();return w*rz>=h?{x:0,y:(h-w*rz)/2,w,h:w*rz}:{x:(w-h/rz)/2,y:0,w:h/rz,h};}
+function aplicar(){if(!VB)VB=inteiro();VB.h=VB.w*raz();sv().setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);cancelAnimationFrame(aplicar.r);aplicar.r=requestAnimationFrame(desenhar);}
+const uu=()=>VB.w/sv().getBoundingClientRect().width;
+async function abrir(id){M=await dbPor("mapas",id);if(!M)return;NOTAS=await notasDe(id);if(URLIMG)URL.revokeObjectURL(URLIMG);URLIMG=URL.createObjectURL(M.img);
+  const im=$("#img");im.setAttribute("href",URLIMG);im.setAttribute("width",M.w);im.setAttribute("height",M.h);
+  $("#lista").style.display="none";$("#visor").classList.add("on");$("#v-n").textContent=M.nome;VB=null;MED.on=false;medUI();aplicar();
+  try{history.replaceState(null,"","#m="+id);}catch(e){}
+  if(M.geo)gpsLigar(true);else{GPS.seguir=false;info();aviso("Este PDF não tem georreferência: dá para ver e anotar, mas sem GPS.",5000);}}
+$("#v-x").onclick=()=>{$("#visor").classList.remove("on");$("#lista").style.display="";try{history.replaceState(null,"",location.pathname);}catch(e){}listar();};
+
+/* gestos: arrastar e pinçar */
+const PT=new Map();let G0=null,moveu=false;
+function pt2m(cx,cy){const r=sv().getBoundingClientRect();return [VB.x+(cx-r.left)/r.width*VB.w,VB.y+(cy-r.top)/r.height*VB.h];}
+sv().addEventListener("pointerdown",e=>{sv().setPointerCapture(e.pointerId);PT.set(e.pointerId,[e.clientX,e.clientY]);G0={vb:{...VB},pts:[...PT.values()].map(p=>[...p])};moveu=false;});
+sv().addEventListener("pointermove",e=>{if(!PT.has(e.pointerId)||!G0)return;PT.set(e.pointerId,[e.clientX,e.clientY]);const r=sv().getBoundingClientRect();const p=[...PT.values()];
+  if(p.length===1&&G0.pts.length===1){const dx=p[0][0]-G0.pts[0][0],dy=p[0][1]-G0.pts[0][1];if(Math.abs(dx)+Math.abs(dy)>4){moveu=true;GPS.seguir=false;}VB={...G0.vb,x:G0.vb.x-dx/r.width*G0.vb.w,y:G0.vb.y-dy/r.height*G0.vb.h};}
+  else if(p.length>=2&&G0.pts.length>=2){moveu=true;GPS.seguir=false;const d0=Math.hypot(G0.pts[0][0]-G0.pts[1][0],G0.pts[0][1]-G0.pts[1][1]),d1=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]);
+    const k=Math.min(Math.max(d0/d1,0.02),50);const c0=[(G0.pts[0][0]+G0.pts[1][0])/2,(G0.pts[0][1]+G0.pts[1][1])/2],c1=[(p[0][0]+p[1][0])/2,(p[0][1]+p[1][1])/2];
+    const w=Math.min(Math.max(G0.vb.w*k,M.w/400),M.w*4);const mx=G0.vb.x+(c0[0]-r.left)/r.width*G0.vb.w,my=G0.vb.y+(c0[1]-r.top)/r.height*G0.vb.h;
+    VB={x:mx-(c1[0]-r.left)/r.width*w,y:my-(c1[1]-r.top)/r.height*w*raz(),w,h:w*raz()};}
+  aplicar();});
+const fim=e=>{PT.delete(e.pointerId);G0=PT.size?{vb:{...VB},pts:[...PT.values()].map(p=>[...p])}:null;};
+sv().addEventListener("pointerup",e=>{const tocou=!moveu&&PT.size===1;fim(e);if(tocou)tocar(e);});sv().addEventListener("pointercancel",fim);
+sv().addEventListener("wheel",e=>{e.preventDefault();zoom(e.deltaY>0?1.25:0.8,e.clientX,e.clientY);},{passive:false});
+function zoom(k,cx,cy){const r=sv().getBoundingClientRect();cx=cx==null?r.left+r.width/2:cx;cy=cy==null?r.top+r.height/2:cy;const [mx,my]=pt2m(cx,cy);const w=Math.min(Math.max(VB.w*k,M.w/400),M.w*4);
+  VB={x:mx-(cx-r.left)/r.width*w,y:my-(cy-r.top)/r.height*w*raz(),w,h:w*raz()};aplicar();}
+$("#b-in").onclick=()=>zoom(1/1.6);$("#b-out").onclick=()=>zoom(1.6);$("#b-fit").onclick=()=>{VB=null;GPS.seguir=false;aplicar();};
+const centro=()=>[VB.x+VB.w/2,VB.y+VB.h/2];
+
+/* ================= GPS ================= */
+const GPS={on:false,fix:null,watch:null,seguir:true,hd:null,erro:""};
+function gpsLigar(centrar){if(!navigator.geolocation){GPS.erro="Este celular não tem GPS no navegador.";info();return;}
+  GPS.seguir=!!centrar;$("#b-gps").classList.add("on");if(GPS.on){if(centrar)gpsCentrar();return;}GPS.on=true;
+  GPS.watch=navigator.geolocation.watchPosition(p=>{const a=GPS.fix,n={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy||0};
+    const hd=p.coords.heading,vl=p.coords.speed;if(hd!=null&&!isNaN(hd)&&(vl==null||vl>0.8))GPS.hd=hd;else if(a&&dist([a.lat,a.lon],[n.lat,n.lon])>Math.max(4,n.acc*0.5))GPS.hd=(Math.atan2((n.lon-a.lon)*Math.cos(n.lat*Math.PI/180),n.lat-a.lat)*180/Math.PI+360)%360;
+    const prim=!a;GPS.fix=n;GPS.erro="";if(TRI.on)triPasso();if(M&&M.geo&&(GPS.seguir||prim&&GPS.seguir))gpsCentrar(true);else aplicar();info();},
+    er=>{GPS.erro=er.code===1?"Localização bloqueada: libere a localização para o app nas configurações.":"Sem sinal de GPS ainda. Vá para céu aberto.";info();},
+    {enableHighAccuracy:true,maximumAge:0,timeout:20000});info();}
+function gpsCentrar(silencio){if(!GPS.fix||!M||!M.geo)return;const [x,y]=g2p(GPS.fix.lat,GPS.fix.lon);
+  if(x<-M.w*0.5||y<-M.h*0.5||x>M.w*1.5||y>M.h*1.5){if(!silencio)aviso("Você está fora deste mapa.");aplicar();return;}
+  if(!VB||VB.w>M.w*0.6){const w=M.w/4;VB={x:x-w/2,y:y-w*raz()/2,w,h:w*raz()};}else VB={...VB,x:x-VB.w/2,y:y-VB.h/2};aplicar();}
+$("#b-gps").onclick=()=>{if(!M.geo){aviso("Este mapa não tem georreferência.");return;}GPS.seguir=true;gpsLigar(true);if(!GPS.fix)aviso("Esperando o sinal do GPS…");else gpsCentrar();};
+
+/* ================= desenho ================= */
+function desenhar(){if(!M)return;const u=uu();
+  /* anotações */
+  let h="";for(const n of NOTAS){if(!M.geo&&!n.px)continue;const P=n.pts.map(q=>M.geo?g2p(q[0],q[1]):q);
+    if(n.tipo==="ponto"){const [x,y]=P[0];h+=`<g data-n="${n.id}" transform="translate(${x} ${y}) scale(${u})"><path d="M0 0C-1.6-5-8-10-8-17A8 8 0 1 1 8-17C8-10 1.6-5 0 0Z" fill="#C0492F" stroke="#fff" stroke-width="1.5"/><circle cy="-17" r="3" fill="#fff"/>${n.nome?`<text x="11" y="-14" font-size="12" font-weight="700" fill="#1E2420" stroke="#fff" stroke-width="3" paint-order="stroke">${esc(n.nome)}</text>`:""}</g>`;}
+    else{const d=P.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join("")+(n.tipo==="area"?"Z":"");const cor=n.tipo==="trilha"?"#1A73E8":"#C0492F";
+      h+=`<path data-n="${n.id}" d="${d}" fill="${n.tipo==="area"?"rgba(192,73,47,.18)":"none"}" stroke="${cor}" stroke-width="${3*u}" stroke-linejoin="round"/>`;}}
+  $("#ns").innerHTML=h;
+  /* medição em andamento */
+  let m="";if(MED.on&&M.geo){const P=MED.pts.map(q=>g2p(q[0],q[1]));const c=centro();const Q=MED.grav?P:[...P,c];
+    if(Q.length>1)m+=`<path d="${Q.map((p,i)=>(i?"L":"M")+p[0]+" "+p[1]).join("")}${MED.tipo==="area"&&Q.length>2?"Z":""}" fill="${MED.tipo==="area"?"rgba(26,115,232,.18)":"none"}" stroke="#1A73E8" stroke-width="${3*u}" stroke-dasharray="${8*u} ${5*u}"/>`;
+    P.forEach(p=>{m+=`<circle cx="${p[0]}" cy="${p[1]}" r="${5*u}" fill="#fff" stroke="#1A73E8" stroke-width="${2*u}"/>`;});}
+  if(TRI.on&&M.geo&&TRI.pts.length>1){const P=TRI.pts.map(q=>g2p(q[0],q[1]));m+=`<path d="${P.map((p,i)=>(i?"L":"M")+p[0]+" "+p[1]).join("")}" fill="none" stroke="#1A73E8" stroke-width="${4*u}"/>`;}
+  $("#med").innerHTML=m;
+  /* GPS */
+  let g="";if(GPS.on&&GPS.fix&&M.geo){const [x,y]=g2p(GPS.fix.lat,GPS.fix.lon);const r=GPS.fix.acc/(mpp()||1);
+    g=`<circle cx="${x}" cy="${y}" r="${r}" fill="#1A73E8" fill-opacity=".14"/>`+(GPS.hd==null?`<circle cx="${x}" cy="${y}" r="${8*u}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${5.5*u}" fill="#1A73E8"/>`:
+      `<g transform="translate(${x} ${y}) rotate(${GPS.hd.toFixed(1)}) scale(${u*0.75})"><path d="M0,-15 L11,12 L0,6 L-11,12 Z" fill="#1A73E8" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></g>`);}
+  $("#gps").innerHTML=g;}
+function tocar(e){const n=e.target.closest&&e.target.closest("[data-n]");if(n&&!MED.on)verNota(n.dataset.n);}
+
+/* ================= painel de baixo ================= */
+function info(){if(!M||MED.on||TRI.on)return;let t="";
+  if(!M.geo)t=`<div class="muted">Mapa sem georreferência: sem GPS. Pontos e medidas não dá para fazer neste PDF.</div>`;
+  else if(GPS.erro)t=`<div class="muted">${esc(GPS.erro)}</div>`;
+  else if(!GPS.fix)t=`<div class="muted">Procurando o sinal do GPS…</div>`;
+  else{const f=GPS.fix;const [x,y]=g2p(f.lat,f.lon);const fora=x<0||y<0||x>M.w||y>M.h;
+    t=`<div class="linha"><b>${fora?"Você está fora deste mapa":"Você está aqui"}</b><span class="muted">±${Math.round(f.acc)} m · ${f.lat.toFixed(6)}, ${f.lon.toFixed(6)}</span></div>
+      <div class="linha"><button class="btn" id="i-cp">📋 Copiar coordenada</button><button class="btn" id="i-tri">⏺ Gravar trilha</button></div>`;}
+  $("#info").innerHTML=t;$("#info").style.display="grid";
+  const cp=$("#i-cp");if(cp)cp.onclick=()=>copiar(GPS.fix.lat,GPS.fix.lon);
+  const tr=$("#i-tri");if(tr)tr.onclick=()=>triIniciar();}
+async function copiar(lat,lon){const t=`${lat.toFixed(6)}, ${lon.toFixed(6)}`,txt=`Local: ${t}\nhttps://maps.google.com/?q=${lat.toFixed(6)},${lon.toFixed(6)}`;
+  try{await navigator.clipboard.writeText(txt);aviso("Coordenada copiada: "+t);}catch(e){folha(`<h2>Coordenada <button class="btn" onclick="fechar()">Fechar</button></h2><textarea style="width:100%;min-height:80px" readonly onclick="this.select()">${esc(txt)}</textarea>`);}}
+
+/* ================= medir (linha / área) ================= */
+const MED={on:false,tipo:"linha",pts:[],grav:false};
+function medUI(){$("#alvo").classList.toggle("on",MED.on&&!MED.grav);$("#b-med").classList.toggle("on",MED.on);if(!MED.on){info();aplicar();return;}
+  const P=MED.pts,c=VB?p2g(...centro()):null;const Q=MED.grav?P:(c?[...P,c]:P);
+  const tx=MED.tipo==="area"?`Área: <b>${fA(areaG(Q))}</b> · perímetro ${fM(compr(Q)+(Q.length>2?dist(Q[Q.length-1],Q[0]):0))}`:`Distância: <b>${fM(compr(Q))}</b>`;
+  $("#info").innerHTML=`<div>${tx} <span class="muted">· ${P.length} ponto(s)</span></div>
+   <div class="linha"><button class="btn pri" id="m-add">＋ Marcar aqui</button><button class="btn" id="m-gps">📍 Na minha posição</button><button class="btn" id="m-un">↶</button>
+   <button class="btn" id="m-tp">${MED.tipo==="area"?"Área ▸ Linha":"Linha ▸ Área"}</button><button class="btn" id="m-sv">💾 Salvar</button><button class="btn" id="m-x">Fechar</button></div>
+   <div class="muted">Arraste o mapa até o alvo ficar no lugar e toque em ＋ Marcar aqui.</div>`;
+  $("#m-add").onclick=()=>{MED.pts.push(p2g(...centro()));medUI();aplicar();};
+  $("#m-gps").onclick=()=>{if(!GPS.fix){aviso("Esperando o GPS…");return;}MED.pts.push([GPS.fix.lat,GPS.fix.lon]);medUI();aplicar();};
+  $("#m-un").onclick=()=>{MED.pts.pop();medUI();aplicar();};
+  $("#m-tp").onclick=()=>{MED.tipo=MED.tipo==="area"?"linha":"area";medUI();aplicar();};
+  $("#m-x").onclick=()=>{MED.on=false;MED.pts=[];medUI();};
+  $("#m-sv").onclick=()=>{if(MED.pts.length<(MED.tipo==="area"?3:2)){aviso(MED.tipo==="area"?"Marque pelo menos 3 pontos.":"Marque pelo menos 2 pontos.");return;}salvarForma(MED.tipo,[...MED.pts],()=>{MED.on=false;MED.pts=[];medUI();});};}
+$("#b-med").onclick=()=>{if(!M.geo){aviso("Este mapa não tem georreferência.");return;}if(TRI.on){aviso("Pare a trilha antes.");return;}MED.on=!MED.on;MED.pts=[];GPS.seguir=false;medUI();aplicar();};
+const _ap=aplicar;aplicar=function(){_ap();if(MED.on){cancelAnimationFrame(aplicar.m);aplicar.m=requestAnimationFrame(()=>{const b=$("#m-add");if(b){const c=p2g(...centro());const P=MED.pts,Q=[...P,c];const d=$("#info").firstElementChild;if(d)d.innerHTML=(MED.tipo==="area"?`Área: <b>${fA(areaG(Q))}</b> · perímetro ${fM(compr(Q)+(Q.length>2?dist(Q[Q.length-1],Q[0]):0))}`:`Distância: <b>${fM(compr(Q))}</b>`)+` <span class="muted">· ${P.length} ponto(s)</span>`;}});}};
+
+/* ================= trilha (grava o caminho pelo GPS) ================= */
+const TRI={on:false,pts:[]};
+function triIniciar(){if(MED.on)return;TRI.on=true;TRI.pts=GPS.fix?[[GPS.fix.lat,GPS.fix.lon]]:[];GPS.seguir=true;triUI();}
+function triPasso(){const f=GPS.fix;if(f.acc>40)return;const u=TRI.pts[TRI.pts.length-1];if(!u||dist(u,[f.lat,f.lon])>=5){TRI.pts.push([f.lat,f.lon]);triUI();}}
+function triUI(){$("#info").innerHTML=`<div>⏺ Gravando trilha: <b>${fM(compr(TRI.pts))}</b> <span class="muted">· ${TRI.pts.length} pontos</span></div><div class="linha"><button class="btn pri" id="t-sv">⏹ Parar e salvar</button><button class="btn dan" id="t-x">Descartar</button></div>`;
+  $("#t-sv").onclick=()=>{const P=[...TRI.pts];TRI.on=false;if(P.length<2){aviso("Trilha muito curta.");info();return;}salvarForma("trilha",P,()=>info());};
+  $("#t-x").onclick=()=>{TRI.on=false;TRI.pts=[];info();aplicar();};aplicar();}
+
+/* ================= anotações ================= */
+function salvarForma(tipo,pts,depois){const tN={linha:"Linha",area:"Área",trilha:"Trilha"}[tipo];
+  const med=tipo==="area"?fA(areaG(pts)):fM(compr(pts));
+  folha(`<h2>Salvar ${tN.toLowerCase()} · ${med}<button class="btn" id="f-x">Cancelar</button></h2>
+   <label class="f">Nome<input id="f-n" placeholder="Ex.: ${tipo==="area"?"Área de empréstimo":"Trecho a cascalhar"}"></label>
+   <label class="f">Observação<textarea id="f-o" rows="2"></textarea></label><button class="btn pri" id="f-ok">Salvar no mapa</button>`);
+  $("#f-x").onclick=fechar;$("#f-ok").onclick=async()=>{const n={id:uid(),mapa:M.id,tipo,pts,nome:$("#f-n").value.trim()||tN,obs:$("#f-o").value.trim(),em:Date.now()};await dbPut("notas",n);NOTAS.push(n);fechar();aplicar();aviso(tN+" salva.");depois&&depois();};}
+$("#b-pt").onclick=()=>{if(!M.geo){aviso("Este mapa não tem georreferência.");return;}const temGps=GPS.fix&&(()=>{const [x,y]=g2p(GPS.fix.lat,GPS.fix.lon);return x>=0&&y>=0&&x<=M.w&&y<=M.h;})();
+  const c=p2g(...centro());let onde=temGps?"gps":"centro";let foto=null;
+  const montar=()=>folha(`<h2>Marcar ponto<button class="btn" id="f-x">Cancelar</button></h2>
+   <div class="linha" style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn ${onde==="gps"?"pri":""}" id="f-g" ${temGps?"":"disabled"}>Na minha posição</button><button class="btn ${onde==="centro"?"pri":""}" id="f-c">No centro da tela</button></div>
+   <label class="f">Nome<input id="f-n" placeholder="Ex.: Buraco, bueiro, erosão"></label><label class="f">Observação<textarea id="f-o" rows="2"></textarea></label>
+   <button class="btn" id="f-f">📷 ${foto?"Foto anexada ✓ (trocar)":"Foto (opcional)"}</button><button class="btn pri" id="f-ok">Salvar ponto</button>`,0);
+  const ligar=()=>{$("#f-x").onclick=fechar;const g=$("#f-g");if(g)g.onclick=()=>{const n=$("#f-n").value,o=$("#f-o").value;onde="gps";montar();ligar();$("#f-n").value=n;$("#f-o").value=o;};
+    $("#f-c").onclick=()=>{const n=$("#f-n").value,o=$("#f-o").value;onde="centro";montar();ligar();$("#f-n").value=n;$("#f-o").value=o;};
+    $("#f-f").onclick=()=>{const n=$("#f-n").value,o=$("#f-o").value;$("#foto").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(f){foto=await reduzir(f);}montar();ligar();$("#f-n").value=n;$("#f-o").value=o;};$("#foto").click();};
+    $("#f-ok").onclick=async()=>{const p=onde==="gps"&&GPS.fix?[GPS.fix.lat,GPS.fix.lon]:c;const n={id:uid(),mapa:M.id,tipo:"ponto",pts:[p],nome:$("#f-n").value.trim(),obs:$("#f-o").value.trim(),foto,em:Date.now()};
+      await dbPut("notas",n);NOTAS.push(n);fechar();aplicar();aviso("Ponto salvo.");};};
+  montar();ligar();};
+async function reduzir(f){const u=URL.createObjectURL(f);const im=new Image();await new Promise(ok=>{im.onload=ok;im.onerror=ok;im.src=u;});const k=Math.min(1,1600/Math.max(im.width||1,im.height||1));
+  const c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);return await new Promise(ok=>c.toBlob(ok,"image/jpeg",0.8));}
+function resumo(n){return n.tipo==="ponto"?`${n.pts[0][0].toFixed(6)}, ${n.pts[0][1].toFixed(6)}`:n.tipo==="area"?fA(areaG(n.pts)):fM(compr(n.pts));}
+const ICO={ponto:"📍",linha:"📏",area:"⬛",trilha:"〰️"};
+function verNota(id){const n=NOTAS.find(x=>x.id===id);if(!n)return;
+  folha(`<h2>${ICO[n.tipo]} ${esc(n.nome||"Ponto")}<button class="btn" onclick="fechar()">Fechar</button></h2><div>${esc(resumo(n))}</div>${n.obs?`<div class="muted">${esc(n.obs)}</div>`:""}
+   ${n.foto?`<img id="f-img" style="width:100%;border-radius:10px">`:""}<div class="muted">${quando(n.em)}</div>
+   <div class="linha" style="display:flex;gap:6px;flex-wrap:wrap">${n.tipo==="ponto"?`<button class="btn" id="f-cp">📋 Copiar coordenada</button>`:""}<button class="btn" id="f-ir">Ir no mapa</button><button class="btn dan" id="f-del">Apagar</button></div><div id="f-conf"></div>`);
+  if(n.foto){const u=URL.createObjectURL(n.foto);$("#f-img").src=u;}
+  const cp=$("#f-cp");if(cp)cp.onclick=()=>copiar(n.pts[0][0],n.pts[0][1]);
+  $("#f-ir").onclick=()=>{fechar();irNota(n);};
+  $("#f-del").onclick=()=>{$("#f-conf").innerHTML=`<div class="linha" style="display:flex;gap:6px"><span>Apagar mesmo?</span><button class="btn dan" id="f-sim">Sim, apagar</button></div>`;$("#f-sim").onclick=async()=>{await dbDel("notas",n.id);NOTAS=NOTAS.filter(x=>x.id!==n.id);fechar();aplicar();aviso("Apagado.");};};}
+function irNota(n){const P=n.pts.map(q=>g2p(q[0],q[1]));let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;P.forEach(p=>{x0=Math.min(x0,p[0]);y0=Math.min(y0,p[1]);x1=Math.max(x1,p[0]);y1=Math.max(y1,p[1]);});
+  const w=Math.max((x1-x0)*1.6,(y1-y0)*1.6/raz(),M.w/12);GPS.seguir=false;VB={x:(x0+x1)/2-w/2,y:(y0+y1)/2-w*raz()/2,w,h:w*raz()};aplicar();}
+$("#b-lst").onclick=()=>{const L=[...NOTAS].sort((a,b)=>b.em-a.em);
+  folha(`<h2>Minhas anotações · ${L.length}<button class="btn" onclick="fechar()">Fechar</button></h2>
+   <div class="muted">Ficam só neste celular. Para mandar a alguém: Exportar (WhatsApp, e-mail…). Não vai para o painel da empresa.</div>
+   <button class="btn pri" id="x-exp" ${L.length?"":"disabled"}>📤 Exportar anotações deste mapa</button>
+   ${L.map(n=>`<div class="nota"><span><b>${ICO[n.tipo]} ${esc(n.nome||"Ponto")}</b><span class="muted">${esc(resumo(n))} · ${quando(n.em)}</span></span><button class="btn" data-v="${n.id}">Ver</button></div>`).join("")||`<div class="muted">Nenhuma anotação ainda. Use 📍 para marcar ponto e 📏 para medir.</div>`}
+   <div style="border-top:1px solid var(--ln);padding-top:10px;display:grid;gap:6px"><button class="btn dan" id="x-delm">Apagar este mapa do celular</button><div id="x-conf"></div></div>`);
+  document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>verNota(b.dataset.v));
+  const ex=$("#x-exp");if(ex)ex.onclick=exportar;
+  $("#x-delm").onclick=()=>{$("#x-conf").innerHTML=`<div>Apaga o mapa e as ${L.length} anotação(ões) dele. Não tem volta.</div><button class="btn dan" id="x-sim">Sim, apagar o mapa</button>`;
+    $("#x-sim").onclick=async()=>{for(const n of NOTAS)await dbDel("notas",n.id);await dbDel("mapas",M.id);fechar();$("#v-x").onclick();aviso("Mapa apagado.");};};};
+
+/* ================= exportar (WhatsApp / e-mail) — nunca para o painel ================= */
+function kml(){const e=s=>esc(s);const pl=NOTAS.map(n=>{const c=n.pts.map(p=>`${p[1]},${p[0]},0`).join(" ");
+  const geo=n.tipo==="ponto"?`<Point><coordinates>${c}</coordinates></Point>`:n.tipo==="area"?`<Polygon><outerBoundaryIs><LinearRing><coordinates>${c} ${n.pts[0][1]},${n.pts[0][0]},0</coordinates></LinearRing></outerBoundaryIs></Polygon>`:`<LineString><coordinates>${c}</coordinates></LineString>`;
+  return `<Placemark><name>${e(n.nome||ICO[n.tipo])}</name><description>${e([resumo(n),n.obs,quando(n.em)].filter(Boolean).join(" · "))}</description><styleUrl>#${n.tipo}</styleUrl>${geo}</Placemark>`;}).join("");
+  return `<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${e(M.nome)} – minhas anotações</name>
+<Style id="ponto"><IconStyle><color>ff2f49c0</color></IconStyle></Style><Style id="linha"><LineStyle><color>ff2f49c0</color><width>3</width></LineStyle></Style>
+<Style id="area"><LineStyle><color>ff2f49c0</color><width>2</width></LineStyle><PolyStyle><color>402f49c0</color></PolyStyle></Style><Style id="trilha"><LineStyle><color>ffe8731a</color><width>3</width></LineStyle></Style>${pl}</Document></kml>`;}
+function texto(){return `${M.nome} – minhas anotações\n\n`+NOTAS.map(n=>`${ICO[n.tipo]} ${n.nome||"Ponto"}: ${resumo(n)}${n.obs?" – "+n.obs:""}${n.tipo==="ponto"?`\n   https://maps.google.com/?q=${n.pts[0][0].toFixed(6)},${n.pts[0][1].toFixed(6)}`:""}`).join("\n");}
+async function exportar(){const nome=(M.nome.replace(/[^\w\- ]+/g,"").trim()||"mapa")+" - anotacoes";const arq=new File([kml()],nome+".kml",{type:"application/vnd.google-earth.kml+xml"});
+  const fotos=NOTAS.filter(n=>n.foto).map((n,i)=>new File([n.foto],`${(n.nome||"ponto").replace(/[^\w\- ]+/g,"")}_${i+1}.jpg`,{type:"image/jpeg"}));
+  const files=[arq,...fotos];
+  try{if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:nome,text:texto()});return;}}catch(e){if(e&&e.name==="AbortError")return;}
+  try{if(navigator.share){await navigator.share({title:nome,text:texto()});return;}}catch(e){if(e&&e.name==="AbortError")return;}
+  const a=document.createElement("a");a.href=URL.createObjectURL(arq);a.download=arq.name;document.body.appendChild(a);a.click();a.remove();aviso("Arquivo .kml baixado. Mande pelo WhatsApp ou e-mail.",5000);}
+
+/* ================= iniciar ================= */
+addEventListener("resize",()=>{if(M&&VB)aplicar();});
+(async()=>{try{await abrirDB();}catch(e){aviso("Não consegui abrir o armazenamento do celular.",6000);return;}
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
+  if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+  /* PDFs que chegaram pelo "Compartilhar" do WhatsApp */
+  if(/compartilhado|fila/.test(location.search)){try{const c=await caches.open("importar-fila");const ks=await c.keys();const fs=[];
+      for(const k of ks){const r=await c.match(k);const b=await r.blob();fs.push(new File([b],decodeURIComponent(r.headers.get("x-nome")||"Mapa.pdf"),{type:"application/pdf"}));await c.delete(k);}
+      history.replaceState(null,"",location.pathname);if(fs.length)await importar(fs);else aviso("Não chegou nenhum PDF. Tente de novo pelo Compartilhar.");}catch(e){aviso("Não consegui receber o arquivo.");}}
+  await listar();const h=/#m=([\w]+)/.exec(location.hash);if(h)abrir(h[1]);})();
+</script>
+</body></html>
