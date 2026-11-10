@@ -7,7 +7,7 @@
 <style>
 :root{--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--ok:#2E8B57;--gps:#1A73E8;--mk:#C0492F;--and:#E0A100;--danger:#F08A80}
 :root[data-tema="claro"],:root[data-tema="sol"]{--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--danger:#B0402A}
-*{box-sizing:border-box}html,body{height:100%;margin:0}
+*{box-sizing:border-box}[hidden]{display:none!important}html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
 button,.btn,input,select,textarea{font:inherit;color:inherit}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--ln);background:var(--sf);cursor:pointer;text-decoration:none}
@@ -88,6 +88,7 @@ label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-rad
   <div class="ctl">
     <button class="btn" id="b-in" aria-label="Aproximar">＋</button>
     <button class="btn" id="b-out" aria-label="Afastar">－</button>
+    <button class="btn" id="b-norte" aria-label="Voltar o norte para cima" hidden><span style="display:inline-block;line-height:1;font-size:13px;font-weight:800;color:#C0492F">▲<br><span style="color:var(--ink)">N</span></span></button>
     <button class="btn" id="b-fit" aria-label="Ver o mapa inteiro">⤢</button>
     <button class="btn" id="b-gps" aria-label="Onde estou">◉</button>
     <button class="btn" id="b-med" aria-label="Medir">📏</button>
@@ -230,7 +231,7 @@ function areaG(P){if(P.length<3)return 0;const r=Math.PI/180,R=6371008.8,lat0=P.
 function compr(P){let s=0;for(let i=1;i<P.length;i++)s+=dist(P[i-1],P[i]);return s;}
 const raz=()=>{const r=sv().getBoundingClientRect();return r.height/r.width||1.6;};
 function inteiro(){const w=M.w,h=M.h,rz=raz();return w*rz>=h?{x:0,y:(h-w*rz)/2,w,h:w*rz}:{x:(w-h/rz)/2,y:0,w:h/rz,h};}
-function aplicar(){if(!VB)VB=inteiro();VB.h=VB.w*raz();sv().setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);cancelAnimationFrame(aplicar.r);aplicar.r=requestAnimationFrame(desenhar);}
+function aplicar(){if(!VB)VB=inteiro();VB.h=VB.w*raz();sv().setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);const cg=$("#cam");if(ANG)cg.setAttribute("transform",`rotate(${ANG.toFixed(2)} ${VB.x+VB.w/2} ${VB.y+VB.h/2})`);else cg.removeAttribute("transform");const bn=$("#b-norte");if(bn){bn.hidden=Math.abs(ANG)<0.5;bn.firstElementChild.style.transform=`rotate(${ANG}deg)`;}cancelAnimationFrame(aplicar.r);aplicar.r=requestAnimationFrame(desenhar);}
 const uu=()=>VB.w/sv().getBoundingClientRect().width;
 async function abrir(id){M=await dbPor("mapas",id);if(!M)return;NOTAS=await notasDe(id);if(URLIMG)URL.revokeObjectURL(URLIMG);URLIMG=URL.createObjectURL(M.img);
   const im=$("#img");im.setAttribute("href",URLIMG);im.setAttribute("width",M.w);im.setAttribute("height",M.h);
@@ -239,23 +240,33 @@ async function abrir(id){M=await dbPor("mapas",id);if(!M)return;NOTAS=await nota
   if(M.geo)gpsLigar(true);else{GPS.seguir=false;info();aviso("Este PDF não tem georreferência: dá para ver e anotar, mas sem GPS.",5000);}}
 $("#v-x").onclick=()=>{$("#visor").classList.remove("on");$("#lista").style.display="";try{history.replaceState(null,"",location.pathname);}catch(e){}listar();};
 
-/* gestos: arrastar e pinçar */
-const PT=new Map();let G0=null,moveu=false;
-function pt2m(cx,cy){const r=sv().getBoundingClientRect();return [VB.x+(cx-r.left)/r.width*VB.w,VB.y+(cy-r.top)/r.height*VB.h];}
-sv().addEventListener("pointerdown",e=>{sv().setPointerCapture(e.pointerId);PT.set(e.pointerId,[e.clientX,e.clientY]);G0={vb:{...VB},pts:[...PT.values()].map(p=>[...p])};moveu=false;});
+/* gestos: arrastar, pinçar (zoom) e girar com dois dedos */
+let ANG=0;const PT=new Map();let G0=null,moveu=false;
+const rot=(v,a)=>{const r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r);return [v[0]*c-v[1]*s,v[0]*s+v[1]*c];};
+/* ponto da tela → ponto do mapa (considerando o giro) */
+function s2m(V,ang,cx,cy){const r=sv().getBoundingClientRect(),k=V.w/r.width;const d=rot([(cx-r.left-r.width/2)*k,(cy-r.top-r.height/2)*k],-ang);return [V.x+V.w/2+d[0],V.y+V.h/2+d[1]];}
+function pt2m(cx,cy){return s2m(VB,ANG,cx,cy);}
+/* monta o VB para que o ponto m do mapa fique no ponto (cx,cy) da tela */
+function vbPara(m,cx,cy,w,ang){const r=sv().getBoundingClientRect(),k=w/r.width,h=w*raz();const d=rot([(cx-r.left-r.width/2)*k,(cy-r.top-r.height/2)*k],-ang);const C=[m[0]-d[0],m[1]-d[1]];return {x:C[0]-w/2,y:C[1]-h/2,w,h};}
+sv().addEventListener("pointerdown",e=>{sv().setPointerCapture(e.pointerId);PT.set(e.pointerId,[e.clientX,e.clientY]);G0={vb:{...VB},ang:ANG,pts:[...PT.values()].map(p=>[...p]),giro:false,off:0};moveu=false;});
 sv().addEventListener("pointermove",e=>{if(!PT.has(e.pointerId)||!G0)return;PT.set(e.pointerId,[e.clientX,e.clientY]);const r=sv().getBoundingClientRect();const p=[...PT.values()];
-  if(p.length===1&&G0.pts.length===1){const dx=p[0][0]-G0.pts[0][0],dy=p[0][1]-G0.pts[0][1];if(Math.abs(dx)+Math.abs(dy)>4){moveu=true;GPS.seguir=false;}VB={...G0.vb,x:G0.vb.x-dx/r.width*G0.vb.w,y:G0.vb.y-dy/r.height*G0.vb.h};}
-  else if(p.length>=2&&G0.pts.length>=2){moveu=true;GPS.seguir=false;const d0=Math.hypot(G0.pts[0][0]-G0.pts[1][0],G0.pts[0][1]-G0.pts[1][1]),d1=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]);
-    const k=Math.min(Math.max(d0/d1,0.02),50);const c0=[(G0.pts[0][0]+G0.pts[1][0])/2,(G0.pts[0][1]+G0.pts[1][1])/2],c1=[(p[0][0]+p[1][0])/2,(p[0][1]+p[1][1])/2];
-    const w=Math.min(Math.max(G0.vb.w*k,M.w/400),M.w*4);const mx=G0.vb.x+(c0[0]-r.left)/r.width*G0.vb.w,my=G0.vb.y+(c0[1]-r.top)/r.height*G0.vb.h;
-    VB={x:mx-(c1[0]-r.left)/r.width*w,y:my-(c1[1]-r.top)/r.height*w*raz(),w,h:w*raz()};}
+  if(p.length===1&&G0.pts.length===1){const dx=p[0][0]-G0.pts[0][0],dy=p[0][1]-G0.pts[0][1];if(Math.abs(dx)+Math.abs(dy)>4){moveu=true;GPS.seguir=false;}
+    const m=s2m(G0.vb,G0.ang,G0.pts[0][0],G0.pts[0][1]);VB=vbPara(m,p[0][0],p[0][1],G0.vb.w,ANG);}
+  else if(p.length>=2&&G0.pts.length>=2){moveu=true;GPS.seguir=false;const a0=G0.pts[0],b0=G0.pts[1],a1=p[0],b1=p[1];
+    const d0=Math.hypot(a0[0]-b0[0],a0[1]-b0[1]),d1=Math.hypot(a1[0]-b1[0],a1[1]-b1[1]);const k=Math.min(Math.max(d0/d1,0.02),50);
+    /* giro: só começa depois de ~10° (para não girar sem querer quando só dá zoom) */
+    let da=(Math.atan2(b1[1]-a1[1],b1[0]-a1[0])-Math.atan2(b0[1]-a0[1],b0[0]-a0[0]))*180/Math.PI;da=((da+540)%360)-180;
+    if(!G0.giro&&Math.abs(da)>10){G0.giro=true;G0.off=da;}ANG=G0.giro?((G0.ang+da-G0.off)%360+360)%360:G0.ang;if(ANG>180)ANG-=360;
+    const c0=[(a0[0]+b0[0])/2,(a0[1]+b0[1])/2],c1=[(a1[0]+b1[0])/2,(a1[1]+b1[1])/2];const w=Math.min(Math.max(G0.vb.w*k,M.w/400),M.w*4);
+    const m=s2m(G0.vb,G0.ang,c0[0],c0[1]);VB=vbPara(m,c1[0],c1[1],w,ANG);}
   aplicar();});
-const fim=e=>{PT.delete(e.pointerId);G0=PT.size?{vb:{...VB},pts:[...PT.values()].map(p=>[...p])}:null;};
+const fim=e=>{PT.delete(e.pointerId);G0=PT.size?{vb:{...VB},ang:ANG,pts:[...PT.values()].map(p=>[...p]),giro:false,off:0}:null;};
 sv().addEventListener("pointerup",e=>{const tocou=!moveu&&PT.size===1;fim(e);if(tocou)tocar(e);});sv().addEventListener("pointercancel",fim);
 sv().addEventListener("wheel",e=>{e.preventDefault();zoom(e.deltaY>0?1.25:0.8,e.clientX,e.clientY);},{passive:false});
-function zoom(k,cx,cy){const r=sv().getBoundingClientRect();cx=cx==null?r.left+r.width/2:cx;cy=cy==null?r.top+r.height/2:cy;const [mx,my]=pt2m(cx,cy);const w=Math.min(Math.max(VB.w*k,M.w/400),M.w*4);
-  VB={x:mx-(cx-r.left)/r.width*w,y:my-(cy-r.top)/r.height*w*raz(),w,h:w*raz()};aplicar();}
-$("#b-in").onclick=()=>zoom(1/1.6);$("#b-out").onclick=()=>zoom(1.6);$("#b-fit").onclick=()=>{VB=null;GPS.seguir=false;aplicar();};
+function zoom(k,cx,cy){const r=sv().getBoundingClientRect();cx=cx==null?r.left+r.width/2:cx;cy=cy==null?r.top+r.height/2:cy;const m=pt2m(cx,cy);const w=Math.min(Math.max(VB.w*k,M.w/400),M.w*4);
+  VB=vbPara(m,cx,cy,w,ANG);aplicar();}
+$("#b-in").onclick=()=>zoom(1/1.6);$("#b-out").onclick=()=>zoom(1.6);$("#b-fit").onclick=()=>{VB=null;ANG=0;GPS.seguir=false;aplicar();};
+$("#b-norte").onclick=()=>{ANG=0;aplicar();};
 const centro=()=>[VB.x+VB.w/2,VB.y+VB.h/2];
 
 /* ================= GPS ================= */
@@ -276,7 +287,7 @@ $("#b-gps").onclick=()=>{if(!M.geo){aviso("Este mapa não tem georreferência.")
 function desenhar(){if(!M)return;const u=uu();
   /* anotações */
   let h="";for(const n of NOTAS){if(!M.geo&&!n.px)continue;const P=n.pts.map(q=>M.geo?g2p(q[0],q[1]):q);
-    if(n.tipo==="ponto"){const [x,y]=P[0];h+=`<g data-n="${n.id}" transform="translate(${x} ${y}) scale(${u})"><path d="M0 0C-1.6-5-8-10-8-17A8 8 0 1 1 8-17C8-10 1.6-5 0 0Z" fill="#C0492F" stroke="#fff" stroke-width="1.5"/><circle cy="-17" r="3" fill="#fff"/>${n.nome?`<text x="11" y="-14" font-size="12" font-weight="700" fill="#1E2420" stroke="#fff" stroke-width="3" paint-order="stroke">${esc(n.nome)}</text>`:""}</g>`;}
+    if(n.tipo==="ponto"){const [x,y]=P[0];h+=`<g data-n="${n.id}" transform="translate(${x} ${y}) rotate(${(-ANG).toFixed(1)}) scale(${u})"><path d="M0 0C-1.6-5-8-10-8-17A8 8 0 1 1 8-17C8-10 1.6-5 0 0Z" fill="#C0492F" stroke="#fff" stroke-width="1.5"/><circle cy="-17" r="3" fill="#fff"/>${n.nome?`<text x="11" y="-14" font-size="12" font-weight="700" fill="#1E2420" stroke="#fff" stroke-width="3" paint-order="stroke">${esc(n.nome)}</text>`:""}</g>`;}
     else{const d=P.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join("")+(n.tipo==="area"?"Z":"");const cor=n.tipo==="trilha"?"#1A73E8":"#C0492F";
       h+=`<path data-n="${n.id}" d="${d}" fill="${n.tipo==="area"?"rgba(192,73,47,.18)":"none"}" stroke="${cor}" stroke-width="${3*u}" stroke-linejoin="round"/>`;}}
   $("#ns").innerHTML=h;
