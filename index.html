@@ -52,7 +52,7 @@ body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 .favb{width:40px;height:40px;flex:0 0 40px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}.favb i{width:16px;height:16px;border-radius:50%;border:2px solid var(--mut);background:transparent;display:block}.favb.on i{background:#F4F3EE;border-color:#5b5b57;box-shadow:0 0 0 1px #fff inset}
 .lab{display:grid;gap:4px;font-weight:600;font-size:14px}.inp{width:100%;text-align:left;font-weight:500;color:var(--ink)}a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)}a.btn.pri{color:#fff}
 #sh-b .bt[aria-pressed=true]{background:var(--ok);border-color:var(--ok);color:#fff}
-.pin{cursor:pointer}.dep .dq{fill:#2B3A33;stroke:#F2F1EC;stroke-width:1.4;vector-effect:non-scaling-stroke}.dep .dt{fill:#F2F1EC;font:700 10px system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}.dep.ext .dq{fill:#F2F1EC;stroke:#2B3A33}.dep.ext .dt{fill:#2B3A33}.dep.pend .dq{fill:#8C7A52}.dep{cursor:pointer}.pin.verp .pc{fill:#1F3A68}.pin .pc{fill:var(--mk);stroke:#fff;stroke-width:1.6;vector-effect:non-scaling-stroke}.pin .pf{fill:#fff}.pin .ps{fill:#000;opacity:.18}
+.pin{cursor:pointer}.dep .dq{fill:#2B3A33;stroke:#F2F1EC;stroke-width:1.4;vector-effect:non-scaling-stroke}.dep .dt{fill:#F2F1EC;font:700 10px system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}.dep.ext .dq{fill:#F2F1EC;stroke:#2B3A33}.dep.ext .dt{fill:#2B3A33}.dep.pend .dq{fill:#8C7A52}.dep{cursor:pointer}.pin.verp .pc{fill:#1F3A68}.pin .pc{fill:var(--mk);stroke:#fff;stroke-width:1.6;vector-effect:non-scaling-stroke}.pin .pf{fill:#fff}.pin.novo .pc{animation:ptnovo 1s ease-in-out 4}@keyframes ptnovo{50%{fill:#FFD54A}}.pin .ps{fill:#000;opacity:.18}
 .top{position:fixed;top:calc(8px + env(safe-area-inset-top));left:8px;right:64px;display:grid;gap:6px;z-index:2}
 .box{background:var(--sf);border:1px solid var(--ln);border-radius:12px}
 #selm{width:100%;min-height:46px;padding:0 12px;font-weight:700;background:var(--sf);border:1px solid var(--ln);border-radius:12px}
@@ -112,6 +112,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 .choice .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:var(--bg)}
 .temas{display:flex;gap:6px;flex-wrap:wrap}.temas button{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--ln);background:var(--sf);font-weight:700;cursor:pointer}.temas button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
 .ctl button{position:relative}.ctl button .lb{display:none}
+#b-voz{height:auto;min-height:58px;padding:4px 0;gap:0;background:#1F3A68;border-color:#1F3A68;color:#fff}#b-voz .lb{display:block;font-size:10.5px;line-height:1.05;font-weight:800;white-space:normal}#b-voz.on{background:#C0492F;border-color:#C0492F}
 
 .choice strong{display:block;font-size:18px}.choice small{color:var(--mut);font-size:13.5px}
 .choice .seta{color:var(--mut);font-size:22px}
@@ -128,7 +129,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 </head>
 <body>
 <svg id="mapa" role="img" aria-label="Mapa da fazenda"></svg><svg id="reg" role="img" aria-label="Mapa da região"></svg>
-<div class="top"><div class="toprow"><button id="b-home" aria-label="Voltar ao início" title="Voltar ao início">← Início</button><select id="selm" aria-label="Fazenda"></select></div><div id="sub"></div><button id="b-cam2" class="campill" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5" opacity=".55"/></svg><span id="b-cam2t">Ver mapa oficial da Geoplant</span><b aria-hidden="true">▾</b></button></div>
+<div class="top"><div class="toprow"><button id="b-home" aria-label="Voltar ao início" title="Voltar ao início">← Início</button><select id="selm" aria-label="Fazenda"></select></div><div id="sub"></div><button id="b-cam2" class="campill" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5" opacity=".55"/></svg><span id="b-cam2t">Ver mapa oficial da empresa</span><b aria-hidden="true">▾</b></button></div>
 <div class="ctl">
   <button id="b-norte" aria-label="Voltar o norte para cima" title="Voltar o norte para cima" hidden><i style="display:block;font-style:normal;font-size:15px;line-height:1;color:#B5483B">▲<br><b style="font-size:11px;color:var(--ink)">N</b></i></button>
   <button id="b-in" aria-label="Zoom +" title="Zoom +">＋</button>
@@ -138,7 +139,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <button id="b-gps" aria-label="Onde estou (GPS)" title="Onde estou (GPS)">◉<span class="lb">Onde estou (GPS)</span></button>
   <button id="b-med" aria-label="Medir distância ou área" title="Medir distância ou área">📏<span class="lb">Medir</span></button>
   <button id="b-pt" aria-label="Marcar ponto" title="Marcar ponto">📍<span class="lb">Marcar ponto</span></button>
-  <button id="b-voz" aria-label="Fala, Piá: marcar ponto falando" title="Fala, Piá: aperte e fale o que quer marcar">🎙️<span class="lb">Fala, Piá</span></button>
+  <button id="b-voz" aria-label="Fala, Piá: marcar ponto falando" title="Fala, Piá: aperte e fale o que quer marcar">🎙️<span class="lb">Fala,<br>Piá</span></button>
   <button id="b-atu" aria-label="Atualizar o app" title="Atualizar o app"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg><span class="lb">Atualizar</span></button>
   <button id="b-menu" aria-label="Talhões, pontos e mais" title="Talhões, pontos e mais">☰<span class="lb">Talhões, pontos e mais</span></button>
 </div>
@@ -223,6 +224,7 @@ const DB={db:null,
 let PONTOS=[];
 async function carregarPontos(){PONTOS=await DB.todos();PONTOS.sort((a,b)=>b.em.localeCompare(a.em));}
 const TIPOS=["Buraco","Erosão","Bueiro / tubo","Atoleiro","Mata-burro","Ponte","Árvore caída","Outro"];
+const ICO_PT={"Buraco":"🕳️","Erosão":"💧","Bueiro / tubo":"🛢️","Atoleiro":"🟫","Mata-burro":"🚧","Ponte":"🌉","Árvore caída":"🌳","Outro":"📍"};let PT_NOVO=null;
 
 /* ================= desenho ================= */
 const M=()=>LISTA[I];const sv=()=>$("#mapa");
@@ -260,13 +262,13 @@ function rtMapa(m){if(!RT.res)return "";if(m._rt!=null)return m._rt;const P=RT.r
 function desenhar(){const m=M();sel=null;VB=null;
   if(!REG.on)$("#selm").value=String(I);
   $("#sub").textContent=`${m.mapa} · mapas de ${DADOS.versao}`;
-  const cA=camAt(m);sv().classList.toggle("comcam",!!cA);$("#b-cam").hidden=!(m.camadas||[]).length;$("#b-cam").classList.toggle("on",!!cA);$("#b-cam2").hidden=!(m.camadas||[]).length;$("#b-cam2").classList.toggle("on",!!cA);$("#b-cam2t").textContent=cA?"Mapa oficial: "+cA.nome:"Ver mapa oficial da Geoplant";
+  const cA=camAt(m);sv().classList.toggle("comcam",!!cA);$("#b-cam").hidden=!(m.camadas||[]).length;$("#b-cam").classList.toggle("on",!!cA);$("#b-cam2").hidden=!(m.camadas||[]).length;$("#b-cam2").classList.toggle("on",!!cA);$("#b-cam2t").textContent=cA?"Mapa oficial: "+cA.nome:"Ver mapa oficial da empresa";
   sv().innerHTML=`<g id="rotf">`+camImg(m)+`<g id="vic">${vicMapa(m)}</g>`+rodMapa(m)+rtMapa(m)+m.talhoes.map(t=>`<polygon class="tal" points="${t.pts.join(" ")}"/>`).join("")+vizinho(m)+
     m.trechos.map(t=>`<polyline class="tr s-${t.st}${t.n%2?"":" alt"}" data-n="${t.n}" points="${t.pts.join(" ")}"/><polyline class="hit" data-n="${t.n}" points="${t.pts.join(" ")}"/>`).join("")+
     m.talhoes.filter(t=>t.lab&&t.id).map(t=>{const xs=t.pts.map(p=>p[0]),ys=t.pts.map(p=>p[1]);return `<g class="fx tl" data-cx="${t.lab[0]}" data-cy="${t.lab[1]}" data-w="${Math.max(...xs)-Math.min(...xs)}" data-h="${Math.max(...ys)-Math.min(...ys)}" data-n="${String(t.id).length}"><text class="tt" x="${t.lab[0]}" y="${t.lab[1]}">${esc(t.id)}</text>${t.ha?`<text class="ts" x="${t.lab[0]}" y="${t.lab[1]+12}">${fmt(Math.round(t.ha*10)/10)} ha</text>`:""}</g>`;}).join("")+
     m.trechos.filter(t=>t.mid).map(t=>`<g class="fx nb" data-n="${t.n}" data-cx="${t.mid[0]}" data-cy="${t.mid[1]}"><circle cx="${t.mid[0]}" cy="${t.mid[1]}" r="10"/><text x="${t.mid[0]}" y="${t.mid[1]}">${t.n}</text></g>`).join("")+
     (window.MAPA?MAPA.finais(m.trechos.map(t=>({fin:t.fin,pts:t.pts}))):"")+
-    `<g id="pins"></g><g id="med"></g><g id="gps"></g></g>`;
+    `<g id="med"></g><g id="gps"></g><g id="pins"></g></g>`;
   $("#leg").innerHTML=m.trechos.some(t=>!String(t.st).startsWith("g-"))||true?`<span><i style="background:var(--zero)"></i>Nada feito</span><span><i style="background:var(--and)"></i>Em andamento</span><span><i style="background:var(--ok)"></i>Pronto (atividade final)</span><span><i style="background:var(--np)"></i>Sem previsão</span>${m.trechos.some(t=>t.fin==="cascalho")?`<button class="legfin" id="leg-fin" aria-pressed="${LS.get("fin","1")?"true":"false"}" title="Ligar ou desligar a linha azul"><i style="background:repeating-linear-gradient(90deg,var(--mapa-chuva) 0 5px,transparent 5px 9px);height:3px"></i>ao lado: rota para chuva (Preparo de leito com brita)</button>`:""}${ROD?`<span><i style="background:#7A6A5E"></i>Rodovia BR/MS</span><span><i style="background:#A99D8A"></i>Vicinal / terra</span>`:""}`:"";
   sv().classList.toggle("semfin",!LS.get("fin","1"));const lf=$("#leg-fin");if(lf)lf.onclick=e=>{e.stopPropagation();const on=!LS.get("fin","1");LS.set("fin",on?"1":"");sv().classList.toggle("semfin",!on);lf.setAttribute("aria-pressed",String(on));};
   info();aplicar();LS.set("mapa",m.id);camAuto(m);}
@@ -289,7 +291,7 @@ function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)
   [...s.querySelectorAll(".tl")].map(g=>({g,w:+g.dataset.w/uu,h:+g.dataset.h/uu})).sort((a,b)=>b.w-a.w).forEach(o=>{const g=o.g,wN=(+g.dataset.n)*7.2+6;const [x,y]=tela(g);
     if(o.w<wN*1.6||o.h<20||!dentro(x,y)){g.style.display="none";return;}tf(g,uu);const sub=g.querySelector(".ts");const cs=!!sub&&o.w>=60&&o.h>=46;if(sub)sub.style.display=cs?"":"none";
     g.style.display=livre(x,y+(cs?6:0),Math.max(wN,cs?50:0),cs?28:15)?"":"none";});
-  $("#pins").innerHTML=pmMarcas(m,uu)+depMarcas(m,uu)+PONTOS.map(p=>{const [x,y]=g2n(m,p.lat,p.lon);if(x<-m.w||y<-m.h||x>2*m.w||y>2*m.h)return "";return alfinete(x,y,uu,`data-pt="${p.id}"`,p.vis==="pessoal"?"pess":"");}).join("")+verMarca(m,uu);
+  $("#pins").innerHTML=pmMarcas(m,uu)+depMarcas(m,uu)+PONTOS.map(p=>{const [x,y]=g2n(m,p.lat,p.lon);if(x<-m.w||y<-m.h||x>2*m.w||y>2*m.h)return "";return alfinete(x,y,uu*1.35,`data-pt="${p.id}"`,(p.vis==="pessoal"?"pess":"")+(p.id===PT_NOVO?" novo":"")).replace(/<\/g>$/,`<circle cx="0" cy="-33" r="8.5" fill="#fff" stroke="#0003"/><text x="0" y="-32.5" font-size="11" text-anchor="middle" dominant-baseline="central">${ICO_PT[p.tipo]||"📍"}</text></g>`);}).join("")+verMarca(m,uu);
   const gg=$("#gps");gg.innerHTML="";if(GPS.on&&GPS.fix){const q=GPS.pos||GPS.fix;const [x,y]=g2n(m,q.lat,q.lon);gg.innerHTML=`<circle cx="${x}" cy="${y}" r="${GPS.fix.acc/mpu(m)}" fill="#1A73E8" fill-opacity=".15"/>`+cursorGps(x,y,uu);}
   const mp=mpu(m)*uu,alvo=mp*100,p=Math.pow(10,Math.floor(Math.log10(alvo))),n=[1,2,5,10].map(k=>k*p).filter(k=>k<=alvo).pop()||p;$("#esc").innerHTML=`<i style="width:${Math.round(n/mp)}px"></i>${fM(n)}`;}
 /* alfinete: a ponta fica exatamente no lugar marcado; sempre em pé na tela, mesmo com o mapa girado */
@@ -426,10 +428,10 @@ function camImg(m){const c=camAt(m);if(!c)return "";const u=CAMB[c.arq];
   if(!u)return "";const op=CAMS._op!=null?CAMS._op:0.9;return `<image href="${u}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(${c.m.join(" ")})" opacity="${op}" style="pointer-events:none"/>`;}
 function desenharMantendo(){const v=VB;desenhar();if(v){VB=v;aplicar();}}
 function camFolha(){const m=M();if(!m)return;const at=CAMS[m.id]||"";
-  if(!senhaEquipe()){abrirFolha("Mapas oficiais da Geoplant",`<div class="muted">Digite a senha da equipe (só na primeira vez).</div><div style="position:relative"><input id="cam-senha" class="btn" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Senha da equipe" style="width:100%;text-align:left;padding-right:56px"><button type="button" class="btn" aria-label="Mostrar a senha" onclick="olhoSenha(this)" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);min-height:38px;padding:0 10px;border:0;background:transparent">${OLHO_A}</button></div><button class="btn pri" id="cam-ok" style="min-height:50px">Entrar</button>`);
+  if(!senhaEquipe()){abrirFolha("Mapas oficiais da empresa",`<div class="muted">Digite a senha da equipe (só na primeira vez).</div><div style="position:relative"><input id="cam-senha" class="btn" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Senha da equipe" style="width:100%;text-align:left;padding-right:56px"><button type="button" class="btn" aria-label="Mostrar a senha" onclick="olhoSenha(this)" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);min-height:38px;padding:0 10px;border:0;background:transparent">${OLHO_A}</button></div><button class="btn pri" id="cam-ok" style="min-height:50px">Entrar</button>`);
     $("#cam-ok").onclick=()=>{const v=senhaLimpa($("#cam-senha").value);if(!v)return;try{localStorage.setItem("painel_senha",v);}catch(e){}camFolha();};return;}
   const op=CAMS._op!=null?CAMS._op:0.9;
-  abrirFolha("Mapas oficiais da Geoplant · "+m.nome,`<div class="muted">Escolha o mapa da Geoplant para ver por baixo dos trechos.</div>
+  abrirFolha("Mapas oficiais da empresa · "+m.nome,`<div class="muted">Escolha o mapa oficial para ver por baixo dos trechos.</div>
    <button class="fzb" data-ck="" style="${!at?"border:2px solid var(--ok)":""}"><span>${!at?"✓ ":""}Nenhum (só o nosso mapa)</span></button>
    ${(m.camadas||[]).map(c=>`<button class="fzb" data-ck="${esc(c.k)}" style="${at===c.k?"border:2px solid var(--ok)":""}"><span>${at===c.k?"✓ ":""}${esc(c.nome)}</span></button>`).join("")}
    <label class="box card"><b>Transparência</b><input id="cam-op" type="range" min="0.3" max="1" step="0.1" value="${op}" style="width:100%"></label>
@@ -569,14 +571,23 @@ function folhaPonto(orig){abrirFolha("Marcar ponto",`<div class="muted">Local: $
   $("#sh-b").querySelectorAll("[data-vis]").forEach(b=>b.onclick=()=>{NOVO.obs=$("#pt-obs").value;NOVO.vis=b.dataset.vis;LS.set("pt_vis",NOVO.vis);folhaPonto(orig);});
   $("#pt-canc").onclick=fecharFolha;
   $("#pt-salvar").onclick=async()=>{NOVO.obs=$("#pt-obs").value.trim();if(!NOVO.tipo){aviso("Escolha o que é o ponto.");return;}
-    try{await DB.por(NOVO);}catch(e){aviso("Não consegui salvar no celular.");return;}await carregarPontos();fecharFolha();aplicar();aviso("Ponto salvo no celular.");};}
+    try{await DB.por(NOVO);}catch(e){aviso("Não consegui salvar no celular.");return;}await carregarPontos();fecharFolha();PT_NOVO=NOVO.id;aplicar();aviso("📍 Ponto salvo: é o pino piscando no mapa. Toque nele para ver ou pôr foto.",6000);setTimeout(()=>{PT_NOVO=null;},5000);};}
 function fotosDe(p){return p.fotos&&p.fotos.length?p.fotos.slice():(p.foto?[p.foto]:[]);}
 function reduzir(file){return new Promise((ok,er)=>{const img=new Image();img.onload=()=>{const s=Math.min(1,1400/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
   c.getContext("2d").drawImage(img,0,0,c.width,c.height);c.toBlob(b=>b?ok(b):er(),"image/jpeg",.8);URL.revokeObjectURL(img.src);};img.onerror=er;img.src=URL.createObjectURL(file);});}
-function abrirPonto(id){const p=PONTOS.find(x=>x.id===id);if(!p)return;
-  abrirFolha(p.tipo,`<div class="muted">${esc(p.fazenda)} · ${new Date(p.em).toLocaleString("pt-BR")}<br>${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}</div>${fotosDe(p).length?`<div class="ths">${fotosDe(p).map((f,i)=>`<img class="thumb" data-pv="${i}">`).join("")}</div>`:""}${p.obs?`<div>${esc(p.obs)}</div>`:""}
-  <div class="row"><button class="btn dan" id="pv-del">Apagar ponto</button></div>`);
-  fotosDe(p).forEach((f,i)=>{const im=$("#sh-b").querySelector(`[data-pv="${i}"]`);if(im)im.src=URL.createObjectURL(f);});
+function abrirPonto(id){const p=PONTOS.find(x=>x.id===id);if(!p)return;const fs=fotosDe(p);
+  abrirFolha(`${ICO_PT[p.tipo]||"📍"} ${p.tipo||"Ponto"}`,`<div class="muted">${esc(p.fazenda||"")} · ${new Date(p.em).toLocaleString("pt-BR")}${p.vis==="pessoal"?" · 🔒 só eu":" · 👥 equipe"}<br>${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}</div>
+  ${p.obs?`<div>${esc(p.obs)}</div>`:""}
+  ${fs.length?`<div class="ths">${fs.map((f,i)=>`<img class="thumb" data-pv="${i}" style="cursor:zoom-in">`).join("")}</div><div id="pv-big"></div>`:`<div class="muted">Sem foto ainda.</div>`}
+  <div class="row" style="gap:8px"><label class="foto" style="flex:1">📷 Tirar foto<input type="file" accept="image/*" capture="environment" id="pv-foto"></label><label class="foto" style="flex:1">🖼 Da galeria<input type="file" accept="image/*" multiple id="pv-gal"></label></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="pv-ed">✏️ Mudar tipo / observação</button><button class="btn" id="pv-cp">📋 Copiar coordenada</button><button class="btn dan" id="pv-del">Apagar ponto</button></div>`);
+  const us=fs.map(f=>URL.createObjectURL(f));
+  fs.forEach((f,i)=>{const im=$("#sh-b").querySelector(`[data-pv="${i}"]`);if(im){im.src=us[i];im.onclick=()=>{$("#pv-big").innerHTML=`<img src="${us[i]}" style="width:100%;border-radius:10px" alt="Foto ${i+1}">`;};}});
+  const add=async e=>{const L=[...e.target.files];if(!L.length)return;const nv=[];for(const f of L){try{nv.push(await reduzir(f));}catch(x){}}
+    p.fotos=[...fotosDe(p),...nv];p.foto=null;try{await DB.por(p);}catch(x){aviso("Não consegui salvar a foto.");return;}await carregarPontos();aplicar();aviso(nv.length>1?nv.length+" fotos salvas no ponto.":"Foto salva no ponto.");abrirPonto(id);};
+  $("#pv-foto").onchange=add;$("#pv-gal").onchange=add;
+  $("#pv-ed").onclick=()=>{NOVO=Object.assign({},p,{fotos:fotosDe(p)});folhaPonto("ponto já marcado");};
+  $("#pv-cp").onclick=()=>{const t=p.lat.toFixed(6)+", "+p.lon.toFixed(6);try{navigator.clipboard.writeText(t);aviso("Coordenada copiada: "+t);}catch(e){aviso(t);}};
   $("#pv-del").onclick=()=>{$("#pv-del").outerHTML=`<span><b>Apagar mesmo?</b> <button class="btn dan" id="pv-sim">Sim</button> <button class="btn" id="pv-nao">Não</button></span>`;
     $("#pv-sim").onclick=async()=>{await DB.tirar(id);await carregarPontos();fecharFolha();aplicar();aviso("Ponto apagado.");};$("#pv-nao").onclick=()=>abrirPonto(id);};}
 
