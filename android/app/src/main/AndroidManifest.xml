@@ -4,6 +4,11 @@
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
   <uses-permission android:name="android.permission.CAMERA"/>
+  <!-- trilha com a tela desligada -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+  <uses-permission android:name="android.permission.WAKE_LOCK"/>
   <application android:label="Estradas Sucuriú" android:icon="@mipmap/ic_launcher" android:usesCleartextTraffic="false" android:hardwareAccelerated="true">
     <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboardHidden|screenLayout">
       <intent-filter>
@@ -26,6 +31,7 @@
         <data android:mimeType="application/pdf"/>
       </intent-filter>
     </activity>
+    <service android:name=".TrilhaServico" android:exported="false" android:foregroundServiceType="location"/>
     <provider android:name="androidx.core.content.FileProvider" android:authorities="br.sucuriu.estradas.arquivos" android:exported="false" android:grantUriPermissions="true">
       <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/arquivos"/>
     </provider>

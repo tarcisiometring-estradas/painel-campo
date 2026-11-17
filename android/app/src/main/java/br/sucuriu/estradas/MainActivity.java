@@ -191,6 +191,18 @@ public class MainActivity extends Activity {
                 runOnUiThread(() -> startActivity(Intent.createChooser(i, "Enviar anotações")));
             } catch (Exception e) { }
         }
-        @JavascriptInterface public String versao() { return "1.0"; }
+        @JavascriptInterface public String versao() { return "1.3"; }
+        /* trilha com a tela desligada (serviço em primeiro plano) */
+        @JavascriptInterface public boolean trilhaIniciar() {
+            if (!temLocal()) { runOnUiThread(() -> requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1)); return false; }
+            if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED)
+                runOnUiThread(() -> requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 5));
+            try { TrilhaServico.iniciar(MainActivity.this); return true; } catch (Exception e) { return false; }
+        }
+        @JavascriptInterface public void trilhaParar() { TrilhaServico.pararServico(MainActivity.this); }
+        @JavascriptInterface public boolean trilhaAtiva() { return TrilhaServico.ativo; }
+        @JavascriptInterface public int trilhaQuantos() { return TrilhaServico.quantos(MainActivity.this); }
+        @JavascriptInterface public String trilhaPontos(int desde) { return TrilhaServico.pontos(MainActivity.this, desde); }
+        @JavascriptInterface public void trilhaLimpar() { TrilhaServico.pararServico(MainActivity.this); TrilhaServico.limpar(MainActivity.this); }
     }
 }
