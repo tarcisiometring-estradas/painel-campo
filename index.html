@@ -550,31 +550,43 @@ let PIA_VOZ=null;
 function piaVoz(){if(PIA_VOZ)return PIA_VOZ;try{const V=speechSynthesis.getVoices().filter(v=>/^pt(-|_)?br/i.test(v.lang)||/portugu/i.test(v.name));
   PIA_VOZ=V.find(v=>/male|mascul|homem|ptd|pt-br-x-ptd|daniel|felipe|antonio|ricardo|thiago/i.test(v.name)&&!/female|femin/i.test(v.name))||null;}catch(e){}return PIA_VOZ;}
 try{speechSynthesis.onvoiceschanged=()=>{PIA_VOZ=null;piaVoz();};}catch(e){}
-function piaFalar(t){try{const u=new SpeechSynthesisUtterance(t);u.lang="pt-BR";const v=piaVoz();if(v)u.voice=v;
+const PIA_NAT=()=>!!(window.EstradasApp&&typeof window.EstradasApp.temVoz==="function");
+function piaFalar(t){if(PIA_NAT()){try{EstradasApp.falar(t);}catch(e){}return;}try{const u=new SpeechSynthesisUtterance(t);u.lang="pt-BR";const v=piaVoz();if(v)u.voice=v;
   /* voz de rapaz: um pouco mais aguda e ligeira que a voz de homem padrão */u.pitch=v?1.2:0.8;u.rate=1.12;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
 function piaBipe(f,ms){try{const c=piaBipe.c||(piaBipe.c=new (window.AudioContext||window.webkitAudioContext)());const o=c.createOscillator(),g=c.createGain();o.frequency.value=f;g.gain.value=.15;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+ms/1000);}catch(e){}}
 const PIA_OK=["Feito, piá!","Beleza, piá. Marcado!","Tá marcado, piá.","Pronto, piá. Fechou!"];
 function piaFaixa(h,cls){let el=$("#pia-fx");if(!el){el=document.createElement("div");el.id="pia-fx";document.body.appendChild(el);}
   el.className=cls||"";el.innerHTML=h;el.style.display=h?"block":"none";}
-$("#b-voz").onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){aviso("Este celular não tem reconhecimento de voz. Use 📍 Marcar ponto.");return;}
+/* marca o ponto com o que foi falado (serve para a voz do APK e para a do navegador) */
+function piaMarcar(txt){txt=(txt||"").trim();if(!txt)return false;const lw=txt.toLowerCase();
+  const tp=TIPOS.find(t=>lw.includes(t.toLowerCase().split(/[ /]/)[0]))||"Outro";
+  $("#b-pt").onclick();NOVO.tipo=tp;NOVO.obs=txt+" (por voz)";const ob=$("#pt-obs");if(ob)ob.value=NOVO.obs;const sv=$("#pt-salvar");if(sv)sv.click();
+  const fr=PIA_OK[Math.floor(Math.random()*PIA_OK.length)];piaBipe(1320,120);try{navigator.vibrate&&navigator.vibrate([60,60,60]);}catch(x){}
+  piaFaixa(`<b>✅ ${ICO_PT[tp]||"📍"} ${esc(tp)} marcado</b><span>“${esc(txt)}” · toque no pino piscando para pôr foto</span>`,"ok");
+  piaFalar(fr+(tp!=="Outro"?" "+tp+" no mapa.":""));setTimeout(()=>piaFaixa(""),5000);return true;}
+function piaFim(){$("#b-voz").classList.remove("on");piaFaixa.ouvindo=false;}
+function piaNaoMarcou(m,falar){piaFim();piaFaixa(`<b>❌ Não marcou</b><span>${m}</span>`,"erro");if(falar)piaFalar(falar);setTimeout(()=>piaFaixa(""),6000);}
+/* respostas da voz do APK (Android, funciona sem internet) */
+window.piaPronto=()=>{piaBipe(880,140);try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}piaFaixa(`<b>🎙️ Escutando…</b><span>Fala aí, piá: “buraco”, “ponte caída”, “erosão”…</span>`,"ouve");};
+window.piaParcial=t=>{piaFaixa(`<b>🎙️ Escutando…</b><span>“${esc(t)}”</span>`,"ouve");};
+window.piaResultado=t=>{piaFim();if(!piaMarcar(t))piaNaoMarcou("Não ouvi nada. Aperta e fala de novo, piá.","Não ouvi nada, piá.");};
+window.piaErro=c=>{piaNaoMarcou(c==="microfone"?"Libere o microfone para o app (Configurações › Apps › Estradas Sucuriú › Permissões).":
+  c==="sem-pacote"?"Falta o pacote de voz sem internet no celular. Com Wi‑Fi: app Google › Configurações › Voz › Reconhecimento de fala off-line › Português (Brasil).":
+  c==="sem-reconhecedor"?"Este celular não tem reconhecimento de voz. Use 📍 Marcar ponto.":"Não peguei. Aperta e fala de novo, piá.",c==="nada"||/^erro/.test(c)?"Não peguei, piá. Fala de novo.":"");};
+$("#b-voz").onclick=()=>{
   if(!(GPS.on&&GPS.fix)){aviso("Ligue o GPS ◉ antes: o Piá marca onde você está.");piaFalar("Liga o GPS primeiro, piá.");return;}
-  if(piaFaixa.ouvindo)return;
-  const r=new SR();r.lang="pt-BR";r.interimResults=true;r.maxAlternatives=1;const b=$("#b-voz");b.classList.add("on");piaFaixa.ouvindo=true;
-  try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}piaBipe(880,140);
-  piaFaixa(`<b>🎙️ Escutando…</b><span>Fala aí, piá: “buraco”, “ponte caída”, “erosão”…</span>`,"ouve");
-  let ok=false,txt="";
-  r.onresult=e=>{txt=[...e.results].map(x=>x[0].transcript).join(" ").trim();piaFaixa(`<b>🎙️ Escutando…</b><span>“${esc(txt)}”</span>`,"ouve");
-    if(!e.results[e.results.length-1].isFinal||!txt)return;ok=true;const lw=txt.toLowerCase();
-    const tp=TIPOS.find(t=>lw.includes(t.toLowerCase().split(/[ /]/)[0]))||"Outro";
-    $("#b-pt").onclick();NOVO.tipo=tp;NOVO.obs=txt+" (por voz)";const ob=$("#pt-obs");if(ob)ob.value=NOVO.obs;const sv=$("#pt-salvar");if(sv)sv.click();
-    const fr=PIA_OK[Math.floor(Math.random()*PIA_OK.length)];piaBipe(1320,120);try{navigator.vibrate&&navigator.vibrate([60,60,60]);}catch(x){}
-    piaFaixa(`<b>✅ ${ICO_PT[tp]||"📍"} ${esc(tp)} marcado</b><span>“${esc(txt)}” · toque no pino piscando para pôr foto</span>`,"ok");
-    piaFalar(fr+(tp!=="Outro"?" "+tp+" no mapa.":""));setTimeout(()=>piaFaixa(""),5000);};
-  r.onerror=e=>{const m=e.error==="network"?"Sem internet a voz não funciona neste celular. Use 📍 Marcar ponto.":e.error==="not-allowed"?"Libere o microfone para o app.":"Não peguei. Aperta e fala de novo, piá.";
-    piaFaixa(`<b>❌ Não marcou</b><span>${m}</span>`,"erro");if(e.error!=="not-allowed"&&e.error!=="network")piaFalar("Não peguei, piá. Fala de novo.");setTimeout(()=>piaFaixa(""),5000);};
-  r.onend=()=>{b.classList.remove("on");piaFaixa.ouvindo=false;if(!ok&&$("#pia-fx")&&$("#pia-fx").className==="ouve"){piaFaixa(`<b>❌ Não marcou</b><span>Não ouvi nada. Aperta e fala de novo, piá.</span>`,"erro");piaFalar("Não ouvi nada, piá.");setTimeout(()=>piaFaixa(""),4500);}};
-  try{r.start();}catch(e){b.classList.remove("on");piaFaixa.ouvindo=false;piaFaixa("");}};
+  if(piaFaixa.ouvindo){if(PIA_NAT())try{EstradasApp.pararOuvir();}catch(e){}return;}
+  const b=$("#b-voz");b.classList.add("on");piaFaixa.ouvindo=true;
+  if(PIA_NAT()){piaFaixa(`<b>🎙️ Preparando…</b><span>Já já pode falar.</span>`,"ouve");try{EstradasApp.ouvir();}catch(e){piaNaoMarcou("Não consegui ligar o microfone.");}return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){piaFim();aviso("Instale o app (APK) novo para usar o Fala, Piá. Por enquanto use 📍 Marcar ponto.");return;}
+  const r=new SR();r.lang="pt-BR";r.interimResults=true;r.maxAlternatives=1;
+  window.piaPronto();let ok=false;
+  r.onresult=e=>{const txt=[...e.results].map(x=>x[0].transcript).join(" ").trim();window.piaParcial(txt);
+    if(!e.results[e.results.length-1].isFinal||!txt)return;ok=true;piaFim();piaMarcar(txt);};
+  r.onerror=e=>{ok=true;window.piaErro(e.error==="network"?"sem-pacote":e.error==="not-allowed"?"microfone":"nada");};
+  r.onend=()=>{if(!ok)window.piaErro("nada");piaFim();};
+  try{r.start();}catch(e){piaFim();piaFaixa("");}};
 function folhaPonto(orig){abrirFolha("Marcar ponto",`<div class="muted">Local: ${esc(orig)}<br>${NOVO.lat.toFixed(6)}, ${NOVO.lon.toFixed(6)}</div>
   <b>O que é?</b><div class="chips">${TIPOS.map(t=>`<button data-tp="${esc(t)}" aria-pressed="${NOVO.tipo===t}">${esc(t)}</button>`).join("")}</div>
   <div class="row" style="gap:8px"><label class="foto" style="flex:1">📷 Tirar foto<input type="file" accept="image/*" capture="environment" id="pt-foto"></label><label class="foto" style="flex:1">🖼 Da galeria<input type="file" accept="image/*" multiple id="pt-gal"></label></div>

@@ -9,6 +9,13 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.Voice;
+import org.json.JSONObject;
+import java.util.Locale;
 import android.util.Base64;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
@@ -38,6 +45,51 @@ public class MainActivity extends Activity {
     /* arquivos recebidos esperando a página buscar */
     final List<String> nomes = new ArrayList<>();
     final List<byte[]> dados = new ArrayList<>();
+    /* "Fala, Piá": reconhecimento de voz e fala do próprio Android (funciona sem internet com o pacote de voz offline) */
+    SpeechRecognizer rec; TextToSpeech tts; boolean ttsOk = false;
+    void js(String fn, String arg) { final String c = "window." + fn + "&&window." + fn + "(" + JSONObject.quote(arg) + ")"; runOnUiThread(() -> web.evaluateJavascript(c, null)); }
+    void iniciarTts() {
+        if (tts != null) return;
+        tts = new TextToSpeech(this, st -> {
+            if (st != TextToSpeech.SUCCESS) return;
+            Locale br = new Locale("pt", "BR"); tts.setLanguage(br); ttsOk = true;
+            try { /* prefere voz masculina e que funcione sem internet */
+                Voice esc = null;
+                for (Voice v : tts.getVoices()) {
+                    if (v.getLocale() == null || !"pt".equals(v.getLocale().getLanguage())) continue;
+                    if (v.isNetworkConnectionRequired()) continue;
+                    String n = v.getName().toLowerCase(Locale.ROOT);
+                    boolean masc = n.contains("ptd") || n.contains("male") && !n.contains("female") || v.getFeatures() != null && v.getFeatures().contains("male");
+                    if (masc) { esc = v; break; }
+                }
+                if (esc != null) tts.setVoice(esc);
+            } catch (Exception e) { }
+            tts.setPitch(1.2f); tts.setSpeechRate(1.1f);
+        });
+    }
+    void ouvirAgora() {
+        try {
+            if (!SpeechRecognizer.isRecognitionAvailable(this)) { js("piaErro", "sem-reconhecedor"); return; }
+            if (rec == null) rec = SpeechRecognizer.createSpeechRecognizer(this);
+            Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "pt-BR");
+            i.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
+            i.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+            rec.setRecognitionListener(new RecognitionListener() {
+                public void onReadyForSpeech(Bundle p) { js("piaPronto", ""); }
+                public void onBeginningOfSpeech() { }
+                public void onRmsChanged(float v) { }
+                public void onBufferReceived(byte[] b) { }
+                public void onEndOfSpeech() { }
+                public void onError(int e) { js("piaErro", e == SpeechRecognizer.ERROR_NETWORK || e == SpeechRecognizer.ERROR_NETWORK_TIMEOUT || e == SpeechRecognizer.ERROR_SERVER ? "sem-pacote" : e == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ? "microfone" : e == SpeechRecognizer.ERROR_SPEECH_TIMEOUT || e == SpeechRecognizer.ERROR_NO_MATCH ? "nada" : "erro-" + e); }
+                public void onResults(Bundle r) { ArrayList<String> L = r.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION); js("piaResultado", L != null && !L.isEmpty() ? L.get(0) : ""); }
+                public void onPartialResults(Bundle r) { ArrayList<String> L = r.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION); if (L != null && !L.isEmpty()) js("piaParcial", L.get(0)); }
+                public void onEvent(int t, Bundle p) { }
+            });
+            rec.startListening(i);
+        } catch (Exception e) { js("piaErro", "erro"); }
+    }
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -106,6 +158,7 @@ public class MainActivity extends Activity {
     }
 
     @Override public void onRequestPermissionsResult(int req, String[] p, int[] g) {
+        if (req == 9) { if (g.length > 0 && g[0] == PackageManager.PERMISSION_GRANTED) ouvirAgora(); else js("piaErro", "microfone"); return; }
         if (req == 1 && geoCb != null) { geoCb.invoke(geoOrigem, temLocal(), true); geoCb = null; }
         if (req == 4) { if (g.length > 0 && g[0] == PackageManager.PERMISSION_GRANTED) abrirCamera(); else if (escolha != null) { escolha.onReceiveValue(null); escolha = null; } }
     }
@@ -191,7 +244,22 @@ public class MainActivity extends Activity {
                 runOnUiThread(() -> startActivity(Intent.createChooser(i, "Enviar anotações")));
             } catch (Exception e) { }
         }
-        @JavascriptInterface public String versao() { return "1.3"; }
+        @JavascriptInterface public String versao() { return "1.4"; }
+        @JavascriptInterface public boolean temVoz() { return true; }
+        @JavascriptInterface public void ouvir() {
+            runOnUiThread(() -> {
+                iniciarTts();
+                if (Build.VERSION.SDK_INT >= 23 && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
+                    requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 9);
+                else ouvirAgora();
+            });
+        }
+        @JavascriptInterface public void pararOuvir() { runOnUiThread(() -> { try { if (rec != null) rec.stopListening(); } catch (Exception e) { } }); }
+        @JavascriptInterface public void falar(String t) {
+            runOnUiThread(() -> { iniciarTts(); if (ttsOk) tts.speak(t, TextToSpeech.QUEUE_FLUSH, null, "pia");
+                else web.postDelayed(() -> { if (ttsOk) tts.speak(t, TextToSpeech.QUEUE_FLUSH, null, "pia"); }, 900); });
+        }
+        @JavascriptInterface public void prepararVoz() { runOnUiThread(() -> iniciarTts()); }
         /* trilha com a tela desligada (serviço em primeiro plano) */
         @JavascriptInterface public boolean trilhaIniciar() {
             if (!temLocal()) { runOnUiThread(() -> requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1)); return false; }
