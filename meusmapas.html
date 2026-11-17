@@ -42,7 +42,7 @@ button,.btn,input,select,textarea{font:inherit;color:inherit}
 .ctl .btn{width:48px;height:48px;min-height:48px;padding:0;font-size:20px}
 .ctl .btn.on{background:var(--gps);border-color:var(--gps);color:#fff}
 #info{position:fixed;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:calc(8px + env(safe-area-inset-bottom));z-index:3;background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;display:grid;gap:8px}
-#info .linha{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#info .linha,#tri-ban .linha{display:flex;flex-wrap:wrap;gap:6px;align-items:center}#tri-ban .btn{color:var(--ink)}
 #alvo{position:fixed;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;pointer-events:none;z-index:2;display:none}
 #alvo.on{display:block}
 #alvo::before,#alvo::after{content:"";position:absolute;background:rgba(192,73,47,.85)}
@@ -74,6 +74,7 @@ label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-rad
   <div class="topo"><a class="btn" href="./">‹ Início</a><h1 style="flex:1">Meus mapas</h1><button class="btn" id="l-atu" aria-label="Atualizar o app" title="Atualizar o app" style="width:44px;padding:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button></div>
   <div class="muted">Mapas em PDF (os que chegam pelo WhatsApp) com as <b>suas</b> anotações. Fica só neste celular e não vai para o painel da empresa.</div>
   <label class="fab" aria-label="Importar mapa (PDF)"><span class="mais">+</span><small>Importar mapa</small><input id="imp" type="file" accept="application/pdf,.pdf,*/*" multiple hidden></label>
+  <div id="tri-ban" style="display:none;gap:8px;background:#1A73E8;color:#fff;border-radius:14px;padding:12px"></div>
   <div class="cards" id="cards"></div>
   <div id="zera" style="display:none;margin-top:18px;border-top:1px solid var(--ln);padding-top:12px;gap:6px">
     <div class="muted">Seus mapas e anotações ficam guardados neste celular e <b>não somem quando o app atualiza</b>. Só saem se você excluir aqui.</div>
@@ -100,6 +101,7 @@ label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-rad
     <button class="btn" id="b-med" aria-label="Medir">📏</button>
     <button class="btn" id="b-pt" aria-label="Marcar ponto (ou segure o dedo no mapa)" title="Marcar ponto (ou segure o dedo no mapa)">📍</button>
     <button class="btn" id="b-lst" aria-label="Minhas anotações">☰</button>
+    <button class="btn" id="b-km" aria-label="Mostrar km e ha no mapa" title="Mostrar km e ha no mapa" style="font-size:13px;font-weight:800">km</button>
     <button class="btn" id="b-atu" aria-label="Atualizar o app"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
   </div>
   <div id="alvo"><i></i></div>
@@ -135,6 +137,8 @@ const corPad=t=>t==="trilha"?"#1A73E8":"#C0492F";
 const corDe=n=>n.cor||corPad(n.tipo);
 const espDe=n=>(ESP.find(e=>e[0]===n.esp)||[0,n.tipo==="trilha"?3.5:3])[1];
 const fotosDe=n=>n.fotos||(n.foto?[n.foto]:[]);
+const transpDe=n=>n.transp==null?19:+n.transp;/* % de preenchimento da área (0 = só contorno) */
+let VERMED=(()=>{try{return localStorage.getItem("mm-vermed")!=="0";}catch(e){return true;}})();
 const segsDe=n=>(n.segs&&n.segs.length?n.segs:[n.pts]).filter(S=>S&&S.length);
 const contorno=c=>c==="#FFFFFF"||c==="#E0A100"?"#1E2420":"#fff";
 
@@ -202,6 +206,8 @@ $("#imp").onchange=e=>{importar(e.target.files);e.target.value="";};
 /* ================= lista ================= */
 async function listar(){const L=(await dbTodos("mapas")).sort((a,b)=>b.em-a.em);const N=await dbTodos("notas");
   $("#cards").innerHTML=L.map(m=>{const n=N.filter(x=>x.mapa===m.id).length;return `<div class="cw"><button class="cm" data-m="${m.id}"><img src="${m.thumb}" alt=""><span><b>${esc(m.nome)}</b><small>${m.geo?"GPS ✓":"sem GPS"} · ${n} anotação(ões) · ${quando(m.em)}</small></span></button><button class="tp" data-op="${m.id}" aria-label="Opções do mapa">⋮</button></div>`;}).join("");
+  const tb=$("#tri-ban");if(TRI.on){const tm=L.find(m=>m.id===TRI.mapa);tb.style.display="grid";tb.innerHTML=`<div>⏺ <b>Trilha ${TRI.pausa?"pausada":"gravando"}</b> · ${fM(triCompr())} · começou em <b>${esc(tm?tm.nome:"?")}</b></div><div class="linha"><button class="btn" id="tb-ab">Abrir o mapa</button><button class="btn pri" id="tb-sv">⏹ Parar e salvar</button></div>`;
+    $("#tb-ab").onclick=()=>abrir(TRI.mapa);$("#tb-sv").onclick=()=>abrir(TRI.mapa).then(()=>triSalvar());}else tb.style.display="none";
   $("#como").style.display=L.length?"none":"grid";$("#zera").style.display=L.length?"grid":"none";
   document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>abrir(b.dataset.m));
   document.querySelectorAll("[data-op]").forEach(b=>b.onclick=()=>opcoes(b.dataset.op));
@@ -250,19 +256,38 @@ const raz=()=>{const r=sv().getBoundingClientRect();return r.height/r.width||1.6
 function inteiro(){const w=M.w,h=M.h,rz=raz();return w*rz>=h?{x:0,y:(h-w*rz)/2,w,h:w*rz}:{x:(w-h/rz)/2,y:0,w:h/rz,h};}
 function aplicar(){if(!VB)VB=inteiro();VB.h=VB.w*raz();sv().setAttribute("viewBox",`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);cancelAnimationFrame(aplicar.r);aplicar.r=requestAnimationFrame(desenhar);}
 const uu=()=>VB.w/sv().getBoundingClientRect().width;
-async function abrir(id){M=await dbPor("mapas",id);if(!M)return;NOTAS=await notasDe(id);if(URLIMG)URL.revokeObjectURL(URLIMG);URLIMG=URL.createObjectURL(M.img);
+/* extensão (lat/lon) de um mapa, para achar mapas que se sobrepõem */
+function geoP2g(m,px,py){const g=m.geo;if(g.px)return [g.px.A[0]+g.px.A[1]*px+g.px.A[2]*py,g.px.B[0]+g.px.B[1]*px+g.px.B[2]*py];const x=px/m.s,y=m.vh-py/m.s;const u=(x-g.bb[0])/(g.bb[2]-g.bb[0]),v=(y-g.bb[1])/(g.bb[3]-g.bb[1]);return [g.A[0]+g.A[1]*u+g.A[2]*v,g.B[0]+g.B[1]*u+g.B[2]*v];}
+function extensao(m){if(!m||!m.geo)return null;const c=[[0,0],[m.w,0],[0,m.h],[m.w,m.h]].map(q=>geoP2g(m,q[0],q[1]));return [Math.min(...c.map(q=>q[0])),Math.min(...c.map(q=>q[1])),Math.max(...c.map(q=>q[0])),Math.max(...c.map(q=>q[1]))];}
+const dentroExt=(e,q)=>e&&q[0]>=e[0]&&q[0]<=e[2]&&q[1]>=e[1]&&q[1]<=e[3];
+function sobrepoe(a,b){if(!a||!b)return 0;const w=Math.min(a[2],b[2])-Math.max(a[0],b[0]),h=Math.min(a[3],b[3])-Math.max(a[1],b[1]);if(w<=0||h<=0)return 0;const ar=e=>(e[2]-e[0])*(e[3]-e[1]);return w*h/Math.min(ar(a),ar(b));}
+let OUTRAS=[],VIZ=[];
+const acharNota=id=>NOTAS.find(x=>x.id===id)||OUTRAS.find(x=>x.id===id);
+function trocarNota(o){for(const L of [NOTAS,OUTRAS]){const i=L.findIndex(x=>x.id===o.id);if(i>=0){L[i]=o;return;}}if(o.mapa===M.id)NOTAS.push(o);else if(segsDe(o).flat().some(q=>dentroExt(extensao(M),q)))OUTRAS.push(o);}
+function tirarNota(id){NOTAS=NOTAS.filter(x=>x.id!==id);OUTRAS=OUTRAS.filter(x=>x.id!==id);}
+async function carregarVizinhos(){OUTRAS=[];VIZ=[];if(!M.geo)return;const e=extensao(M);const L=await dbTodos("mapas"),N=await dbTodos("notas");const nome={};
+  for(const m of L){nome[m.id]=m.nome;if(m.id!==M.id&&m.geo&&sobrepoe(e,extensao(m))>0.03)VIZ.push(m);}
+  OUTRAS=N.filter(n=>n.mapa!==M.id&&nome[n.mapa]&&segsDe(n).flat().some(q=>dentroExt(e,q))).map(n=>Object.assign(n,{_de:nome[n.mapa]}));}
+async function abrir(id){if(TRI.on&&TRI.mapa!==id&&!abrir.ok){abrir.ok=false;const tm=await dbPor("mapas",TRI.mapa);
+    folha(`<h2><span>Trilha gravando</span><button class="btn" id="a-x">Voltar</button></h2><div>Tem uma trilha gravando (<b>${fM(triCompr())}</b>) que começou no mapa <b>${esc(tm?tm.nome:"?")}</b>.</div>
+     <div class="muted">Ela é gravada pelo GPS, não pelo mapa: se continuar, ela aparece também neste mapa e é salva junto com o mapa onde começou.</div>
+     <button class="btn pri" id="a-c">Continuar gravando e abrir este mapa</button><button class="btn" id="a-s">Parar e salvar a trilha agora</button>`);
+    $("#a-x").onclick=fechar;$("#a-c").onclick=()=>{fechar();abrir.ok=true;abrir(id);};$("#a-s").onclick=()=>{fechar();triSalvar(()=>{abrir.ok=true;abrir(id);});};return;}
+  abrir.ok=false;
+  M=await dbPor("mapas",id);if(!M)return;NOTAS=await notasDe(id);await carregarVizinhos();if(URLIMG)URL.revokeObjectURL(URLIMG);URLIMG=URL.createObjectURL(M.img);
   const im=$("#img");im.setAttribute("href",URLIMG);im.setAttribute("width",M.w);im.setAttribute("height",M.h);
   $("#lista").style.display="none";$("#visor").classList.add("on");$("#v-n").textContent=M.nome;VB=null;MED.on=false;medUI();aplicar();
   try{history.replaceState(null,"","#m="+id);}catch(e){}
-  if(M.geo){gpsLigar(true);triRetomar(id);}else{GPS.seguir=false;info();aviso("Este PDF não tem georreferência: dá para ver e anotar, mas sem GPS.",5000);}}
-$("#v-x").onclick=()=>{if(TRI.on){aviso("A trilha está gravando. Pare e salve (ou pause) antes de sair do mapa.",5000);return;}$("#visor").classList.remove("on");$("#lista").style.display="";try{history.replaceState(null,"",location.pathname);}catch(e){}listar();};
+  if(M.geo){gpsLigar(true);triRetomar();if(TRI.on)triUI();if(VIZ.length)aviso(`Este mapa se sobrepõe com: ${VIZ.map(m=>m.nome).join(" · ")}.${OUTRAS.length?` As anotações de lá que caem aqui aparecem mais claras.`:""}`,7000);}
+  else{GPS.seguir=false;info();aviso("Este PDF não tem georreferência: dá para ver e anotar, mas sem GPS.",5000);}}
+$("#v-x").onclick=()=>{if(EDV.on){aviso("Salve ou cancele a edição dos pontos antes.");return;}if(TRI.on)aviso("A trilha continua gravando. Para parar: faixa azul no alto da lista.",5000);$("#visor").classList.remove("on");$("#lista").style.display="";try{history.replaceState(null,"",location.pathname);}catch(e){}listar();};
 
 /* gestos: arrastar e pinçar */
 const PT=new Map();let G0=null,moveu=false;
 function pt2m(cx,cy){const r=sv().getBoundingClientRect();return [VB.x+(cx-r.left)/r.width*VB.w,VB.y+(cy-r.top)/r.height*VB.h];}
 let LP=null,LPfeito=false;
 sv().addEventListener("pointerdown",e=>{sv().setPointerCapture(e.pointerId);PT.set(e.pointerId,[e.clientX,e.clientY]);G0={vb:{...VB},pts:[...PT.values()].map(p=>[...p])};moveu=false;LPfeito=false;
-  clearTimeout(LP);if(PT.size===1&&M&&M.geo&&!MED.on){const cx=e.clientX,cy=e.clientY;LP=setTimeout(()=>{if(moveu||PT.size!==1)return;LPfeito=true;try{navigator.vibrate&&navigator.vibrate(35);}catch(x){}marcarPonto(p2g(...pt2m(cx,cy)));},650);}});
+  clearTimeout(LP);if(PT.size===1&&M&&M.geo&&!MED.on&&!EDV.on){const cx=e.clientX,cy=e.clientY;LP=setTimeout(()=>{if(moveu||PT.size!==1)return;LPfeito=true;try{navigator.vibrate&&navigator.vibrate(35);}catch(x){}marcarPonto(p2g(...pt2m(cx,cy)));},650);}});
 sv().addEventListener("pointermove",e=>{if(!PT.has(e.pointerId)||!G0)return;PT.set(e.pointerId,[e.clientX,e.clientY]);const r=sv().getBoundingClientRect();const p=[...PT.values()];
   if(p.length===1&&G0.pts.length===1){const dx=p[0][0]-G0.pts[0][0],dy=p[0][1]-G0.pts[0][1];if(Math.abs(dx)+Math.abs(dy)>6){moveu=true;GPS.seguir=false;clearTimeout(LP);}VB={...G0.vb,x:G0.vb.x-dx/r.width*G0.vb.w,y:G0.vb.y-dy/r.height*G0.vb.h};}
   else if(p.length>=2&&G0.pts.length>=2){moveu=true;clearTimeout(LP);GPS.seguir=false;const d0=Math.hypot(G0.pts[0][0]-G0.pts[1][0],G0.pts[0][1]-G0.pts[1][1]),d1=Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]);
@@ -297,17 +322,27 @@ $("#b-gps").onclick=()=>{if(!M.geo){aviso("Este mapa não tem georreferência.")
 function desenhar(){if(!M)return;const u=uu();
   /* anotações */
   let h="";const caminho=(S,fe)=>S.map((q,i)=>{const p=M.geo?g2p(q[0],q[1]):q;return (i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1);}).join("")+(fe?"Z":"");
-  for(const n of NOTAS){if(!M.geo&&!n.px)continue;const cor=corDe(n);
+  const rot=(x,y,t)=>`<text x="${x}" y="${y}" font-size="${12*u}" font-weight="700" fill="#1E2420" stroke="#fff" stroke-width="${3.2*u}" paint-order="stroke" pointer-events="none">${esc(t)}</text>`;
+  for(const n of [...OUTRAS.map(x=>({...x,_out:1})),...NOTAS]){if(!M.geo&&!n.px)continue;if(EDV.on&&EDV.n.id===n.id)continue;const cor=corDe(n),op=n._out?' opacity=".55"':"";
     if(n.tipo==="ponto"){const [x,y]=M.geo?g2p(n.pts[0][0],n.pts[0][1]):n.pts[0];const sm=n.sim,k=sm?1.3:1;
-      h+=`<g data-n="${n.id}" transform="translate(${x} ${y}) scale(${u*k})"><path d="M0 0C-1.6-5-8-10-8-17A8 8 0 1 1 8-17C8-10 1.6-5 0 0Z" fill="${cor}" stroke="${contorno(cor)}" stroke-width="1.5"/>${sm?`<circle cy="-17" r="6.2" fill="#fff"/><text y="-13.6" text-anchor="middle" font-size="9">${sm}</text>`:`<circle cy="-17" r="3" fill="${contorno(cor)}"/>`}${n.nome?`<text x="${11/k}" y="-14" font-size="${12/k}" font-weight="700" fill="#1E2420" stroke="#fff" stroke-width="${3/k}" paint-order="stroke">${esc(n.nome)}</text>`:""}</g>`;}
-    else{const ar=n.tipo==="area";const d=segsDe(n).map(S=>caminho(S,ar)).join("");
-      h+=`<g data-n="${n.id}"><path d="${d}" fill="${ar?cor+"30":"none"}" stroke="${cor}" stroke-width="${espDe(n)*u}" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" fill="none" stroke="transparent" stroke-width="${18*u}"/></g>`;}}
+      h+=`<g data-n="${n.id}"${op} transform="translate(${x} ${y}) scale(${u*k})"><path d="M0 0C-1.6-5-8-10-8-17A8 8 0 1 1 8-17C8-10 1.6-5 0 0Z" fill="${cor}" stroke="${contorno(cor)}" stroke-width="1.5"/>${sm?`<circle cy="-17" r="6.2" fill="#fff"/><text y="-13.6" text-anchor="middle" font-size="9">${sm}</text>`:`<circle cy="-17" r="3" fill="${contorno(cor)}"/>`}${n.nome?`<text x="${11/k}" y="-14" font-size="${12/k}" font-weight="700" fill="#1E2420" stroke="#fff" stroke-width="${3/k}" paint-order="stroke">${esc(n.nome)}</text>`:""}</g>`;}
+    else{const ar=n.tipo==="area";const S=segsDe(n);const d=S.map(x=>caminho(x,ar)).join("");
+      const fill=ar?cor+Math.round(transpDe(n)*2.55).toString(16).padStart(2,"0"):"none";
+      h+=`<g data-n="${n.id}"${op}><path d="${d}" fill="${fill}" stroke="${cor}" stroke-width="${espDe(n)*u}" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" fill="none" stroke="transparent" stroke-width="${18*u}"/>`;
+      if(VERMED){const t=(n.nome?n.nome+" · ":"")+(ar?fA(areaG(n.pts)):fM(S.reduce((a,x)=>a+compr(x),0)));let q;
+        if(ar){const P=n.pts.map(z=>g2p(z[0],z[1]));q=[P.reduce((a,z)=>a+z[0],0)/P.length,P.reduce((a,z)=>a+z[1],0)/P.length];}else{const L=S[S.length-1];q=g2p(L[L.length-1][0],L[L.length-1][1]);q=[q[0]+8*u,q[1]-6*u];}
+        h+=rot(q[0],q[1],t);}
+      h+=`</g>`;}}
+  /* editando os pontos de uma linha/área */
+  if(EDV.on&&M.geo){const ar=EDV.n.tipo==="area";const P=EDV.pts.map(z=>g2p(z[0],z[1]));const cor=corDe(EDV.n);
+    if(P.length>1)h+=`<path d="${P.map((z,i)=>(i?"L":"M")+z[0].toFixed(1)+" "+z[1].toFixed(1)).join("")}${ar&&P.length>2?"Z":""}" fill="${ar?cor+"30":"none"}" stroke="${cor}" stroke-width="${3*u}" stroke-dasharray="${8*u} ${5*u}"/>`;
+    P.forEach((z,i)=>{const sel=i===EDV.sel;h+=`<g data-v="${i}"><circle cx="${z[0]}" cy="${z[1]}" r="${16*u}" fill="transparent"/><circle cx="${z[0]}" cy="${z[1]}" r="${(sel?9:6)*u}" fill="${sel?"#1A73E8":"#fff"}" stroke="${sel?"#fff":cor}" stroke-width="${2.5*u}"/>${sel?rot(z[0]+11*u,z[1]-9*u,"Ponto "+(i+1)):""}</g>`;});}
   $("#ns").innerHTML=h;
   /* medição em andamento */
   let m="";if(MED.on&&M.geo){const P=MED.pts.map(q=>g2p(q[0],q[1]));const c=centro();const Q=MED.grav?P:[...P,c];
     if(Q.length>1)m+=`<path d="${Q.map((p,i)=>(i?"L":"M")+p[0]+" "+p[1]).join("")}${MED.tipo==="area"&&Q.length>2?"Z":""}" fill="${MED.tipo==="area"?"rgba(26,115,232,.18)":"none"}" stroke="#1A73E8" stroke-width="${3*u}" stroke-dasharray="${8*u} ${5*u}"/>`;
     P.forEach(p=>{m+=`<circle cx="${p[0]}" cy="${p[1]}" r="${5*u}" fill="#fff" stroke="#1A73E8" stroke-width="${2*u}"/>`;});}
-  if(TRI.on&&M.geo&&TRI.mapa===M.id){const d=TRI.segs.filter(S=>S.length>1).map(S=>S.map((q,i)=>{const p=g2p(q[0],q[1]);return (i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1);}).join("")).join("");
+  if(TRI.on&&M.geo){const d=TRI.segs.filter(S=>S.length>1).map(S=>S.map((q,i)=>{const p=g2p(q[0],q[1]);return (i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1);}).join("")).join("");
     if(d)m+=`<path d="${d}" fill="none" stroke="#1A73E8" stroke-width="${4*u}" stroke-linejoin="round" stroke-linecap="round"${TRI.pausa?` stroke-dasharray="${6*u} ${5*u}"`:""}/>`;}
   $("#med").innerHTML=m;
   /* GPS */
@@ -315,10 +350,11 @@ function desenhar(){if(!M)return;const u=uu();
     g=`<circle cx="${x}" cy="${y}" r="${r}" fill="#1A73E8" fill-opacity=".14"/>`+(GPS.hd==null?`<circle cx="${x}" cy="${y}" r="${8*u}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${5.5*u}" fill="#1A73E8"/>`:
       `<g transform="translate(${x} ${y}) rotate(${GPS.hd.toFixed(1)}) scale(${u*0.75})"><path d="M0,-15 L11,12 L0,6 L-11,12 Z" fill="#1A73E8" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></g>`);}
   $("#gps").innerHTML=g;}
-function tocar(e){const n=e.target.closest&&e.target.closest("[data-n]");if(n&&!MED.on)verNota(n.dataset.n);}
+function tocar(e){if(EDV.on){const v=e.target.closest&&e.target.closest("[data-v]");if(v){EDV.sel=+v.dataset.v;edvUI();aplicar();}return;}
+  const n=e.target.closest&&e.target.closest("[data-n]");if(n&&!MED.on)verNota(n.dataset.n);}
 
 /* ================= painel de baixo ================= */
-function info(){if(!M||MED.on||(TRI.on&&TRI.mapa===M.id))return;let t="";
+function info(){if(!M||MED.on||EDV.on)return;if(TRI.on){triUI();return;}let t="";
   if(!M.geo)t=`<div class="muted">Mapa sem georreferência: sem GPS. Pontos e medidas não dá para fazer neste PDF.</div>`;
   else if(GPS.erro)t=`<div class="muted">${esc(GPS.erro)}</div>`;
   else if(!GPS.fix)t=`<div class="muted">Procurando o sinal do GPS…</div>`;
@@ -346,14 +382,14 @@ function medUI(){$("#alvo").classList.toggle("on",MED.on&&!MED.grav);$("#b-med")
   $("#m-tp").onclick=()=>{MED.tipo=MED.tipo==="area"?"linha":"area";medUI();aplicar();};
   $("#m-x").onclick=()=>{MED.on=false;MED.pts=[];medUI();};
   $("#m-sv").onclick=()=>{if(MED.pts.length<(MED.tipo==="area"?3:2)){aviso(MED.tipo==="area"?"Marque pelo menos 3 pontos.":"Marque pelo menos 2 pontos.");return;}salvarForma(MED.tipo,[...MED.pts],()=>{MED.on=false;MED.pts=[];medUI();});};}
-$("#b-med").onclick=()=>{if(!M.geo){aviso("Este mapa não tem georreferência.");return;}if(TRI.on){aviso("Pare a trilha antes.");return;}MED.on=!MED.on;MED.pts=[];GPS.seguir=false;medUI();aplicar();};
-const _ap=aplicar;aplicar=function(){_ap();if(MED.on){cancelAnimationFrame(aplicar.m);aplicar.m=requestAnimationFrame(()=>{const b=$("#m-add");if(b){const c=p2g(...centro());const P=MED.pts,Q=[...P,c];const d=$("#info").firstElementChild;if(d)d.innerHTML=(MED.tipo==="area"?`Área: <b>${fA(areaG(Q))}</b> · perímetro ${fM(compr(Q)+(Q.length>2?dist(Q[Q.length-1],Q[0]):0))}`:`Distância: <b>${fM(compr(Q))}</b>`)+` <span class="muted">· ${P.length} ponto(s)</span>`;}});}};
+$("#b-med").onclick=()=>{if(!M.geo){aviso("Este mapa não tem georreferência.");return;}if(TRI.on){aviso("Pare a trilha antes.");return;}if(EDV.on)return;MED.on=!MED.on;MED.pts=[];GPS.seguir=false;medUI();aplicar();};
+const _ap=aplicar;aplicar=function(){_ap();if(EDV.on){cancelAnimationFrame(aplicar.e);aplicar.e=requestAnimationFrame(()=>{const d=$("#info").firstElementChild;if(d&&$("#e-mv"))d.innerHTML=`📐 ${esc(EDV.n.nome||"Editando")} · ${edvMed()} · ${EDV.pts.length} pontos`;});}if(MED.on){cancelAnimationFrame(aplicar.m);aplicar.m=requestAnimationFrame(()=>{const b=$("#m-add");if(b){const c=p2g(...centro());const P=MED.pts,Q=[...P,c];const d=$("#info").firstElementChild;if(d)d.innerHTML=(MED.tipo==="area"?`Área: <b>${fA(areaG(Q))}</b> · perímetro ${fM(compr(Q)+(Q.length>2?dist(Q[Q.length-1],Q[0]):0))}`:`Distância: <b>${fM(compr(Q))}</b>`)+` <span class="muted">· ${P.length} ponto(s)</span>`;}});}};
 
 /* ================= trilha (grava o caminho pelo GPS) =================
    No APK novo (1.3) quem grava é o celular (serviço com aviso fixo): continua com a TELA DESLIGADA.
    No navegador/APK antigo: a tela fica ligada enquanto grava; se o GPS parar (tela apagou),
    a trilha é CORTADA ali e continua num pedaço novo — nunca liga os dois lados com uma reta. */
-const TRI={on:false,pausa:false,segs:[],mapa:null,ini:0,nat:false,idx:0,ult:0,timer:null,wl:null};
+const TRI={on:false,pausa:false,segs:[],mapa:null,cont:null,ini:0,nat:false,idx:0,ult:0,timer:null,wl:null};
 const NAT=()=>!!(window.EstradasApp&&typeof window.EstradasApp.trilhaIniciar==="function");
 function triGuardar(){try{const {timer,wl,...o}=TRI;localStorage.setItem("mm-trilha",JSON.stringify(o));}catch(e){}}
 function triEsquecer(){try{localStorage.removeItem("mm-trilha");}catch(e){}if(NAT())try{EstradasApp.trilhaLimpar();}catch(e){}}
@@ -372,38 +408,46 @@ function triPuxar(){if(!TRI.on||!TRI.nat)return;let L=[];try{L=JSON.parse(Estrad
 async function triTela(on){try{if(on&&!TRI.nat&&navigator.wakeLock&&document.visibilityState==="visible"){if(!TRI.wl)TRI.wl=await navigator.wakeLock.request("screen");TRI.wl.addEventListener&&TRI.wl.addEventListener("release",()=>{TRI.wl=null;});}
   else if(!on&&TRI.wl){await TRI.wl.release();TRI.wl=null;}}catch(e){TRI.wl=null;}}
 function triRelogio(on){clearInterval(TRI.timer);TRI.timer=on?setInterval(()=>{triPuxar();triStatus();},2000):null;}
-function triIniciar(){if(MED.on||!M||!M.geo)return;Object.assign(TRI,{on:true,pausa:false,segs:[[]],mapa:M.id,ini:Date.now(),idx:0,ult:0,nat:false});
+/* cont = trilha já salva que a pessoa quer CONTINUAR gravando (emenda num pedaço novo) */
+function triIniciar(cont){if(MED.on||EDV.on||!M||!M.geo)return;if(TRI.on){aviso("Já tem uma trilha gravando.");return;}
+  Object.assign(TRI,{on:true,pausa:false,segs:cont?[...segsDe(cont).map(S=>S.map(q=>[...q])),[]]:[[]],mapa:cont?cont.mapa:M.id,cont:cont?cont.id:null,ini:Date.now()-(cont&&cont.dur||0),idx:0,ult:0,nat:false});
   if(NAT()){try{EstradasApp.trilhaLimpar();TRI.nat=!!EstradasApp.trilhaIniciar();}catch(e){TRI.nat=false;}}
   if(!TRI.nat&&GPS.fix)triAdd(GPS.fix.lat,GPS.fix.lon,GPS.fix.acc,Date.now());
   triTela(true);triRelogio(true);GPS.seguir=true;triGuardar();triUI();
-  if(!TRI.nat)aviso(window.EstradasApp?"Instale o APK novo (1.3) para gravar com a tela desligada. Por enquanto a tela fica ligada enquanto grava.":"No navegador o GPS para quando a tela apaga: a tela vai ficar ligada enquanto grava. Para gravar com a tela desligada use o app (APK).",7000);}
+  if(!TRI.nat)aviso(window.EstradasApp?"Instale o APK novo (1.3) para gravar com a tela desligada. Por enquanto a tela fica ligada enquanto grava.":"No navegador o GPS para quando a tela apaga: a tela vai ficar ligada enquanto grava. Para gravar com a tela desligada use o app (APK).",7000);
+  else if(cont)aviso("Continuando a trilha “"+(cont.nome||"Trilha")+"”. O pedaço novo emenda nela ao salvar.",5000);}
 function triPausar(){TRI.pausa=!TRI.pausa;if(TRI.nat){try{if(TRI.pausa){triPuxar();EstradasApp.trilhaParar();}else EstradasApp.trilhaIniciar();}catch(e){}}
   if(!TRI.pausa){TRI.segs.push([]);if(!TRI.nat&&GPS.fix)triAdd(GPS.fix.lat,GPS.fix.lon,GPS.fix.acc,Date.now());}
   triTela(!TRI.pausa);triGuardar();triUI();aviso(TRI.pausa?"Trilha pausada. O que andar agora não entra.":"Gravando de novo.");}
 function triParar(){triPuxar();triRelogio(false);triTela(false);if(TRI.nat)try{EstradasApp.trilhaParar();}catch(e){}}
-function triStatus(){const e=$("#t-st");if(!e)return;const n=triPts().length,pd=TRI.segs.filter(S=>S.length>1).length;
-  e.innerHTML=`${TRI.pausa?"⏸ Pausada":"⏺ Gravando"}: <b>${fM(triCompr())}</b> · ${fT(Date.now()-TRI.ini)} · ${n} pontos${pd>1?` · ${pd} pedaços`:""}`;}
-function triUI(){if(!TRI.on||!M||TRI.mapa!==M.id)return;
-  $("#info").innerHTML=`<div id="t-st"></div><div class="tri-st">${TRI.nat?"✓ Pode desligar a tela: o celular continua gravando (aviso “Gravando trilha” na barra).":"Mantenha a tela ligada. Se ela apagar, a trilha é cortada ali e continua quando voltar."}</div>
+function triStatus(){const e=$("#t-st");if(!e)return;const P=triPts(),pd=TRI.segs.filter(S=>S.length>1).length;
+  e.innerHTML=`${TRI.pausa?"⏸ Pausada":"⏺ Gravando"}: <b>${fM(triCompr())}</b> · ${fT(Date.now()-TRI.ini)} · ${P.length} pontos${pd>1?` · ${pd} pedaços`:""}${P.length>2?` · se fechar a área: <b>${fA(areaG(P))}</b>`:""}`;}
+/* parar e salvar (de qualquer mapa ou da lista) — salva no mapa onde a trilha começou */
+async function triSalvar(depois){triParar();const segs=TRI.segs.filter(S=>S.length>1);
+  if(!segs.length){aviso("Trilha muito curta. Ande um pouco mais.");if(!TRI.pausa){triRelogio(true);if(TRI.nat)try{EstradasApp.trilhaIniciar();}catch(e){}triTela(true);}else triRelogio(true);return;}
+  const dur=Date.now()-TRI.ini,volta=()=>{TRI.on=true;TRI.pausa=true;triGuardar();triRelogio(true);triUI();aplicar();aviso("Trilha pausada (não salvou). Continue ou salve quando quiser.");};
+  const fim=()=>{triEsquecer();TRI.cont=null;info();aplicar();depois&&depois();};
+  TRI.on=false;
+  if(TRI.cont){const n=acharNota(TRI.cont)||await dbPor("notas",TRI.cont);if(n){editor({...n,pts:segs.flat(),segs,dur},false,fim,volta);return;}}
+  salvarForma("trilha",segs.flat(),fim,{segs,dur,ini:TRI.ini,mapa:TRI.mapa},volta);}
+function triUI(){if(!TRI.on||!M)return;const outro=TRI.mapa!==M.id;
+  $("#info").innerHTML=`<div id="t-st"></div><div class="tri-st">${outro?"Esta trilha começou em outro mapa e vai ser salva lá (aparece em todos os mapas por onde passar). ":""}${TRI.nat?"✓ Pode desligar a tela: o celular continua gravando (aviso “Gravando trilha” na barra).":"Mantenha a tela ligada. Se ela apagar, a trilha é cortada ali e continua quando voltar (sem linha reta)."}</div>
    <div class="linha"><button class="btn" id="t-pa">${TRI.pausa?"▶ Continuar":"⏸ Pausar"}</button><button class="btn pri" id="t-sv">⏹ Parar e salvar</button><button class="btn dan" id="t-x">Descartar</button></div><div id="t-cf"></div>`;
   $("#info").style.display="grid";triStatus();
-  $("#t-pa").onclick=triPausar;
-  $("#t-sv").onclick=()=>{triParar();const segs=TRI.segs.filter(S=>S.length>1);if(!segs.length){aviso("Trilha muito curta. Ande um pouco mais.");triRelogio(true);if(!TRI.pausa){if(TRI.nat)try{EstradasApp.trilhaIniciar();}catch(e){}triTela(true);}return;}
-    const dur=Date.now()-TRI.ini;TRI.on=false;
-    salvarForma("trilha",segs.flat(),()=>{triEsquecer();info();aplicar();},{segs,dur,ini:TRI.ini},()=>{/* cancelou: volta pausada, nada se perde */TRI.on=true;TRI.pausa=true;triGuardar();triRelogio(true);triUI();aplicar();});};
-  $("#t-x").onclick=()=>{$("#t-cf").innerHTML=`<div class="linha"><span>Jogar fora esta trilha (${fM(triCompr())})?</span><button class="btn dan" id="t-xs">Sim, descartar</button><button class="btn" id="t-xn">Não</button></div>`;
-    $("#t-xn").onclick=()=>$("#t-cf").innerHTML="";$("#t-xs").onclick=()=>{triParar();TRI.on=false;TRI.segs=[];triEsquecer();info();aplicar();aviso("Trilha descartada.");};};
+  $("#t-pa").onclick=triPausar;$("#t-sv").onclick=()=>triSalvar();
+  $("#t-x").onclick=()=>{$("#t-cf").innerHTML=`<div class="linha"><span>Jogar fora ${TRI.cont?"o pedaço novo desta":"esta"} trilha (${fM(triCompr())})?</span><button class="btn dan" id="t-xs">Sim, descartar</button><button class="btn" id="t-xn">Não</button></div>`;
+    $("#t-xn").onclick=()=>$("#t-cf").innerHTML="";$("#t-xs").onclick=()=>{triParar();TRI.on=false;TRI.segs=[];TRI.cont=null;triEsquecer();info();aplicar();aviso("Trilha descartada.");};};
   aplicar();}
-/* trilha que estava gravando quando o app fechou: continua de onde parou */
-function triRetomar(id){const g=triGuardada();if(!g||!g.on||g.mapa!==id||TRI.on)return false;Object.assign(TRI,g,{timer:null,wl:null});
+/* trilha que estava gravando quando o app fechou: continua de onde parou (em qualquer mapa) */
+function triRetomar(){const g=triGuardada();if(!g||!g.on||TRI.on)return false;Object.assign(TRI,g,{timer:null,wl:null});
   if(TRI.nat&&!NAT())TRI.nat=false;
   if(TRI.nat&&!TRI.pausa){try{if(!EstradasApp.trilhaAtiva())EstradasApp.trilhaIniciar();}catch(e){}}
-  triTela(!TRI.pausa);triRelogio(true);triPuxar();triUI();aviso("Trilha em andamento recuperada.");return true;}
+  triTela(!TRI.pausa);triRelogio(true);triPuxar();aviso("Trilha em andamento recuperada.");return true;}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&TRI.on){triPuxar();if(!TRI.pausa)triTela(true);triStatus();aplicar();}});
 
 /* ================= anotações ================= */
 /* editor único: serve para criar e para EDITAR depois de salvo (nome, observação, cor, símbolo, espessura, fotos, posição) */
-function editor(n,novo,depois,cancelou){const E={...n,fotos:[...fotosDe(n)],cor:corDe(n),onde:n._onde||"manter"};delete E.foto;
+function editor(n,novo,depois,cancelou){const E={...n,fotos:[...fotosDe(n)],cor:corDe(n),onde:n._onde||"manter",virar:n.tipo,transp:transpDe(n)};delete E.foto;
   const tN={ponto:"ponto",linha:"linha",area:"área",trilha:"trilha"}[n.tipo];
   const temGps=()=>GPS.fix&&M.geo&&(()=>{const [x,y]=g2p(GPS.fix.lat,GPS.fix.lon);return x>=0&&y>=0&&x<=M.w&&y<=M.h;})();
   const ler=()=>{const a=$("#f-n"),b=$("#f-o");if(a)E.nome=a.value;if(b)E.obs=b.value;};
@@ -417,6 +461,8 @@ function editor(n,novo,depois,cancelou){const E={...n,fotos:[...fotosDe(n)],cor:
      <label class="f">Observação<textarea id="f-o" rows="2"></textarea></label>
      ${n.tipo==="ponto"?`<div class="f"><b>Símbolo</b><div class="sims">${SIMB.map(([c,t])=>`<button data-sim="${c}" class="${(E.sim||"")===c?"on":""}" title="${t}" aria-label="${t}">${c||"📍"}</button>`).join("")}</div></div>`:""}
      <div class="f"><b>Cor</b><div class="cores">${CORES.map(([c,t])=>`<button data-cor="${c}" class="${E.cor===c?"on":""}" style="background:${c}" title="${t}" aria-label="${t}"></button>`).join("")}</div></div>
+     ${n.tipo==="trilha"?`<div class="f"><b>Salvar como</b><div class="seg"><button class="btn ${E.virar==="trilha"?"on":""}" data-virar="trilha">〰️ Trilha (linha)</button><button class="btn ${E.virar==="area"?"on":""}" data-virar="area">⬛ Área (fecha o contorno) · ${fA(areaG(segsDe(n).flat()))}</button></div></div>`:""}
+     ${n.tipo==="area"||E.virar==="area"?`<label class="f">Preenchimento da área: <span id="f-tv">${E.transp}%</span> <span class="muted" style="font-weight:400">(0% = só o contorno, o mapa aparece inteiro)</span><input type="range" id="f-tr" min="0" max="80" step="5" value="${E.transp}"></label>`:""}
      ${n.tipo!=="ponto"?`<div class="f"><b>Espessura da linha</b><div class="seg">${ESP.map(([k,w,t])=>`<button class="btn ${(E.esp||"media")===k?"on":""}" data-esp="${k}"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="${E.cor==="#FFFFFF"?"#888":E.cor}" stroke-width="${w}" stroke-linecap="round"/></svg>${t}</button>`).join("")}</div></div>`:""}
      <div class="f"><b>Fotos${E.fotos.length?" · "+E.fotos.length:""}</b>${E.fotos.length?`<div class="fotos">${E.fotos.map((f,i)=>`<div><img src="${urlDe(f)}" alt="Foto ${i+1}"><button data-rf="${i}" aria-label="Tirar esta foto">✕</button></div>`).join("")}</div>`:""}
       <div class="seg"><button class="btn" id="f-f">📷 Tirar foto</button><button class="btn" id="f-g2">🖼 Da galeria</button></div></div>
@@ -427,6 +473,8 @@ function editor(n,novo,depois,cancelou){const E={...n,fotos:[...fotosDe(n)],cor:
     document.querySelectorAll("#sheet [data-sim]").forEach(b=>b.onclick=()=>{ler();E.sim=b.dataset.sim;montar();});
     document.querySelectorAll("#sheet [data-cor]").forEach(b=>b.onclick=()=>{ler();E.cor=b.dataset.cor;montar();});
     document.querySelectorAll("#sheet [data-esp]").forEach(b=>b.onclick=()=>{ler();E.esp=b.dataset.esp;montar();});
+    document.querySelectorAll("#sheet [data-virar]").forEach(b=>b.onclick=()=>{ler();E.virar=b.dataset.virar;montar();});
+    const tr=$("#f-tr");if(tr)tr.oninput=()=>{E.transp=+tr.value;$("#f-tv").textContent=tr.value+"%";};
     document.querySelectorAll("#sheet [data-rf]").forEach(b=>b.onclick=()=>{ler();E.fotos.splice(+b.dataset.rf,1);montar();});
     const pegar=id=>{ler();$(id).onchange=async e=>{const fs=[...e.target.files];e.target.value="";for(const f of fs)E.fotos.push(await reduzir(f));montar();};$(id).click();};
     $("#f-f").onclick=()=>pegar("#foto");$("#f-g2").onclick=()=>pegar("#foto2");
@@ -434,42 +482,68 @@ function editor(n,novo,depois,cancelou){const E={...n,fotos:[...fotosDe(n)],cor:
       o.nome=(E.nome||"").trim()||(n.tipo==="ponto"?"":{linha:"Linha",area:"Área",trilha:"Trilha"}[n.tipo]);o.obs=(E.obs||"").trim();o.cor=E.cor;o.fotos=E.fotos;
       if(n.tipo==="ponto"){o.sim=E.sim||"";if(E.onde==="gps"&&GPS.fix)o.pts=[[GPS.fix.lat,GPS.fix.lon]];else if(E.onde==="centro")o.pts=[p2g(...centro())];else if(E.onde==="toque"&&n._toque)o.pts=[n._toque];}
       else o.esp=E.esp||"media";
-      if(!novo)o.editado=Date.now();
-      await dbPut("notas",o);const i=NOTAS.findIndex(x=>x.id===o.id);if(i>=0)NOTAS[i]=o;else NOTAS.push(o);
+      if(n.tipo==="trilha"&&E.virar==="area"){o.tipo="area";o.pts=segsDe(n).flat();delete o.segs;}
+      if(o.tipo==="area"){o.transp=E.transp;try{localStorage.setItem("mm-transp",String(E.transp));}catch(e){}}
+      if(!novo)o.editado=Date.now();delete o._de;delete o._out;
+      await dbPut("notas",o);trocarNota(o);
       fechar();URLS.forEach(u=>URL.revokeObjectURL(u));aplicar();aviso(novo?(n.tipo==="ponto"?"Ponto salvo.":tN[0].toUpperCase()+tN.slice(1)+" salva."):"Alterações salvas.");depois&&depois(o);};};
   montar();}
-function salvarForma(tipo,pts,depois,extra,cancelou){editor({id:uid(),mapa:M.id,tipo,pts,nome:"",obs:"",cor:corPad(tipo),esp:"media",fotos:[],em:Date.now(),...(extra||{})},true,depois,cancelou);}
+function salvarForma(tipo,pts,depois,extra,cancelou){const tp=(()=>{try{const v=localStorage.getItem("mm-transp");return v==null?19:+v;}catch(e){return 19;}})();
+  editor({id:uid(),mapa:M.id,tipo,pts,nome:"",obs:"",cor:corPad(tipo),esp:"media",transp:tp,fotos:[],em:Date.now(),...(extra||{})},true,depois,cancelou);}
 /* marcar ponto: botão 📍 ou SEGURAR O DEDO no mapa (marca onde segurou) */
 function marcarPonto(toque){if(!M||!M.geo){aviso("Este mapa não tem georreferência.");return;}
   const temGps=GPS.fix&&(()=>{const [x,y]=g2p(GPS.fix.lat,GPS.fix.lon);return x>=0&&y>=0&&x<=M.w&&y<=M.h;})();
   const ult=(()=>{try{return JSON.parse(localStorage.getItem("mm-ultpino")||"{}");}catch(e){return {};}})();
   const n={id:uid(),mapa:M.id,tipo:"ponto",pts:[toque||p2g(...centro())],nome:"",obs:"",cor:ult.cor||"#C0492F",sim:ult.sim||"",fotos:[],em:Date.now(),_toque:toque||null,_onde:toque?"toque":temGps?"gps":"centro"};
   editor(n,true,o=>{try{localStorage.setItem("mm-ultpino",JSON.stringify({cor:o.cor,sim:o.sim}));}catch(e){}});}
-$("#b-pt").onclick=()=>marcarPonto(null);
+$("#b-pt").onclick=()=>{if(EDV.on)return;marcarPonto(null);};
+$("#b-km").onclick=()=>{VERMED=!VERMED;try{localStorage.setItem("mm-vermed",VERMED?"1":"0");}catch(e){}$("#b-km").classList.toggle("on",VERMED);aplicar();aviso(VERMED?"Mostrando km e ha no mapa.":"Medidas escondidas no mapa.");};
+setTimeout(()=>$("#b-km").classList.toggle("on",VERMED),0);
+/* ================= editar os pontos de uma linha / área (aumentar, mover, apagar) ================= */
+const EDV={on:false,n:null,pts:[],sel:-1};
+function edvMed(){const ar=EDV.n.tipo==="area";return ar?`Área: <b>${fA(areaG(EDV.pts))}</b>`:`Comprimento: <b>${fM(compr(EDV.pts))}</b>`;}
+function edvIniciar(n){if(TRI.on&&TRI.cont===n.id){aviso("Esta trilha está gravando.");return;}EDV.on=true;EDV.n=n;EDV.pts=segsDe(n)[0].map(q=>[...q]);EDV.sel=EDV.pts.length-1;GPS.seguir=false;$("#alvo").classList.add("on");irNota(n);edvUI();aplicar();}
+function edvUI(){const N=EDV.pts.length,min=EDV.n.tipo==="area"?3:2;
+  $("#info").innerHTML=`<div>📐 ${esc(EDV.n.nome||"Editando")} · ${edvMed()} · ${N} pontos</div>
+   <div class="muted">Toque num ponto para escolher (azul = ponto ${EDV.sel+1}). Arraste o mapa até o alvo e use os botões.</div>
+   <div class="linha"><button class="btn" id="e-mv">↔ Mover p/ o alvo</button><button class="btn" id="e-add">＋ Ponto no alvo</button><button class="btn" id="e-gps">📍 Na minha posição</button><button class="btn dan" id="e-del" ${N>min?"":"disabled"}>Apagar ponto</button></div>
+   <div class="linha"><button class="btn" id="e-ant">‹ Anterior</button><button class="btn" id="e-prx">Próximo ›</button><button class="btn pri" id="e-sv">💾 Salvar</button><button class="btn" id="e-x">Cancelar</button></div>`;
+  $("#info").style.display="grid";
+  const ins=q=>{EDV.pts.splice(EDV.sel+1,0,q);EDV.sel++;edvUI();aplicar();};
+  $("#e-mv").onclick=()=>{EDV.pts[EDV.sel]=p2g(...centro());edvUI();aplicar();};
+  $("#e-add").onclick=()=>ins(p2g(...centro()));
+  $("#e-gps").onclick=()=>{if(!GPS.fix){aviso("Esperando o GPS…");return;}ins([GPS.fix.lat,GPS.fix.lon]);};
+  $("#e-del").onclick=()=>{if(N<=min)return;EDV.pts.splice(EDV.sel,1);EDV.sel=Math.max(0,EDV.sel-1);edvUI();aplicar();};
+  $("#e-ant").onclick=()=>{EDV.sel=(EDV.sel-1+N)%N;edvUI();aplicar();};$("#e-prx").onclick=()=>{EDV.sel=(EDV.sel+1)%N;edvUI();aplicar();};
+  $("#e-x").onclick=()=>edvFim();
+  $("#e-sv").onclick=async()=>{const o={...EDV.n,pts:EDV.pts,editado:Date.now()};if(o.segs)o.segs=[EDV.pts];delete o._de;delete o._out;await dbPut("notas",o);trocarNota(o);edvFim();aviso("Pontos salvos.");};}
+function edvFim(){EDV.on=false;EDV.n=null;$("#alvo").classList.remove("on");info();aplicar();}
 async function reduzir(f){const u=URL.createObjectURL(f);const im=new Image();await new Promise(ok=>{im.onload=ok;im.onerror=ok;im.src=u;});const k=Math.min(1,1600/Math.max(im.width||1,im.height||1));
   const c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);return await new Promise(ok=>c.toBlob(ok,"image/jpeg",0.8));}
 function resumo(n){return n.tipo==="ponto"?`${n.pts[0][0].toFixed(6)}, ${n.pts[0][1].toFixed(6)}`:n.tipo==="area"?fA(areaG(n.pts)):fM(segsDe(n).reduce((s,S)=>s+compr(S),0))+(n.dur?" · "+fT(n.dur):"");}
 const ICO={ponto:"📍",linha:"📏",area:"⬛",trilha:"〰️"};
 const icoDe=n=>n.tipo==="ponto"&&n.sim?n.sim:ICO[n.tipo];
-function verNota(id){const n=NOTAS.find(x=>x.id===id);if(!n)return;const fs=fotosDe(n),us=fs.map(f=>URL.createObjectURL(f));
+function verNota(id){const n=acharNota(id);if(!n)return;const fs=fotosDe(n),us=fs.map(f=>URL.createObjectURL(f));
   folha(`<h2><span><span class="bola" style="background:${corDe(n)}"></span>${icoDe(n)} ${esc(n.nome||"Ponto")}</span><button class="btn" id="v-fc">Fechar</button></h2><div>${esc(resumo(n))}</div>${n.obs?`<div class="muted">${esc(n.obs)}</div>`:""}
    ${us.length?`<div class="fotos">${us.map((u,i)=>`<div><img src="${u}" alt="Foto ${i+1}" data-ft="${i}" style="cursor:zoom-in"></div>`).join("")}</div>`:""}
-   <div class="muted">${quando(n.em)}${n.editado?" · editado "+quando(n.editado):""}</div>
-   <div class="linha" style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn pri" id="f-ed">✏️ Editar</button>${n.tipo==="ponto"?`<button class="btn" id="f-cp">📋 Copiar coordenada</button>`:""}<button class="btn" id="f-ir">Ir no mapa</button><button class="btn dan" id="f-del">Apagar</button></div><div id="f-conf"></div>`);
+   <div class="muted">${quando(n.em)}${n.editado?" · editado "+quando(n.editado):""}${n._de?` · <b>do mapa ${esc(n._de)}</b>`:""}</div>
+   <div class="linha" style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn pri" id="f-ed">✏️ Editar</button>${n.tipo!=="ponto"&&segsDe(n).length===1?`<button class="btn" id="f-ep">📐 Editar pontos</button>`:""}${n.tipo==="trilha"?`<button class="btn" id="f-ct">⏺ Continuar gravando</button>`:""}${n.tipo==="ponto"?`<button class="btn" id="f-cp">📋 Copiar coordenada</button>`:""}<button class="btn" id="f-ir">Ir no mapa</button><button class="btn dan" id="f-del">Apagar</button></div><div id="f-conf"></div>`);
   const sair=()=>us.forEach(u=>URL.revokeObjectURL(u));
   $("#v-fc").onclick=()=>{fechar();sair();};
   document.querySelectorAll("#sheet [data-ft]").forEach(im=>im.onclick=()=>{const u=us[+im.dataset.ft];$("#f-conf").innerHTML=`<img src="${u}" style="width:100%;border-radius:10px" alt="Foto ampliada">`;});
   $("#f-ed").onclick=()=>{sair();editor(n,false,()=>{},()=>verNota(n.id));};
+  const ep=$("#f-ep");if(ep)ep.onclick=()=>{fechar();sair();edvIniciar(n);};
+  const ct=$("#f-ct");if(ct)ct.onclick=()=>{fechar();sair();if(TRI.on){aviso("Pare a trilha que está gravando antes.");return;}triIniciar(n);};
   const cp=$("#f-cp");if(cp)cp.onclick=()=>copiar(n.pts[0][0],n.pts[0][1]);
   $("#f-ir").onclick=()=>{fechar();sair();irNota(n);};
-  $("#f-del").onclick=()=>{$("#f-conf").innerHTML=`<div class="linha" style="display:flex;gap:6px"><span>Apagar mesmo?</span><button class="btn dan" id="f-sim">Sim, apagar</button></div>`;$("#f-sim").onclick=async()=>{await dbDel("notas",n.id);NOTAS=NOTAS.filter(x=>x.id!==n.id);fechar();sair();aplicar();aviso("Apagado.");};};}
+  $("#f-del").onclick=()=>{$("#f-conf").innerHTML=`<div class="linha" style="display:flex;gap:6px"><span>Apagar mesmo?</span><button class="btn dan" id="f-sim">Sim, apagar</button></div>`;$("#f-sim").onclick=async()=>{await dbDel("notas",n.id);tirarNota(n.id);fechar();sair();aplicar();aviso("Apagado.");};};}
 function irNota(n){const P=segsDe(n).flat().map(q=>g2p(q[0],q[1]));let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;P.forEach(p=>{x0=Math.min(x0,p[0]);y0=Math.min(y0,p[1]);x1=Math.max(x1,p[0]);y1=Math.max(y1,p[1]);});
   const w=Math.max((x1-x0)*1.6,(y1-y0)*1.6/raz(),M.w/12);GPS.seguir=false;VB={x:(x0+x1)/2-w/2,y:(y0+y1)/2-w*raz()/2,w,h:w*raz()};aplicar();}
-$("#b-lst").onclick=()=>{const L=[...NOTAS].sort((a,b)=>b.em-a.em);
+$("#b-lst").onclick=()=>{const L=[...NOTAS,...OUTRAS].sort((a,b)=>b.em-a.em);
   folha(`<h2>Minhas anotações · ${L.length}<button class="btn" onclick="fechar()">Fechar</button></h2>
    <div class="muted">Ficam só neste celular. Para mandar a alguém: Exportar (WhatsApp, e-mail…). Não vai para o painel da empresa.</div>
    <button class="btn pri" id="x-exp" ${L.length?"":"disabled"}>📤 Exportar anotações deste mapa</button>
-   ${L.map(n=>`<div class="nota"><span><b><span class="bola" style="background:${corDe(n)}"></span>${icoDe(n)} ${esc(n.nome||"Ponto")}${fotosDe(n).length?` <span class="muted">📷${fotosDe(n).length}</span>`:""}</b><span class="muted">${esc(resumo(n))} · ${quando(n.em)}</span></span><button class="btn" data-v="${n.id}">Ver</button></div>`).join("")||`<div class="muted">Nenhuma anotação ainda. Use 📍 (ou segure o dedo no mapa) para marcar ponto, 📏 para medir e ⏺ Gravar trilha.</div>`}
+   ${L.map(n=>`<div class="nota"><span><b><span class="bola" style="background:${corDe(n)}"></span>${icoDe(n)} ${esc(n.nome||"Ponto")}${fotosDe(n).length?` <span class="muted">📷${fotosDe(n).length}</span>`:""}</b><span class="muted">${esc(resumo(n))} · ${quando(n.em)}${n._de?" · mapa "+esc(n._de):""}</span></span><button class="btn" data-v="${n.id}">Ver</button></div>`).join("")||`<div class="muted">Nenhuma anotação ainda. Use 📍 (ou segure o dedo no mapa) para marcar ponto, 📏 para medir e ⏺ Gravar trilha.</div>`}
    <div style="border-top:1px solid var(--ln);padding-top:10px;display:grid;gap:6px"><button class="btn dan" id="x-delm">Apagar este mapa do celular</button><div id="x-conf"></div></div>`);
   document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>verNota(b.dataset.v));
   const ex=$("#x-exp");if(ex)ex.onclick=exportar;

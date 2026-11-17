@@ -293,8 +293,39 @@ function rotulos(){const s=sv(),m=M(),r0=s.getBoundingClientRect();if(!r0.width)
   const mp=mpu(m)*uu,alvo=mp*100,p=Math.pow(10,Math.floor(Math.log10(alvo))),n=[1,2,5,10].map(k=>k*p).filter(k=>k<=alvo).pop()||p;$("#esc").innerHTML=`<i style="width:${Math.round(n/mp)}px"></i>${fM(n)}`;}
 /* alfinete: a ponta fica exatamente no lugar marcado; sempre em pé na tela, mesmo com o mapa girado */
 function alfinete(x,y,uu,attr,cls){return `<g class="pin${cls?" "+cls:""}" ${attr||""} transform="translate(${x} ${y}) rotate(${(-ANG).toFixed(1)}) scale(${uu})"><ellipse class="ps" cx="0" cy="0" rx="4" ry="1.6"/><path class="pc" d="M0 0C-1.6-5-8-10-8-17A8 8 0 1 1 8-17C8-10 1.6-5 0 0Z"/><circle class="pf" cx="0" cy="-17" r="3"/></g>`;}
+/* ===== mapas que se sobrepõem (o acesso de uma fazenda usa a mesma estrada do acesso de outra, ou passa dentro de outra fazenda)
+   Regra (Tarcisio, 16/11): dentro de outra fazenda vale o mapa interno DELA. O alerta mostra onde as estradas coincidem e qual trecho é qual. */
+const SOB={};
+function sobAmostra(m){if(m._amo)return m._amo;const k=111320*Math.cos(-19.9*Math.PI/180),A=[];
+  for(const t of m.trechos){const P=t.pts.map(p=>{const g=n2g(m,p[0],p[1]);return [g[1]*k,g[0]*110574];});const S=[];
+    for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],n=Math.max(1,Math.floor(Math.hypot(b[0]-a[0],b[1]-a[1])/10));for(let j=0;j<n;j++)S.push([a[0]+(b[0]-a[0])*j/n,a[1]+(b[1]-a[1])*j/n]);}
+    if(P.length)S.push(P[P.length-1]);A.push({n:t.n,S});}
+  return m._amo=A;}
+function sobreposicoes(m){if(!m||!m.trechos)return [];if(SOB[m.id])return SOB[m.id];const R=15,C=30,grade=new Map();
+  LISTA.forEach((o,oi)=>{if(o.cod===m.cod)return;for(const t of sobAmostra(o))for(const p of t.S){const key=Math.floor(p[0]/C)+","+Math.floor(p[1]/C);let L=grade.get(key);if(!L)grade.set(key,L=[]);L.push([p[0],p[1],oi,t.n]);}});
+  const res={};
+  for(const t of sobAmostra(m)){const cont={};
+    for(const p of t.S){const vis=new Set(),cx=Math.floor(p[0]/C),cy=Math.floor(p[1]/C);
+      for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const L=grade.get((cx+dx)+","+(cy+dy));if(L)for(const q of L)if(Math.abs(q[0]-p[0])<R&&Math.abs(q[1]-p[1])<R&&Math.hypot(q[0]-p[0],q[1]-p[1])<R)vis.add(q[2]+":"+q[3]);}
+      vis.forEach(kk=>cont[kk]=(cont[kk]||0)+1);}
+    for(const kk in cont)if(cont[kk]>=Math.max(3,t.S.length*0.5)){const [oi,tn]=kk.split(":").map(Number);(res[oi]=res[oi]||[]).push([t.n,tn]);}}
+  return SOB[m.id]=Object.entries(res).map(([oi,pares])=>({o:LISTA[+oi],oi:+oi,pares})).sort((a,b)=>b.pares.length-a.pares.length);}
+function faixasT(ns){ns=[...new Set(ns)].sort((a,b)=>a-b);const r=[];for(const n of ns){const u=r[r.length-1];if(u&&n===u[1]+1)u[1]=n;else r.push([n,n]);}return r.map(([a,b])=>a===b?"T"+a:"T"+a+"–T"+b).join(", ");}
+const sobNome=o=>`${o.nome} · ${o.acesso?"Acesso":"Estradas internas"}`;
+/* qual mapa vale: se o outro é o mapa INTERNO de outra fazenda, vale o dele; senão vale este */
+const sobVale=(m,o)=>m.acesso&&!o.acesso?`Vale o mapa interno de ${esc(o.nome)}.`:"Vale o mapa desta fazenda.";
+function sobLinha(m,t){const S=sobreposicoes(m);if(!S.length)return "";
+  if(t){const L=S.map(s=>({s,ns:s.pares.filter(p=>p[0]===t.n).map(p=>p[1])})).filter(x=>x.ns.length);
+    return L.length?`<br>⚠️ Mesma estrada em: ${L.map(x=>`<b>${esc(sobNome(x.s.o))}</b> ${faixasT(x.ns)}`).join(" · ")}. <span class="muted">${sobVale(m,L[0].s.o)}</span>`:"";}
+  const meus=S.flatMap(s=>s.pares.map(p=>p[0]));
+  return `⚠️ <b>Mapa sobreposto</b>: ${faixasT(meus)} ${m.acesso?"deste acesso":"deste mapa"} coincide com ${S.length} outro(s) mapa(s). <button class="btn" data-sob="1" style="min-height:34px;padding:0 10px">Ver onde</button>`;}
+function sobFolha(){const m=M(),S=sobreposicoes(m);
+  abrirFolha("Mapas sobrepostos",`<div class="muted">${esc(m.nome)} · ${m.acesso?"Acesso":"Estradas internas"}. Onde a estrada é a mesma: <b>dentro de outra fazenda vale o mapa interno dela</b>; fora disso vale o mapa desta fazenda. O número do trecho do outro mapa é só para achar o mesmo lugar.</div>
+   ${S.map(s=>{const a=s.pares.map(p=>p[0]),b=s.pares.map(p=>p[1]);return `<div class="box card"><b>${esc(sobNome(s.o))}</b><div>A partir do <span style="font-weight:800">T${Math.min(...a)}</span> deste mapa: ${faixasT(a)} = ${faixasT(b)} de lá</div><div class="muted">${sobVale(m,s.o)}</div><button class="btn" data-sobab="${s.oi}" style="min-height:40px">Abrir esse mapa</button></div>`;}).join("")}`);}
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("[data-sob]");if(a){e.stopPropagation();sobFolha();return;}
+  const b=e.target.closest&&e.target.closest("[data-sobab]");if(b){e.stopPropagation();$("#sheet").classList.remove("on");$("#scrim").classList.remove("on");abrirMapa(+b.dataset.sobab);}},true);
 function info(){if(REG.on||VER)return;const m=M();const t=sel!=null?m.trechos.find(x=>x.n===sel):null;let h="";
-  if(t)h=`<b>Trecho ${t.n}${m.acesso?" do acesso":""}</b> · ${esc(t.tipo)} · ${fmt(t.m)} m<br><span class="pill p-${t.st}">${ST_N[t.st]||t.st}</span> ${t.partes&&t.partes.length?esc(t.partes.join(" · ")):""}`;
+  if(t)h=`<b>Trecho ${t.n}${m.acesso?" do acesso":""}</b> · ${esc(t.tipo)} · ${fmt(t.m)} m<br><span class="pill p-${t.st}">${ST_N[t.st]||t.st}</span> ${t.partes&&t.partes.length?esc(t.partes.join(" · ")):""}`+sobLinha(m,t);else{const sl=sobLinha(m,null);if(sl)h=sl;}
   if(GPS.on){const f=GPS.fix;let g=GPS.erro?esc(GPS.erro):!f?"Procurando o sinal do GPS…":"";
     if(f){let best=null;for(const tr of m.trechos)for(const p of tr.pts){const d=dist([f.lat,f.lon],n2g(m,p[0],p[1]));if(!best||d<best.d)best={d,n:tr.n};}
       g=`<b>Você está aqui</b> · ±${Math.round(f.acc)} m${best?` · mais perto: <b>T${best.n}</b> a ${fM(best.d)}`:""} <button class="btn" data-copia="1" style="min-height:34px;padding:0 10px">📋 Copiar coordenada</button>`;}
