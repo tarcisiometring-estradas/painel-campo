@@ -224,8 +224,25 @@ const DB={db:null,
   async tirar(id){const d=await this.abrir();if(!d)return;return new Promise(ok=>{const t=d.transaction("pontos","readwrite");t.objectStore("pontos").delete(id);t.oncomplete=ok;t.onerror=ok;});}};
 let PONTOS=[];
 async function carregarPontos(){PONTOS=await DB.todos();PONTOS.sort((a,b)=>b.em.localeCompare(a.em));}
-const TIPOS=["Buraco","Erosão","Bueiro / tubo","Atoleiro","Mata-burro","Ponte","Árvore caída","Outro"];
-const ICO_PT={"Buraco":"🕳️","Erosão":"💧","Bueiro / tubo":"🛢️","Atoleiro":"🟫","Mata-burro":"🚧","Ponte":"🌉","Árvore caída":"🌳","Outro":"📍"};let PT_NOVO=null;
+/* BO (ocorrências): lista base + o que o supervisor for acrescentando (fica no celular; a lista oficial vem nas próximas versões) */
+const TIPOS0=["Buraco","Erosão","Voçoroca","Atoleiro","Bueiro / tubo","Mata-burro","Ponte","Árvore caída","Sinalização","Vizinho","Porteira / cerca","Outro"];
+const TIPOS_EXTRA=LS.get("pia_bo_extra",[]);
+const TIPOS=[...TIPOS0.slice(0,-1),...TIPOS_EXTRA.filter(t=>!TIPOS0.includes(t)),"Outro","Atividade"];
+const ICO_PT={"Buraco":"🕳️","Erosão":"💧","Voçoroca":"🕳️","Atoleiro":"🟫","Bueiro / tubo":"🛢️","Mata-burro":"🚧","Ponte":"🌉","Árvore caída":"🌳","Sinalização":"🪧","Vizinho":"🏠","Porteira / cerca":"🚪","Outro":"📍","Atividade":"🛠️"};
+/* como cada BO pode ser falado (o reconhecimento sem internet erra bastante palavra técnica) */
+const BO_FALA={"Buraco":["buraco","buraqueira","panela"],"Erosão":["erosao","erozao","ravina","sulco","lavou"],"Voçoroca":["vocoroca","vossoroca","bossoroca","bocoroca","vocorocas","bossorocas"],
+ "Atoleiro":["atoleiro","atolado","atolou","barro","lama","poca","pocas"],"Bueiro / tubo":["bueiro","tubo","manilha","tubulacao"],"Mata-burro":["mata burro","mataburro"],
+ "Ponte":["ponte","pontilhao"],"Árvore caída":["arvore","galho","eucalipto caido","pau caido"],"Sinalização":["sinalizacao","placa","sinal"],"Vizinho":["vizinho","vizinha","lindeiro","morador"],
+ "Porteira / cerca":["porteira","cerca","colchete"]};
+/* atividades do escopo, do jeito que se fala no campo */
+const ATIV_FALA=[["Caixa de contenção",["caixa de contencao","caixa contencao","caixa"]],["Saída d’água",["saida dagua","saida de agua","saida d agua","bigode"]],["Bacia de retenção",["bacia"]],
+ ["Mini curva de nível",["mini curva","curva de nivel","curvinha"]],["Camalhão / murchão",["camalhao","murchao","lombada"]],["Abertura de estrada",["abertura","abrir estrada","abriu estrada"]],
+ ["Derrubada de árvores",["derrubada","derrubar"]],["Destoca",["destoca","toco"]],["Agulhamento",["agulhamento","agulhado","agulhar","agulhou"]],["Compactação de base",["compactacao","compactar","rolo"]],
+ ["Limpeza de aceiro",["aceiro","grade"]],["Ponto de módulo",["ponto de modulo","modulo"]],["Patrolamento",["patrolamento","patrola","patrolado","patrolou","motoniveladora"]],
+ ["Limpeza de estrada",["limpeza de estrada","rocada","rocagem"]],["Limpeza de camada vegetal",["camada vegetal","raspagem"]],["Escavação e carregamento",["escavacao","escavar","carregamento"]],
+ ["Preparo de leito com brita",["leito com brita","preparo com brita","brita"]],["Preparo de leito",["preparo de leito","preparo","leito"]],["Elevação com solo",["elevacao","elevar","levantar o greide"]],
+ ["Regularização de base",["regularizacao","regularizar"]],["Virador / manobrador",["virador","manobrador","bolsao"]],["Umectação",["umectacao","molhar","pipa","molhando"]],
+ ["Construção de aterro",["aterro"]],["Taper",["taper","aceleracao","desaceleracao"]],["Entroncamento",["entroncamento"]],["Ponto de captação",["captacao","ponto de agua"]],["Recuperação de jazida",["jazida","cascalheira"]]];let PT_NOVO=null;
 
 /* ================= desenho ================= */
 const M=()=>LISTA[I];const sv=()=>$("#mapa");
@@ -557,13 +574,34 @@ function piaBipe(f,ms){try{const c=piaBipe.c||(piaBipe.c=new (window.AudioContex
 const PIA_OK=["Feito, piá!","Beleza, piá. Marcado!","Tá marcado, piá.","Pronto, piá. Fechou!"];
 function piaFaixa(h,cls){let el=$("#pia-fx");if(!el){el=document.createElement("div");el.id="pia-fx";document.body.appendChild(el);}
   el.className=cls||"";el.innerHTML=h;el.style.display=h?"block":"none";}
-/* marca o ponto com o que foi falado (serve para a voz do APK e para a do navegador) */
-function piaMarcar(txt){txt=(txt||"").trim();if(!txt)return false;const lw=txt.toLowerCase();
-  const tp=TIPOS.find(t=>lw.includes(t.toLowerCase().split(/[ /]/)[0]))||"Outro";
-  $("#b-pt").onclick();NOVO.tipo=tp;NOVO.obs=txt+" (por voz)";const ob=$("#pt-obs");if(ob)ob.value=NOVO.obs;const sv=$("#pt-salvar");if(sv)sv.click();
+/* entende a frase falada: BO (lista) ou atividade do escopo (+ feito / em andamento, ligada ao trecho mais perto pelo GPS) */
+const semAc=t=>(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[’'´`]/g,"").replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim();
+function lev(a,b){if(Math.abs(a.length-b.length)>2)return 9;const d=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t;}}return d[b.length];}
+function temFala(frase,alias){if((" "+frase+" ").includes(" "+alias+" "))return true;const W=frase.split(" "),A=alias.split(" ");if(A.length!==1||A[0].length<6)return false;return W.some(w=>w.length>=5&&lev(w,A[0])<=(A[0].length>=8?2:1));}
+function acharBO(f){for(const t of TIPOS){if(t==="Outro"||t==="Atividade")continue;const al=[semAc(t),...(BO_FALA[t]||[])];if(al.some(a=>temFala(f,a)))return t;}return null;}
+function acharAtiv(f){for(const [n,al] of ATIV_FALA){if([semAc(n),...al].some(a=>temFala(f,a))){const limp=/\blimpeza\b|\blimpar\b|\blimpou\b/.test(f)&&/caixa|saida|bacia|curva/.test(semAc(n))?"Limpeza de "+n.charAt(0).toLowerCase()+n.slice(1):n;return limp;}}return null;}
+function sitFala(f){if(/\b(feito|feita|pronto|pronta|terminado|terminou|terminei|concluido|concluiu|finalizado|finalizou|acabou|ok)\b/.test(f))return "feito";if(/\b(andamento|fazendo|comecou|comecando|iniciou|metade|parcial)\b/.test(f))return "em andamento";return "";}
+function trechoPerto(){const m=M();if(!m||!GPS.fix)return null;let best=null;for(const tr of m.trechos)for(const p of tr.pts){const d=dist([GPS.fix.lat,GPS.fix.lon],n2g(m,p[0],p[1]));if(!best||d<best.d)best={d,n:tr.n};}return best&&best.d<=60?best:null;}
+let PIA_ULT=null,PIA_PERG=null;
+function piaMarcar(txt){txt=(txt||"").trim();if(!txt)return false;let f=semAc(txt);
+  if(/\bdesfa(z|ca|ze|zer)\b|\bapaga\b/.test(f)){if(PIA_ULT){DB.tirar(PIA_ULT).then(async()=>{await carregarPontos();aplicar();});PIA_ULT=null;piaFaixa(`<b>↩️ Desfeito</b><span>Apaguei o último ponto marcado por voz.</span>`,"ok");piaFalar("Desfeito, piá.");}else{piaFaixa(`<b>Nada para desfazer</b>`,"erro");piaFalar("Não tem nada pra desfazer, piá.");}setTimeout(()=>piaFaixa(""),4000);return true;}
+  if(PIA_PERG)f=PIA_PERG+" "+f;PIA_PERG=null;
+  let tipo=null,ativ=null;const querBO=/^(bo|b o|beo|ocorrencia)\b/.test(f),querAt=/^(atividade|servico)\b/.test(f);
+  if(!querAt)tipo=acharBO(f);if(!tipo&&!querBO)ativ=acharAtiv(f);
+  if(!tipo&&!ativ){const so=f.split(" ").length<=2;
+    if(querBO&&so){PIA_PERG="bo";piaPergunta("Qual BO, piá?");return true;}
+    if(querAt&&so){PIA_PERG="atividade";piaPergunta("Qual atividade, piá?");return true;}
+    if(querAt)ativ="Atividade (não achei no escopo)";else tipo="Outro";}
+  const st=ativ?sitFala(f):"";const tp=ativ?"Atividade":tipo;const tr=ativ?trechoPerto():null;
+  $("#b-pt").onclick();NOVO.tipo=tp;if(ativ){NOVO.ativ=ativ;NOVO.st=st;NOVO.trecho=tr?tr.n:null;}
+  NOVO.obs=(ativ?ativ+(st?" · "+st:"")+(tr?" · perto do T"+tr.n:"")+" — ":"")+"“"+txt+"” (por voz)";NOVO.voz=true;
+  const ob=$("#pt-obs");if(ob)ob.value=NOVO.obs;const id=NOVO.id;const sv=$("#pt-salvar");if(sv)sv.click();PIA_ULT=id;
   const fr=PIA_OK[Math.floor(Math.random()*PIA_OK.length)];piaBipe(1320,120);try{navigator.vibrate&&navigator.vibrate([60,60,60]);}catch(x){}
-  piaFaixa(`<b>✅ ${ICO_PT[tp]||"📍"} ${esc(tp)} marcado</b><span>“${esc(txt)}” · toque no pino piscando para pôr foto</span>`,"ok");
-  piaFalar(fr+(tp!=="Outro"?" "+tp+" no mapa.":""));setTimeout(()=>piaFaixa(""),5000);return true;}
+  const nome=ativ?ativ+(st?", "+st:""):tp;
+  piaFaixa(`<b>✅ ${ICO_PT[tp]||"📍"} ${esc(nome)}</b><span>${tr?"Trecho T"+tr.n+" · ":""}“${esc(txt)}” · errou? fale “desfaz”</span>`,"ok");
+  piaFalar(fr+" "+(tp==="Outro"?"Marquei como outro.":nome+"."));setTimeout(()=>piaFaixa(""),6000);return true;}
+/* o Piá pergunta e já volta a escutar */
+function piaPergunta(t){piaFaixa(`<b>🎙️ ${esc(t)}</b><span>Fale depois do bipe.</span>`,"ouve");piaFalar(t);setTimeout(()=>{piaFaixa.ouvindo=false;$("#b-voz").onclick();},1800);}
 function piaFim(){$("#b-voz").classList.remove("on");piaFaixa.ouvindo=false;}
 function piaNaoMarcou(m,falar){piaFim();piaFaixa(`<b>❌ Não marcou</b><span>${m}</span>`,"erro");if(falar)piaFalar(falar);setTimeout(()=>piaFaixa(""),6000);}
 /* respostas da voz do APK (Android, funciona sem internet) */
@@ -588,7 +626,7 @@ $("#b-voz").onclick=()=>{
   r.onend=()=>{if(!ok)window.piaErro("nada");piaFim();};
   try{r.start();}catch(e){piaFim();piaFaixa("");}};
 function folhaPonto(orig){abrirFolha("Marcar ponto",`<div class="muted">Local: ${esc(orig)}<br>${NOVO.lat.toFixed(6)}, ${NOVO.lon.toFixed(6)}</div>
-  <b>O que é?</b><div class="chips">${TIPOS.map(t=>`<button data-tp="${esc(t)}" aria-pressed="${NOVO.tipo===t}">${esc(t)}</button>`).join("")}</div>
+  <b>O que é?</b><div class="chips">${TIPOS.map(t=>`<button data-tp="${esc(t)}" aria-pressed="${NOVO.tipo===t}">${ICO_PT[t]||"📍"} ${esc(t)}</button>`).join("")}<button id="tp-novo" style="border-style:dashed">＋ Novo tipo</button></div><div id="tp-novo-c"></div>
   <div class="row" style="gap:8px"><label class="foto" style="flex:1">📷 Tirar foto<input type="file" accept="image/*" capture="environment" id="pt-foto"></label><label class="foto" style="flex:1">🖼 Da galeria<input type="file" accept="image/*" multiple id="pt-gal"></label></div>
   ${fotosDe(NOVO).length?`<div class="ths">${fotosDe(NOVO).map((f,i)=>`<span class="thw"><img class="thumb" data-th="${i}"><button class="thx" data-thx="${i}" aria-label="Tirar esta foto">✕</button></span>`).join("")}</div><div class="muted">${fotosDe(NOVO).length} foto(s)</div>`:""}
   <textarea id="pt-obs" placeholder="Observação (opcional)">${esc(NOVO.obs)}</textarea>
@@ -598,6 +636,9 @@ function folhaPonto(orig){abrirFolha("Marcar ponto",`<div class="muted">Local: $
   fotosDe(NOVO).forEach((f,i)=>{const im=$("#sh-b").querySelector(`[data-th="${i}"]`);if(im)im.src=URL.createObjectURL(f);});
   $("#sh-b").querySelectorAll("[data-thx]").forEach(b=>b.onclick=()=>{NOVO.obs=$("#pt-obs").value;NOVO.fotos=fotosDe(NOVO).filter((_,i)=>i!==+b.dataset.thx);NOVO.foto=NOVO.fotos[0]||null;folhaPonto(orig);});
   $("#sh-b").querySelectorAll("[data-tp]").forEach(b=>b.onclick=()=>{NOVO.obs=$("#pt-obs").value;NOVO.tipo=b.dataset.tp;folhaPonto(orig);});
+  $("#tp-novo").onclick=()=>{$("#tp-novo-c").innerHTML=`<div class="row" style="gap:6px"><input id="tp-nome" class="btn" style="flex:1;text-align:left" placeholder="Ex.: Cupinzeiro, Fio baixo…"><button class="btn pri" id="tp-ok">Criar</button></div><div class="muted">Fica neste celular e o Piá passa a entender também por voz.</div>`;
+    $("#tp-nome").focus();$("#tp-ok").onclick=()=>{const n=($("#tp-nome").value||"").trim();if(!n)return;const L=LS.get("pia_bo_extra",[]);if(!L.includes(n)&&!TIPOS.includes(n)){L.push(n);LS.set("pia_bo_extra",L);TIPOS.splice(TIPOS.indexOf("Outro"),0,n);}
+      NOVO.obs=$("#pt-obs").value;NOVO.tipo=n;folhaPonto(orig);aviso("Tipo “"+n+"” criado.");};};
   const addF=async e=>{const fs=[...(e.target.files||[])];if(!fs.length)return;NOVO.obs=$("#pt-obs").value;const L=fotosDe(NOVO);for(const f of fs){if(L.length>=10){aviso("Até 10 fotos por ponto.");break;}try{L.push(await reduzir(f));}catch(x){aviso("Não consegui ler uma das fotos.");}}NOVO.fotos=L;NOVO.foto=L[0]||null;folhaPonto(orig);};
   $("#pt-foto").onchange=addF;$("#pt-gal").onchange=addF;
   $("#sh-b").querySelectorAll("[data-vis]").forEach(b=>b.onclick=()=>{NOVO.obs=$("#pt-obs").value;NOVO.vis=b.dataset.vis;LS.set("pt_vis",NOVO.vis);folhaPonto(orig);});
