@@ -1,7 +1,7 @@
 /* Estradas Sucuriú – funciona sem internet.
    Com internet: busca sempre a versão mais nova (app e mapas) e guarda no celular.
    Sem internet: abre o que está guardado. */
-const VERSAO="v1-2026-11-09spot";
+const VERSAO="v1-2026-11-10g";
 const ARQS=["./","index.html","meusmapas.html","lib/atualizar.js","lib/acesso.js","usuarios.html","brita/config.js","lib/pdf-lib.min.js","lib/pdfjs.min.js","lib/pdfjs.worker.min.js","guia/","guia/index.html","guia/tecnico.html","guia/supervisor.html","guia/motorista.html","guia/visualizacao.html","manifest.webmanifest","dados/mapas.json","dados/situacao.json","dados/rodovias/MS.json","dados/regiao.json","dados/estradas.json","painel.html","dados/painel_base.json","icones/icone-192.png","icones/icone-512.png","lib/xlsx.full.min.js","lib/jszip.min.js","lib/mapa.js"];
 /* a versão nova espera: só entra quando a pessoa confirma no ⟳ (ou fecha e abre o app) */
 self.addEventListener("install",e=>{e.waitUntil(caches.open(VERSAO).then(c=>c.addAll(ARQS.map(u=>new Request(u,{cache:"reload"})))));});
