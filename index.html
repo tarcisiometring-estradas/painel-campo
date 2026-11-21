@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Estradas Sucuriú</title>
+<title>MalhaMaps</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icones/icone-192.png">
 <link rel="apple-touch-icon" href="icones/icone-192.png">
@@ -70,7 +70,7 @@ body.regiao svg#reg{display:block}body.regiao svg#mapa{display:none}
 :root{--mapa-rotulo:var(--mut);--mapa-fundo:var(--bg);--mapa-chuva:#3D66AD}[data-tema="claro"],[data-tema="sol"]{--mapa-chuva:#1F3A68}
 #medalvo{position:fixed;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(0,0,0,.35),inset 0 0 0 2px rgba(0,0,0,.25);background:rgba(232,179,58,.12);pointer-events:none;z-index:3;display:none}
 #medalvo::before,#medalvo::after{content:"";position:absolute;background:rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(0,0,0,.35)}#medalvo::before{left:50%;top:-14px;bottom:-14px;width:2px;margin-left:-1px}#medalvo::after{top:50%;left:-14px;right:-14px;height:2px;margin-top:-1px}
-#medalvo i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#E8B33A;box-shadow:0 0 0 1.5px #000}body.medindo #medalvo{display:block}
+#medalvo i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#E8B33A;box-shadow:0 0 0 1.5px #000}body.medindo #medalvo,body.mirando #medalvo{display:block}#mirabar{position:fixed;left:8px;right:8px;bottom:calc(44px + env(safe-area-inset-bottom));z-index:4;padding:10px 12px;display:none}#mirabar.on{display:block}body.mirando #info{display:none!important}#mirabar .mrow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}#mirabar #mi-ok{flex:1;min-height:50px;font-size:17px}
 .meuL{fill:none;stroke:#111;stroke-width:2.6px;stroke-dasharray:0.1 6;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round;opacity:.85}.meuA{fill:#111;fill-opacity:.12;stroke:#111;stroke-width:2.2px;stroke-dasharray:0.1 6;stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:.9}
 .pin.pess .pc{fill:#8E8A9E!important}
 .medg{fill:none;stroke:#E8B33A;stroke-width:2px;stroke-dasharray:6 5;vector-effect:non-scaling-stroke;opacity:.9}
@@ -137,7 +137,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <button id="b-out" aria-label="Zoom −" title="Zoom −">－</button>
   <button id="b-fit" aria-label="Ver a fazenda inteira" title="Ver a fazenda inteira">⤢<span class="lb">Ver a fazenda inteira</span></button>
   <button id="b-cam" aria-label="Mapas oficiais (camadas)" title="Mapas oficiais (camadas)" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/><path d="m2 17.5 10 5 10-5" opacity=".55"/></svg><span class="lb">Mapas oficiais</span></button>
-  <button id="b-gps" aria-label="Onde estou (GPS)" title="Onde estou (GPS)">◉<span class="lb">Onde estou (GPS)</span></button>
+  <button id="b-gps" aria-label="Ligar o GPS / voltar para minha posição" title="Ligar o GPS / voltar para minha posição" style="font-size:17px">◎<span class="lb">GPS</span></button>
   <button id="b-med" aria-label="Medir distância ou área" title="Medir distância ou área">📏<span class="lb">Medir</span></button>
   <button id="b-pt" aria-label="Marcar ponto" title="Marcar ponto">📍<span class="lb">Marcar ponto</span></button>
   <button id="b-voz" aria-label="Fala, Piá: marcar ponto falando" title="Fala, Piá: aperte e fale o que quer marcar">🎙️<span class="lb">Fala,<br>Piá</span></button>
@@ -146,6 +146,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 </div>
 <div id="info" class="box"></div>
 <div id="medalvo" aria-hidden="true"><i></i></div>
+<div id="mirabar" class="box"><div><b>Arraste o mapa</b> até a mira ficar em cima do lugar. A bolinha azul que pisca é você.</div><div class="mrow"><button class="btn pri" id="mi-ok">📍 Marcar aqui</button><button class="btn" id="mi-gps">Na minha posição</button><button class="btn" id="mi-x">Cancelar</button></div><div class="muted" id="mi-d"></div></div>
 <div id="medbar" class="box"><div id="med-r"><b>Arraste o mapa</b> até o alvo ficar no lugar e toque em <b>＋ Marcar aqui</b>.</div>
 <div class="mrow"><button class="btn pri" id="med-add">＋ Marcar aqui</button><button class="btn" id="med-und" aria-label="Desfazer">↶</button><button class="btn" id="med-x">Fechar</button></div>
 <div class="mrow sm"><div class="bar" style="width:auto;flex:0 0 auto"><button class="bt" data-mt="linha">Linha</button><button class="bt" data-mt="area">Área</button></div><select class="btn" id="med-un" aria-label="Unidade"><option value="auto">Unid.: auto</option><option value="m">Área em m²</option><option value="ha">Área em hectares</option><option value="km">km e km²</option></select><button class="btn" id="med-gps" aria-label="Marcar onde estou">📍</button><button class="btn" id="med-grav">⏺ Gravar</button><button class="btn" id="med-sv">💾 Salvar</button><button class="btn" id="med-lim">Limpar</button><button class="btn" id="med-cp">Copiar</button></div></div>
@@ -156,7 +157,7 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheet"><div class="sh-h"><b id="sh-t"></b><button class="btn" id="sh-x">Fechar</button></div><div class="sh-b" id="sh-b"></div></div>
 <div id="home"><div class="hw">
-  <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1;min-width:0"><div class="eyebrow">Estradas · Projeto Sucuriú</div><h1>O que você deseja fazer?</h1></div><button class="btn" id="h-atu" aria-label="Atualizar o app" title="Atualizar o app" style="flex:0 0 auto;width:44px;min-height:44px;padding:0;display:grid;place-items:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button></div>
+  <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1;min-width:0"><div class="eyebrow">MalhaMaps</div><h1>O que você deseja fazer?</h1></div><button class="btn" id="h-atu" aria-label="Atualizar o app" title="Atualizar o app" style="flex:0 0 auto;width:44px;min-height:44px;padding:0;display:grid;place-items:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button></div>
   <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><span class="ok-chip">✓ Funciona sem internet</span> <span class="muted" id="h-ver"></span></div>
   <div class="temas" id="h-tema"><span class="muted" style="align-self:center">Tela:</span><button data-tema="escuro">Escuro</button><button data-tema="claro">Claro</button><button data-tema="sol">Sol (forte)</button></div>
   <button class="choice" id="h-inst" style="display:none;border:2px solid var(--ok)"><span class="ic">📲</span><span><strong>Instalar o app</strong><small>Fica na tela inicial e abre sem internet.</small></span><span class="seta">›</span></button>
@@ -172,10 +173,14 @@ textarea{width:100%;min-height:70px;padding:10px;border-radius:10px;border:1px s
   <div class="bar" id="h-et" role="group" aria-label="Etapa"><button class="bt" data-et="implantacao">Implantação</button><button class="bt" data-et="abastecimento">Abastecimento</button></div>
   <div class="fz" id="h-fz"></div>
 </div></div>
-<div id="pin"><div class="box"><b style="font-size:19px">Estradas Sucuriú</b><div class="muted">Digite o código de acesso da equipe.</div><input id="pin-i" inputmode="numeric" autocomplete="off" maxlength="8"><button class="btn pri" id="pin-ok">Entrar</button></div></div>
+<div id="pin"><div class="box"><b style="font-size:19px">MalhaMaps</b><div class="muted">Digite o código de acesso da equipe.</div><input id="pin-i" inputmode="numeric" autocomplete="off" maxlength="8"><button class="btn pri" id="pin-ok">Entrar</button></div></div>
 
 <script src="lib/mapa.js"></script>
-<script src="brita/config.js"></script><script src="lib/atualizar.js"></script><script src="lib/acesso.js" defer></script>
+<script>/* modo de teste (teste.html): GPS de mentira, comandado pela página de teste */
+if(/[?&]teste=1/.test(location.search)){const cbs=[];const fake={watchPosition(ok){cbs.push(ok);return cbs.length;},clearWatch(){},getCurrentPosition(ok){ok&&cbs.push(ok);}};
+  try{Object.defineProperty(navigator,"geolocation",{value:fake,configurable:true});}catch(e){}
+  window.__gps=(lat,lon,hd,v)=>cbs.forEach(f=>{try{f({coords:{latitude:lat,longitude:lon,accuracy:4,heading:hd==null?null:hd,speed:v||0,altitude:null},timestamp:Date.now()});}catch(e){}});}
+</script><script src="lib/cofre.js"></script><script src="brita/config.js"></script><script src="lib/atualizar.js"></script><script src="lib/acesso.js" defer></script>
 <script>
 "use strict";
 /* ================= dados ================= */
@@ -492,7 +497,7 @@ function medDesenhar(){const g=document.getElementById(REG.on?"r-med":"med");con
   const ultimo=pts[pts.length-1];const guia=cg?`<line class="medg" x1="${ultimo[0]}" y1="${ultimo[1]}" x2="${cg[0]}" y2="${cg[1]}"/>`:"";
   g.innerHTML=meus+guia+(MED.tipo==="area"&&pts.length>2?`<polygon class="meda" points="${s}"/><polygon class="medl" points="${s}"/>`:`<polyline class="medl" points="${s}"/>`)+pts.map(p=>`<circle class="medp" cx="${p[0]}" cy="${p[1]}" r="${5*u}"/>`).join("");
   $("#med-r").innerHTML=medTexto();}
-function medAbrir(){MED.on=true;document.body.classList.add("medindo");$("#medbar").classList.add("on");$("#b-med").classList.add("on");medTipo(MED.tipo);}
+function medAbrir(){if(typeof MIRA!=="undefined"&&MIRA.on)miraFechar();MED.on=true;document.body.classList.add("medindo");$("#medbar").classList.add("on");$("#b-med").classList.add("on");medTipo(MED.tipo);}
 function medFechar(){if(MED.grav)medGrav(false);MED.on=false;MED.pts=[];document.body.classList.remove("medindo");$("#medbar").classList.remove("on");$("#b-med").classList.remove("on");medDesenhar();if(!REG.on)info();}
 function medTipo(t){MED.tipo=t;document.querySelectorAll("#medbar [data-mt]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.mt===t)));medDesenhar();$("#med-r").innerHTML=medTexto();}
 $("#b-med").onclick=()=>MED.on?medFechar():medAbrir();
@@ -555,9 +560,9 @@ function fecharFolha(){$("#sheet").classList.remove("on");$("#scrim").classList.
 $("#sh-x").onclick=fecharFolha;$("#scrim").onclick=fecharFolha;
 
 /* marcar ponto */
-let NOVO=null;
+let NOVO=null,PT_ALVO=null;
 $("#b-pt").onclick=()=>{const m=M();let lat,lon,orig;
-  if(GPS.on&&GPS.fix){lat=GPS.fix.lat;lon=GPS.fix.lon;orig=`sua posição (±${Math.round(GPS.fix.acc)} m)`;}
+  if(PT_ALVO){[lat,lon,orig]=PT_ALVO;PT_ALVO=null;}else if(GPS.on&&GPS.fix){lat=GPS.fix.lat;lon=GPS.fix.lon;orig=`sua posição (±${Math.round(GPS.fix.acc)} m)`;}
   else{const c=[VB.x+VB.w/2,VB.y+VB.h/2];[lat,lon]=n2g(m,c[0],c[1]);orig="centro da tela (ligue o GPS ◉ para marcar onde você está)";}
   NOVO={id:"p"+Date.now().toString(36),lat,lon,tipo:"",obs:"",foto:null,fotos:[],vis:LS.get("pt_vis","geral"),fazenda:m.nome,mapa:m.mapa,em:new Date().toISOString()};
   folhaPonto(orig);};
@@ -593,7 +598,7 @@ function piaMarcar(txt){txt=(txt||"").trim();if(!txt)return false;let f=semAc(tx
     if(querAt&&so){PIA_PERG="atividade";piaPergunta("Qual atividade, piá?");return true;}
     if(querAt)ativ="Atividade (não achei no escopo)";else tipo="Outro";}
   const st=ativ?sitFala(f):"";const tp=ativ?"Atividade":tipo;const tr=ativ?trechoPerto():null;
-  $("#b-pt").onclick();NOVO.tipo=tp;if(ativ){NOVO.ativ=ativ;NOVO.st=st;NOVO.trecho=tr?tr.n:null;}
+  (window.ptFazer||$("#b-pt").onclick)();NOVO.tipo=tp;if(ativ){NOVO.ativ=ativ;NOVO.st=st;NOVO.trecho=tr?tr.n:null;}
   NOVO.obs=(ativ?ativ+(st?" · "+st:"")+(tr?" · perto do T"+tr.n:"")+" — ":"")+"“"+txt+"” (por voz)";NOVO.voz=true;
   const ob=$("#pt-obs");if(ob)ob.value=NOVO.obs;const id=NOVO.id;const sv=$("#pt-salvar");if(sv)sv.click();PIA_ULT=id;
   const fr=PIA_OK[Math.floor(Math.random()*PIA_OK.length)];piaBipe(1320,120);try{navigator.vibrate&&navigator.vibrate([60,60,60]);}catch(x){}
@@ -608,7 +613,7 @@ function piaNaoMarcou(m,falar){piaFim();piaFaixa(`<b>❌ Não marcou</b><span>${
 window.piaPronto=()=>{piaBipe(880,140);try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}piaFaixa(`<b>🎙️ Escutando…</b><span>Fala aí, piá: “buraco”, “ponte caída”, “erosão”…</span>`,"ouve");};
 window.piaParcial=t=>{piaFaixa(`<b>🎙️ Escutando…</b><span>“${esc(t)}”</span>`,"ouve");};
 window.piaResultado=t=>{piaFim();if(!piaMarcar(t))piaNaoMarcou("Não ouvi nada. Aperta e fala de novo, piá.","Não ouvi nada, piá.");};
-window.piaErro=c=>{piaNaoMarcou(c==="microfone"?"Libere o microfone para o app (Configurações › Apps › Estradas Sucuriú › Permissões).":
+window.piaErro=c=>{piaNaoMarcou(c==="microfone"?"Libere o microfone para o app (Configurações › Apps › MalhaMaps › Permissões).":
   c==="sem-pacote"?"Falta o pacote de voz sem internet no celular. Com Wi‑Fi: app Google › Configurações › Voz › Reconhecimento de fala off-line › Português (Brasil).":
   c==="sem-reconhecedor"?"Este celular não tem reconhecimento de voz. Use 📍 Marcar ponto.":"Não peguei. Aperta e fala de novo, piá.",c==="nada"||/^erro/.test(c)?"Não peguei, piá. Fala de novo.":"");};
 $("#b-voz").onclick=()=>{
@@ -783,7 +788,7 @@ $("#b-menu").onclick=()=>{const m=M();const tal=m.talhoes.filter(t=>t.id).sort((
   $("#m-att").onclick=async()=>{if(!navigator.onLine){aviso("Sem internet agora. Tente quando pegar sinal.");return;}const r=await buscarDados(true);aviso(r?"Mapas atualizados.":"Já está com os mapas mais novos.");if(r)fecharFolha();};};
 function ptsGerais(){return PONTOS.filter(p=>p.vis!=="pessoal");}
 async function enviarPontos(){const PONTOS=ptsGerais();if(!PONTOS.length){aviso("Nenhum ponto geral para enviar.");return;}const txt=PONTOS.map(p=>`• ${p.tipo} – ${p.fazenda} – ${new Date(p.em).toLocaleString("pt-BR")}${p.obs?" – "+p.obs:""}\n  https://maps.google.com/?q=${p.lat.toFixed(6)},${p.lon.toFixed(6)}`).join("\n");
-  const cab=`*Pontos marcados – Estradas Sucuriú*\n`;
+  const cab=`*Pontos marcados – MalhaMaps*\n`;
   const files=PONTOS.flatMap((p,i)=>fotosDe(p).map((f,k)=>new File([f],`ponto_${i+1}${fotosDe(p).length>1?"_"+(k+1):""}_${p.tipo.replace(/\W+/g,"_")}.jpg`,{type:"image/jpeg"}))).slice(0,20);
   try{if(navigator.canShare&&files.length&&navigator.canShare({files})){await navigator.share({text:cab+txt,files});return;}if(navigator.share){await navigator.share({text:cab+txt});return;}}catch(e){if(e&&e.name==="AbortError")return;}
   try{await navigator.clipboard.writeText(cab+txt);aviso("Lista copiada. Cole no WhatsApp.");}catch(e){aviso("Não consegui compartilhar neste aparelho.");}}
@@ -804,10 +809,10 @@ const rsv=()=>$("#reg");
 const CLN={colh:"Colheita próxima",meio:"Meio do ciclo",novo:"Plantio novo",sem:"Sem plantio informado"};
 function rClasse(f){const tot=Object.values(f.anos).reduce((a,b)=>a+b,0);if(!tot)return "sem";if(f.colh/tot>=.3)return "colh";
   const nv=Object.entries(f.anos).filter(([a])=>+a>=2023).reduce((s,[,v])=>s+v,0);return nv/tot>=.5?"novo":"meio";}
-fetch("dados/regiao.json").then(r=>r.ok?r.json():null).then(d=>{if(!d)return;REG.dados=d;d.faz.forEach(f=>{f.cl=rClasse(f);f.P=RP(f.c[0],f.c[1]);
+fetch("dados/regiao.json").then(r=>r.ok?COFRE.json(r):null).then(d=>{if(!d)return;REG.dados=d;d.faz.forEach(f=>{f.cl=rClasse(f);f.P=RP(f.c[0],f.c[1]);
   const xs=f.r.flat().map(p=>RP(p[0],p[1]));f.bb=[Math.min(...xs.map(p=>p[0])),Math.min(...xs.map(p=>p[1])),Math.max(...xs.map(p=>p[0])),Math.max(...xs.map(p=>p[1]))];});
   if(REG.on)rDesenhar();}).catch(()=>{});
-function rTal(){if(REG.tal||REG.carregandoTal)return;REG.carregandoTal=true;fetch("dados/talhoes.json").then(r=>r.ok?r.json():null).then(d=>{REG.tal=d;REG.carregandoTal=false;if(REG.on){rDetalhe();rRotulos();}}).catch(()=>{REG.carregandoTal=false;});}
+function rTal(){if(REG.tal||REG.carregandoTal)return;REG.carregandoTal=true;fetch("dados/talhoes.json").then(r=>r.ok?COFRE.json(r):null).then(d=>{REG.tal=d;REG.carregandoTal=false;if(REG.on){rDetalhe();rRotulos();}}).catch(()=>{REG.carregandoTal=false;});}
 const rPath=rs=>rs.map(r=>"M"+r.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join("L")+"Z").join("");
 function rDesenhar(){const D=REG.dados;const s=rsv();if(!D){s.innerHTML="";return;}
   let h=`<g id="r-rod">${ROD?ROD.rod.map(([c,n,t,pts])=>`<polyline class="rod ${c}${t?" t":""}" points="${pts.map(p=>RP(p[0],p[1]).map(v=>v.toFixed(1)).join(",")).join(" ")}"/>`).join(""):""}</g><g id="r-fz">`;
@@ -852,8 +857,10 @@ function rRotulos(){const s=rsv(),r=s.getBoundingClientRect(),V=REG.VB,u=V.w/r.w
 function rGps(){const g=$("#r-gps");if(!g)return;g.innerHTML="";if(!(GPS.on&&GPS.fix))return;const r=rsv().getBoundingClientRect(),u=REG.VB.w/r.width;const q=GPS.pos||GPS.fix;const [x,y]=RP(q.lon,q.lat);
   g.innerHTML=cursorGps(x,y,u);}
 /* cursor de navegação: seta (triângulo) apontando para onde está indo; parado vira bolinha */
-function cursorGps(x,y,u){if(GPS.hd==null)return `<circle cx="${x}" cy="${y}" r="${7.5*u}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${5*u}" fill="#1A73E8"/>`;
-  const a=GPS.hd,k=u*0.75;return `<g transform="translate(${x} ${y}) rotate(${a.toFixed(1)}) scale(${k})"><path d="M0,-15 L11,12 L0,6 L-11,12 Z" fill="#1A73E8" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></g>`;}
+/* a sua posição "tremula" (onda azul) para não confundir com a mira; andando, o leque mostra para onde você vai */
+function pulsoGps(x,y,u){return `<circle cx="${x}" cy="${y}" r="${8*u}" fill="#1A73E8" opacity=".35" pointer-events="none"><animate attributeName="r" values="${8*u};${22*u}" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".35;0" dur="1.6s" repeatCount="indefinite"/></circle>`;}
+function cursorGps(x,y,u){if(GPS.hd==null)return pulsoGps(x,y,u)+`<circle cx="${x}" cy="${y}" r="${7.5*u}" fill="#fff"/><circle cx="${x}" cy="${y}" r="${5*u}" fill="#1A73E8"/>`;
+  const a=GPS.hd,k=u*0.75;return pulsoGps(x,y,u)+`<g transform="translate(${x} ${y}) rotate(${a.toFixed(1)}) scale(${k})"><path d="M0,0 L-22,-46 A50,50 0 0 1 22,-46 Z" fill="#1A73E8" opacity=".18"/><path d="M0,-15 L11,12 L0,6 L-11,12 Z" fill="#1A73E8" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></g>`;}
 function rEscala(){const r=rsv().getBoundingClientRect();const mp=REG.VB.w/r.width*RU,alvo=mp*100,p=Math.pow(10,Math.floor(Math.log10(alvo))),n=[1,2,5,10].map(k=>k*p).filter(k=>k<=alvo).pop()||p;$("#esc").innerHTML=`<i style="width:${Math.round(n/mp)}px"></i>${fM(n)}`;}
 function rLegenda(){$("#leg").innerHTML=`<span><i style="background:#C08A2E"></i>Acesso da fazenda</span><span><i style="background:#B9AE9C"></i>Estrada de terra</span><span><i style="background:var(--r-meio)"></i>Fazenda no painel</span><span><i style="background:var(--r-sem)"></i>Outras fazendas</span><span><i style="background:var(--r-pd);height:8px;width:8px"></i>Pedreira</span><span><i style="background:#2E6B8A;height:8px;width:8px"></i>Fábrica</span><span><i style="background:#8A7E73"></i>Rodovia</span>`;}
 /* entrar e sair do mapa detalhado */
@@ -993,7 +1000,7 @@ function rInfo(){const el=$("#info");
   $("#b-out").onclick=()=>REG.on?rZoom(1.6):orig["b-out"]();
   $("#b-fit").onclick=()=>{if(REG.on){ANG=0;REG.VB=null;rAplicar();}else orig["b-fit"]();};
   $("#b-gps").onclick=()=>{if(!REG.on)return orig["b-gps"]();if(!GPS.on){gpsLigar();aviso("Ligando o GPS…");return;}GPS.seguir=true;GPS.auto=false;if(!GPS.fix){aviso("Esperando o sinal do GPS… vá para céu aberto.");return;}const [x,y]=RP(GPS.fix.lon,GPS.fix.lat);const w=Math.min(REG.VB.w,60),h=w*raz();REG.VB={x:x-w/2,y:y-h/2,w,h};rAplicar();rChecarEntrada();};
-  $("#b-pt").onclick=()=>{if(!REG.on)return orig["b-pt"]();let lat,lon,o;if(GPS.on&&GPS.fix){lat=GPS.fix.lat;lon=GPS.fix.lon;o=`sua posição (±${Math.round(GPS.fix.acc)} m)`;}else{const V=REG.VB;[lat,lon]=RG(V.x+V.w/2,V.y+V.h/2);o="centro da tela (ligue o GPS ◉ para marcar onde você está)";}
+  $("#b-pt").onclick=()=>{if(!REG.on)return orig["b-pt"]();let lat,lon,o;if(PT_ALVO){[lat,lon,o]=PT_ALVO;PT_ALVO=null;}else if(GPS.on&&GPS.fix){lat=GPS.fix.lat;lon=GPS.fix.lon;o=`sua posição (±${Math.round(GPS.fix.acc)} m)`;}else{const V=REG.VB;[lat,lon]=RG(V.x+V.w/2,V.y+V.h/2);o="centro da tela (ligue o GPS ◉ para marcar onde você está)";}
     const [x,y]=RP(lon,lat);const f=REG.dados&&REG.dados.faz.find(f=>x>=f.bb[0]&&x<=f.bb[2]&&y>=f.bb[1]&&y<=f.bb[3]);
     NOVO={id:"p"+Date.now().toString(36),lat,lon,tipo:"",obs:"",foto:null,fotos:[],vis:LS.get("pt_vis","geral"),fazenda:f?f.n:"Fora das fazendas",mapa:"Região",em:new Date().toISOString()};folhaPonto(o);};
   $("#b-menu").onclick=()=>{if(!REG.on)return orig["b-menu"]();const D=REG.dados;if(!D)return;const c={colh:0,meio:0,novo:0,sem:0};D.faz.forEach(f=>c[f.cl]+=f.ha);
@@ -1008,7 +1015,7 @@ function rInfo(){const el=$("#info");
 let SIT=null;
 function aplicarSit(){if(!DADOS||!SIT||!SIT.mapas)return;DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{const S=SIT.mapas[f.cod]||{};const k=(m.acesso?"A":"I");const s=m.fin==="implantacao"?(S[k+"i"]||S[k]):S[k];if(!s)return;
   m.trechos.forEach(t=>{const v=s[t.n];if(v){t.st=v[0];t.partes=v[1]||[];t.fin=v[2]||"";}});}));}
-async function buscarSit(forcar){try{const r=await fetch("dados/situacao.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)return false;const d=await r.json();
+async function buscarSit(forcar){try{const r=await fetch("dados/situacao.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)return false;const d=await COFRE.json(r);
   const mudou=!SIT||d.em!==SIT.em;SIT=d;if(mudou)aplicarSit();return mudou;}catch(e){return false;}}
 function dataSit(){if(!SIT||!SIT.em)return "";const d=new Date(SIT.em);return isNaN(d)?"":d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
 const finA=m=>m.fin||"abastecimento";let ETAPA=LS.get("etapa","");
@@ -1016,7 +1023,7 @@ function fazEt(){return DADOS.fazendas.map(f=>({f,ms:f.mapas.filter(m=>!ETAPA||f
 function montarLista(){LISTA=[];DADOS.fazendas.forEach(f=>f.mapas.forEach(m=>{m.cod=f.cod;m.id=f.cod+(m.acesso?"-acesso":"")+(finA(m)==="implantacao"?"-imp":"");LISTA.push(m);}));
   $("#selm").innerHTML=`<option value="R">🌎 Região – todas as fazendas</option>`+fazEt().map(({f,ms})=>`<optgroup label="${esc(f.mapas[0].nome)}${ETAPA?"":" · "+(finA(ms[0])==="implantacao"?"Implantação":"Abastecimento")}">${ms.map(m=>`<option value="${LISTA.indexOf(m)}">${esc(m.nome)} · ${m.acesso?"Acesso":"Estradas internas"}</option>`).join("")}</optgroup>`).join("");}
 $("#selm").onchange=e=>{if(e.target.value==="R"){irRegiao(false);setTimeout(gpsAbrir,50);return;}I=+e.target.value;if(REG.on){REG.on=false;document.body.classList.remove("regiao");LS.set("modo","fazenda");}desenhar();setTimeout(gpsAbrir,50);};
-async function buscarDados(forcar){try{const r=await fetch("dados/mapas.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)throw 0;const d=await r.json();
+async function buscarDados(forcar){try{const r=await fetch("dados/mapas.json"+(forcar?"?t="+Date.now():""),{cache:forcar?"no-store":"default"});if(!r.ok)throw 0;const d=await COFRE.json(r);
     const mudou=!DADOS||d.versao!==DADOS.versao;if(mudou){const id=LISTA[I]&&LISTA[I].id;DADOS=d;aplicarSit();montarLista();const k=LISTA.findIndex(m=>m.id===(id||LS.get("mapa","")));I=k>=0?k:0;desenhar();}const ms=await buscarSit(forcar);if(ms&&!mudou)desenhar();if($("#home").classList.contains("on")&&!$("#sheet").classList.contains("on"))home();return (mudou||ms)&&forcar;}catch(e){return false;}}
 let swNovo=null;
 /* pede ao celular para não apagar os dados guardados (mapas oficiais, Meus mapas) quando faltar espaço */
@@ -1035,7 +1042,7 @@ const UA=navigator.userAgent,iOS=/iPhone|iPad|iPod/i.test(UA)||(/Macintosh/.test
 if(!jaApp&&(celular||noZap))$("#h-inst").style.display="grid";
 try{if(!localStorage.getItem("guia_visto")){$("#h-guia").style.border="2px solid var(--ok)";$("#h-guias").textContent="Primeira vez? Comece aqui: o passo a passo do seu papel, com os links e como entrar.";}$("#h-guia").addEventListener("click",()=>{try{localStorage.setItem("guia_visto","1")}catch(e){}});}catch(e){}
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();instEv=e;if(!jaApp)$("#h-inst").style.display="grid";});
-window.addEventListener("appinstalled",()=>{instEv=null;$("#h-inst").style.display="none";aviso("App instalado. Procure o ícone Estradas na tela inicial.");});
+window.addEventListener("appinstalled",()=>{instEv=null;$("#h-inst").style.display="none";aviso("App instalado. Procure o ícone MalhaMaps na tela inicial.");});
 $("#h-inst").onclick=async()=>{if(instEv){instEv.prompt();try{await instEv.userChoice;}catch(e){}instEv=null;return;}
   const L=location.href.split("#")[0];
   abrirFolha("Instalar o app",noZap?`<div>Você abriu o link dentro do WhatsApp. Ele não instala por aqui.</div><ol style="padding-left:20px;display:grid;gap:6px;margin:0"><li>Toque nos <b>três pontinhos ⋮</b> (ou no ícone do navigador) no canto da tela.</li><li>Escolha <b>Abrir no Chrome</b>${iOS?" / <b>Abrir no Safari</b>":""}.</li><li>Lá, toque de novo em <b>Instalar o app</b>.</li></ol><div class="muted">Ou copie o link e cole no ${iOS?"Safari":"Chrome"}: <b style="word-break:break-all">${esc(L)}</b></div>`
@@ -1048,9 +1055,20 @@ window.addEventListener("online",()=>buscarDados(true));
 const PIN_H="7c14d3";function h(s){let x=5381;for(const c of s)x=((x<<5)+x+c.charCodeAt(0))>>>0;return (x%0xffffff).toString(16).padStart(6,"0");}
 async function iniciar(){await carregarPontos();
   const r=await fetch("dados/mapas.json").catch(()=>null);if(!r||!r.ok){document.body.innerHTML='<div style="padding:24px">Abra o app uma vez com internet para baixar os mapas.</div>';return;}
-  DADOS=await r.json();await buscarSit(false);montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();home();brHome();brFila().then(brBaixar);if(location.hash.startsWith("#ver="))verAbrir();
+  try{DADOS=await COFRE.json(r);}catch(e){semChave(e);return;}await buscarSit(false);montarLista();const k=LISTA.findIndex(m=>m.id===LS.get("mapa",""));I=k>=0?k:0;desenhar();home();brHome();brFila().then(brBaixar);if(location.hash.startsWith("#ver="))verAbrir();
   if(navigator.onLine)setTimeout(()=>buscarDados(true),2500);}
 function entrar(){$("#pin").style.display="none";iniciar();}
+/* mapas da empresa trancados: só abre para quem o supervisor liberou (a chave vem do servidor ao entrar) */
+function semChave(e){const p=$("#pin");p.style.display="grid";const errada=e&&e.message==="chave";
+  p.innerHTML=`<div class="box" style="max-width:380px"><b style="font-size:19px">MalhaMaps</b>
+  <div class="muted">${errada?"A chave dos mapas mudou ou foi retirada deste celular.":"Os mapas da empresa são só para quem o supervisor liberou."} Entre com o seu usuário para abrir.</div>
+  <button class="btn pri" id="sc-ent" style="min-height:52px">👤 Entrar com meu usuário</button>
+  <a class="btn" href="meusmapas.html" style="min-height:52px;display:grid;place-items:center;text-decoration:none">🗺️ Abrir só Meus mapas</a>
+  <details><summary class="muted" style="cursor:pointer">Tenho a senha da equipe</summary><div style="display:grid;gap:8px;margin-top:8px"><input id="sc-s" class="btn" type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Senha da equipe" style="text-align:left"><button class="btn" id="sc-ok">Abrir</button></div></details>
+  <div class="muted" id="sc-m"></div></div>`;
+  $("#sc-ent").onclick=()=>{if(window.ACESSO_tela)ACESSO_tela(false);else $("#sc-m").textContent="Carregando… tente de novo em 2 segundos.";};
+  $("#sc-ok").onclick=()=>{const v=senhaLimpa($("#sc-s").value);if(!v)return;try{localStorage.setItem("painel_senha",v);}catch(x){}location.reload();};}
+window.addEventListener("acesso-mudou",()=>{const temChave=!!COFRE.chave();if(!DADOS&&temChave)location.reload();if(DADOS&&!temChave)location.reload();});
 function tema(t){document.documentElement.setAttribute("data-tema",t);LS.set("tema",t);document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tema===t));
   const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.content=t==="escuro"?"#1F2420":"#F2F1EC";}
 document.querySelectorAll("#h-tema [data-tema]").forEach(b=>b.onclick=()=>tema(b.dataset.tema));tema(LS.get("tema","escuro"));
@@ -1088,6 +1106,18 @@ const PAINEL="https://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8";
 function abrirPainel(e){if(!navigator.onLine){e.preventDefault();aviso("O Painel precisa de internet.");return;}
   if(/Android/i.test(navigator.userAgent)){e.preventDefault();location.href="intent://claude.ai/artifact/Ve7zV5K3mb87dN7z4tz2a8#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url="+encodeURIComponent(PAINEL)+";end";}}
 document.addEventListener("click",e=>{const a=e.target.closest("#h-painel,.painel-lk");if(a)abrirPainel(e);});
+/* marcar ponto como no Avenza: mira fixa no centro; você arrasta o mapa até a mira cair no lugar e toca "Marcar aqui".
+   Serve para quando o carro parou 50 m antes ou depois do ponto. "Fala, Piá" continua marcando direto na sua posição. */
+window.ptFazer=$("#b-pt").onclick;
+const MIRA={on:false};
+function miraAbrir(){if(MED.on)medFechar();MIRA.on=true;GPS.seguir=false;GPS.auto=false;document.body.classList.add("mirando");$("#mirabar").classList.add("on");$("#b-pt").classList.add("on");miraDist();}
+function miraFechar(){MIRA.on=false;document.body.classList.remove("mirando");$("#mirabar").classList.remove("on");$("#b-pt").classList.remove("on");}
+function miraDist(){if(!MIRA.on)return;const e=$("#mi-d");if(!GPS.fix){e.textContent=GPS.on?"Esperando o GPS…":"GPS desligado: toque em ◎ para ver onde você está.";return;}const c=medCentro(),d=dist(c,[GPS.fix.lat,GPS.fix.lon]);e.textContent=d<3?"A mira está em cima de você.":`A mira está a ${d<1000?Math.round(d)+" m":(d/1000).toFixed(2).replace(".",",")+" km"} de você.`;}
+setInterval(miraDist,700);
+$("#b-pt").onclick=()=>MIRA.on?miraFechar():miraAbrir();
+$("#mi-x").onclick=miraFechar;
+$("#mi-ok").onclick=()=>{const c=medCentro();let o="a mira";if(GPS.fix){const d=dist(c,[GPS.fix.lat,GPS.fix.lon]);o=d<3?"a mira (em cima de você)":`a mira (${Math.round(d)} m de você)`;}PT_ALVO=[c[0],c[1],o];miraFechar();window.ptFazer();};
+$("#mi-gps").onclick=()=>{if(!GPS.on){gpsLigar();aviso("Ligando o GPS…");return;}if(!GPS.fix){aviso("Esperando o sinal do GPS…");return;}PT_ALVO=[GPS.fix.lat,GPS.fix.lon,`sua posição (±${Math.round(GPS.fix.acc)} m)`];miraFechar();window.ptFazer();};
 entrar();if(false){$("#pin").style.display="grid";const ok=()=>{if(h($("#pin-i").value.trim())===PIN_H){LS.set("pin_ok",true);entrar();}else{aviso("Código errado.");$("#pin-i").value="";}};$("#pin-ok").onclick=ok;$("#pin-i").onkeydown=e=>{if(e.key==="Enter")ok();};}
 </script>
 </body>

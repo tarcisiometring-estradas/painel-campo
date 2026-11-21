@@ -1,0 +1,66 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teste do app · MalhaMaps</title>
+<style>
+:root{--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--ok:#2E8B57;--er:#B5483B}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,sans-serif}
+.w{max-width:900px;margin:0 auto;padding:12px 16px;display:grid;gap:12px}
+h1{margin:0;font-size:20px}.mut{color:var(--mut);font-size:13px}
+.lay{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}@media(min-width:760px){.lay{grid-template-columns:minmax(0,1fr) 390px}}
+ol{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+li{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:8px 10px;display:grid;grid-template-columns:24px minmax(0,1fr);gap:6px}
+li small{grid-column:2;color:var(--mut)}
+.st{font-weight:800}.ok .st{color:#4CAF6E}.er .st{color:#E58B83}.vai .st{color:#E0A100}
+button{font:inherit;min-height:48px;border-radius:12px;border:0;background:var(--ok);color:#fff;font-weight:700;padding:0 16px}
+iframe{width:100%;height:700px;border:1px solid var(--ln);border-radius:14px;background:#000}
+#res{font-weight:700}
+</style></head><body><div class="w">
+<h1>Teste do app</h1>
+<div class="mut">Roda sozinho dentro do app (abaixo/ao lado) e marca ✔ ou ✖ em cada item. O GPS é de mentira: ele "anda" por um trecho do mapa. Nada é salvo.</div>
+<div><button id="go">▶ Rodar os testes</button> <span id="res" class="mut"></span></div>
+<div class="lay"><ol id="lst"></ol><iframe id="app" title="App em teste"></iframe></div>
+</div>
+<script>
+const T=[
+ ["abre","O app abre"],
+ ["tranca","Dados da empresa trancados (quem baixa o arquivo não lê)"],
+ ["chave","Este celular tem a chave e abre os mapas"],
+ ["faz","Abre uma fazenda"],
+ ["zoom","Ampliar e reduzir"],
+ ["gps","GPS andando pelo trecho (sem travar)"],
+ ["atraso","Atraso do ponto azul ao andar"],
+ ["mira","Mira: arrastar o mapa e Marcar aqui"],
+ ["gpsbt","Marcar na minha posição"],
+ ["meus","Meus mapas abre"]
+];
+const L=document.getElementById("lst");L.innerHTML=T.map(([k,t])=>`<li id="t-${k}"><span class="st">·</span><span>${t}</span><small></small></li>`).join("");
+const set=(k,s,msg)=>{const e=document.getElementById("t-"+k);e.className=s;e.querySelector(".st").textContent=s==="ok"?"✔":s==="er"?"✖":"…";e.querySelector("small").textContent=msg||"";};
+const esp=ms=>new Promise(r=>setTimeout(r,ms));
+async function ate(f,ms){const t0=Date.now();while(Date.now()-t0<(ms||8000)){try{const v=f();if(v)return v;}catch(e){}await esp(150);}return null;}
+async function rodar(){
+ document.getElementById("go").disabled=true;T.forEach(([k])=>set(k,"",""));let ok=0,er=0;
+ const passo=async(k,fn)=>{set(k,"vai");try{const m=await fn();set(k,"ok",m||"");ok++;}catch(e){set(k,"er",e.message||String(e));er++;}};
+ const F=document.getElementById("app");F.src="index.html?teste=1&t="+Date.now();
+ await new Promise(r=>F.onload=r);await esp(1500);const W=F.contentWindow,E=s=>W.eval(s);
+ await passo("abre",async()=>{const v=await ate(()=>E("typeof DADOS!=='undefined'")&&(E("!!DADOS&&LISTA.length>0&&!!VB")||W.document.getElementById("sc-ent")));if(!v)throw new Error("não carregou em 8 s");return E("DADOS")?"":"abriu a tela de entrada (sem chave)";});
+ await passo("tranca",async()=>{const j=await (await fetch("dados/mapas.json",{cache:"no-store"})).json();if(!j.ct)throw new Error("mapas.json está ABERTO");const s=await (await fetch("dados/situacao.json",{cache:"no-store"})).json();if(!s.ct)throw new Error("situacao.json está ABERTO");return "mapas e situação trancados";});
+ await passo("chave",async()=>{await ate(()=>E("!!DADOS&&LISTA.length>0"),10000);if(!E("!!DADOS"))throw new Error("sem chave neste celular: entre com seu usuário no app e rode de novo");return E("DADOS.fazendas.length")+" fazendas";});
+ if(!E("!!DADOS")){["faz","zoom","gps","atraso","mira","gpsbt"].forEach(k=>set(k,"er","precisa da chave"));er+=6;}
+ else{
+ await passo("faz",async()=>{const i=E("LISTA.findIndex(m=>m.trechos&&m.trechos.length>3&&!m.acesso)");if(i<0)throw new Error("nenhuma fazenda com trechos");E(`(function(){$("#home").classList.remove("on");I=${i};desenhar();})()`);await esp(600);return E("M().nome");});
+ await passo("zoom",async()=>{const w0=E("VB.w");W.document.getElementById("b-in").click();await esp(400);const w1=E("VB.w");W.document.getElementById("b-out").click();await esp(400);const w2=E("VB.w");if(!(w1<w0))throw new Error("＋ não ampliou");if(!(w2>w1))throw new Error("－ não reduziu");return "ok";});
+ let pts=[];
+ await passo("gps",async()=>{pts=E(`(function(){const m=M();const t=m.trechos.slice().sort((a,b)=>b.pts.length-a.pts.length)[0];return t.pts.slice(0,12).map(p=>n2g(m,p[0],p[1]));})()`);
+   W.document.getElementById("b-gps").click();await esp(300);
+   for(let i=0;i<pts.length;i++){const a=pts[Math.max(0,i-1)],b=pts[i];const hd=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI;W.__gps(b[0],b[1],(hd+360)%360,8);await esp(350);}
+   const f=E("GPS.fix&&[GPS.fix.lat,GPS.fix.lon]");if(!f)throw new Error("o app não recebeu o GPS");return pts.length+" posições";});
+ await passo("atraso",async()=>{const u=pts[pts.length-1];const svg=()=>W.document.getElementById("mapa").innerHTML;const a0=svg();const t0=performance.now();W.__gps(u[0]+0.0003,u[1]+0.0003,45,8);
+   const t=await ate(()=>svg()!==a0?performance.now():0,3000);if(!t)throw new Error("o ponto azul não se mexeu em 3 s");const ms=Math.round(t-t0);if(ms>600)throw new Error(ms+" ms (lento)");return ms+" ms";});
+ await passo("mira",async()=>{W.document.getElementById("b-pt").click();await esp(300);if(!E("document.body.classList.contains('mirando')"))throw new Error("a mira não apareceu");
+   E("VB.x+=VB.w*0.15;aplicar()");await esp(300);const c=E("medCentro()");W.document.getElementById("mi-ok").click();await esp(500);
+   const n=E("NOVO&&[NOVO.lat,NOVO.lon]");if(!n)throw new Error("não abriu o ponto");const d=E(`dist([${c}],[${n}])`);E("fecharFolha();NOVO=null");if(d>2)throw new Error("ponto caiu a "+Math.round(d)+" m da mira");return "ponto exatamente na mira";});
+ await passo("gpsbt",async()=>{W.document.getElementById("b-pt").click();await esp(300);W.document.getElementById("mi-gps").click();await esp(500);const n=E("NOVO&&[NOVO.lat,NOVO.lon]"),g=E("[GPS.fix.lat,GPS.fix.lon]");E("fecharFolha();NOVO=null");if(!n)throw new Error("não abriu o ponto");const d=E(`dist([${g}],[${n}])`);if(d>2)throw new Error(Math.round(d)+" m da sua posição");return "ok";});
+ }
+ await passo("meus",async()=>{F.src="meusmapas.html?t="+Date.now();await new Promise(r=>F.onload=r);await esp(800);if(!F.contentWindow.document.getElementById("b-pt"))throw new Error("não abriu");return "giro de dois dedos: confira no celular com um mapa";});
+ document.getElementById("res").textContent=`${ok} passaram · ${er} falharam`;document.getElementById("go").disabled=false;}
+document.getElementById("go").onclick=rodar;
+</script></body></html>

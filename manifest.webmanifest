@@ -1,6 +1,6 @@
 {
-"name": "Estradas Sucuriú",
-"short_name": "Estradas",
+"name": "MalhaMaps",
+"short_name": "MalhaMaps",
 "description": "Mapas das estradas das fazendas, GPS e marcação de pontos. Funciona sem internet.",
 "start_url": "./",
 "scope": "./",

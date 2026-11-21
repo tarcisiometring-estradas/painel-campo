@@ -11,13 +11,13 @@
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
   <uses-permission android:name="android.permission.WAKE_LOCK"/>
   <queries><intent><action android:name="android.speech.RecognitionService"/></intent><intent><action android:name="android.intent.action.TTS_SERVICE"/></intent></queries>
-  <application android:label="Estradas Sucuriú" android:icon="@mipmap/ic_launcher" android:usesCleartextTraffic="false" android:hardwareAccelerated="true">
+  <application android:label="MalhaMaps" android:icon="@mipmap/ic_launcher" android:usesCleartextTraffic="false" android:hardwareAccelerated="true">
     <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboardHidden|screenLayout">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
-      <!-- tocar no PDF no WhatsApp › "Abrir com" › Estradas Sucuriú -->
+      <!-- tocar no PDF no WhatsApp › "Abrir com" › MalhaMaps -->
       <intent-filter android:label="Abrir em Meus mapas">
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
@@ -25,7 +25,7 @@
         <data android:scheme="content" android:mimeType="application/pdf"/>
         <data android:scheme="file" android:mimeType="application/pdf"/>
       </intent-filter>
-      <!-- Compartilhar › Estradas Sucuriú -->
+      <!-- Compartilhar › MalhaMaps -->
       <intent-filter android:label="Guardar em Meus mapas">
         <action android:name="android.intent.action.SEND"/>
         <action android:name="android.intent.action.SEND_MULTIPLE"/>

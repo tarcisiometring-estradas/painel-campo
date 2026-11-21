@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#1F2420">
 <link rel="manifest" href="manifest.webmanifest">
-<title>Meus mapas · Estradas Sucuriú</title>
+<title>Meus mapas · MalhaMaps</title>
 <style>
 :root{--bg:#1F2420;--sf:#262C27;--ln:#353C36;--ink:#E8EAE4;--mut:#A3AAA2;--ok:#2E8B57;--gps:#1A73E8;--mk:#C0492F;--and:#E0A100;--danger:#F08A80}
 :root[data-tema="claro"],:root[data-tema="sol"]{--bg:#F2F1EC;--sf:#FFFFFF;--ln:#D6D4CA;--ink:#1E2420;--mut:#5F665F;--danger:#B0402A}
@@ -83,7 +83,7 @@ label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-rad
     <b>Como trazer um mapa do WhatsApp</b>
     <ol>
       <li>No WhatsApp, toque no PDF do mapa.</li>
-      <li>Em <b>Abrir com</b>, escolha <b>Estradas Sucuriú</b>.</li>
+      <li>Em <b>Abrir com</b>, escolha <b>MalhaMaps</b>.</li>
       <li>O mapa abre aqui e fica guardado no celular.</li>
     </ol>
     <div class="muted">Ou toque no <b>+ verde</b> (embaixo, à direita) e procure o PDF: ☰ › Armazenamento interno › Android › media › com.whatsapp › WhatsApp › Media › <b>WhatsApp Documents</b>.</div>
@@ -365,7 +365,7 @@ function tocar(e){if(EDV.on){const v=e.target.closest&&e.target.closest("[data-v
   const n=e.target.closest&&e.target.closest("[data-n]");if(n&&!MED.on)verNota(n.dataset.n);}
 
 /* ================= painel de baixo ================= */
-function info(){if(!M||MED.on||EDV.on)return;if(TRI.on){triUI();return;}let t="";
+function info(){if(!M||MED.on||EDV.on||(typeof MIRA!=="undefined"&&MIRA.on))return;if(TRI.on){triUI();return;}let t="";
   if(!M.geo)t=`<div class="muted">Mapa sem georreferência: sem GPS. Pontos e medidas não dá para fazer neste PDF.</div>`;
   else if(GPS.erro)t=`<div class="muted">${esc(GPS.erro)}</div>`;
   else if(!GPS.fix)t=`<div class="muted">Procurando o sinal do GPS…</div>`;
@@ -466,7 +466,7 @@ function editor(n,novo,depois,cancelou){const E={...n,fotos:[...fotosDe(n)],cor:
   const URLS=[];const urlDe=b=>{const u=URL.createObjectURL(b);URLS.push(u);return u;};
   const montar=()=>{URLS.splice(0).forEach(u=>URL.revokeObjectURL(u));
     const med=n.tipo==="ponto"?"":" · "+(n.tipo==="area"?fA(areaG(E.pts)):fM(n.segs?n.segs.reduce((s,S)=>s+compr(S),0):compr(E.pts)));
-    let pos="";if(n.tipo==="ponto"){const op=novo?[["toque","Onde segurei",!!n._toque],["gps","Na minha posição",temGps()],["centro","No centro da tela",true]]:[["manter","Onde está",true],["gps","Mover para minha posição",temGps()],["centro","Mover para o centro da tela",true]];
+    let pos="";if(n.tipo==="ponto"){const op=novo?[["toque",n._rot||"Onde segurei",!!n._toque],["gps","Na minha posição",temGps()],["centro","No centro da tela",true]]:[["manter","Onde está",true],["gps","Mover para minha posição",temGps()],["centro","Mover para o centro da tela",true]];
       pos=`<div class="seg">${op.filter(o=>o[0]!=="toque"||o[2]).map(o=>`<button class="btn ${E.onde===o[0]?"on":""}" data-onde="${o[0]}" ${o[2]?"":"disabled"}>${o[1]}</button>`).join("")}</div>`;}
     folha(`<h2><span>${novo?"Salvar":"Editar"} ${tN}${med}</span><button class="btn" id="f-x">Cancelar</button></h2>${pos}
      <label class="f">Nome<input id="f-n" placeholder="${n.tipo==="ponto"?"Ex.: Buraco, bueiro, erosão":n.tipo==="area"?"Ex.: Área de empréstimo":"Ex.: Trecho a cascalhar"}"></label>
@@ -503,12 +503,24 @@ function editor(n,novo,depois,cancelou){const E={...n,fotos:[...fotosDe(n)],cor:
 function salvarForma(tipo,pts,depois,extra,cancelou){const tp=(()=>{try{const v=localStorage.getItem("mm-transp");return v==null?19:+v;}catch(e){return 19;}})();
   editor({id:uid(),mapa:M.id,tipo,pts,nome:"",obs:"",cor:corPad(tipo),esp:"media",transp:tp,fotos:[],em:Date.now(),...(extra||{})},true,depois,cancelou);}
 /* marcar ponto: botão 📍 ou SEGURAR O DEDO no mapa (marca onde segurou) */
-function marcarPonto(toque){if(!M||!M.geo){aviso("Este mapa não tem georreferência.");return;}
+function marcarPonto(toque,rot){if(!M||!M.geo){aviso("Este mapa não tem georreferência.");return;}
   const temGps=GPS.fix&&(()=>{const [x,y]=g2p(GPS.fix.lat,GPS.fix.lon);return x>=0&&y>=0&&x<=M.w&&y<=M.h;})();
   const ult=(()=>{try{return JSON.parse(localStorage.getItem("mm-ultpino")||"{}");}catch(e){return {};}})();
-  const n={id:uid(),mapa:M.id,tipo:"ponto",pts:[toque||p2g(...centro())],nome:"",obs:"",cor:ult.cor||"#C0492F",sim:ult.sim||"",fotos:[],em:Date.now(),_toque:toque||null,_onde:toque?"toque":temGps?"gps":"centro"};
+  const n={id:uid(),mapa:M.id,tipo:"ponto",pts:[toque||p2g(...centro())],nome:"",obs:"",cor:ult.cor||"#C0492F",sim:ult.sim||"",fotos:[],em:Date.now(),_toque:toque||null,_rot:rot||"",_onde:toque?"toque":temGps?"gps":"centro"};
   editor(n,true,o=>{try{localStorage.setItem("mm-ultpino",JSON.stringify({cor:o.cor,sim:o.sim}));}catch(e){}});}
-$("#b-pt").onclick=()=>{if(EDV.on)return;marcarPonto(null);};
+/* marcar ponto como no Avenza: aparece a mira no centro; arraste o mapa até a mira cair no lugar (o ponto azul é você) e toque em Marcar aqui */
+const MIRA={on:false};
+function miraAbrir(){if(!M||!M.geo){aviso("Este mapa não tem georreferência.");return;}if(MED.on)return;MIRA.on=true;GPS.seguir=false;$("#alvo").classList.add("on");$("#b-pt").classList.add("on");
+  $("#info").innerHTML=`<div style="display:grid;gap:8px"><div><b>Arraste o mapa</b> até a mira ficar em cima do lugar. O ponto azul é você.</div>
+  <div class="linha" style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn pri" id="mi-ok" style="flex:1;min-height:50px;font-size:17px">📍 Marcar aqui</button><button class="btn" id="mi-gps">Na minha posição</button><button class="btn" id="mi-x">Cancelar</button></div><div class="muted" id="mi-d"></div></div>`;
+  $("#mi-ok").onclick=()=>{const c=p2g(...centro());miraFechar();marcarPonto(c,"Na mira");};
+  $("#mi-gps").onclick=()=>{if(!GPS.fix){aviso("Esperando o sinal do GPS…");return;}const c=[GPS.fix.lat,GPS.fix.lon];miraFechar();marcarPonto(c,"Na minha posição");};
+  $("#mi-x").onclick=miraFechar;miraDist();}
+function miraFechar(){MIRA.on=false;$("#b-pt").classList.remove("on");if(!MED.on)$("#alvo").classList.remove("on");info();aplicar();}
+/* mostra a que distância de você está a mira (ex.: parou o carro 50 m antes) */
+function miraDist(){if(!MIRA.on)return;const e=$("#mi-d");if(!e)return;if(!GPS.fix){e.textContent="";return;}const c=p2g(...centro());const R=6371000,r=Math.PI/180,dl=(c[0]-GPS.fix.lat)*r,dn=(c[1]-GPS.fix.lon)*r,x=Math.sin(dl/2)**2+Math.cos(GPS.fix.lat*r)*Math.cos(c[0]*r)*Math.sin(dn/2)**2,d=2*R*Math.asin(Math.sqrt(x));e.textContent=d<3?"A mira está em cima de você.":`A mira está a ${d<1000?Math.round(d)+" m":(d/1000).toFixed(2).replace(".",",")+" km"} de você.`;}
+setInterval(miraDist,700);
+$("#b-pt").onclick=()=>{if(EDV.on)return;MIRA.on?miraFechar():miraAbrir();};
 $("#b-km").onclick=()=>{VERMED=!VERMED;try{localStorage.setItem("mm-vermed",VERMED?"1":"0");}catch(e){}$("#b-km").classList.toggle("on",VERMED);aplicar();aviso(VERMED?"Mostrando km e ha no mapa.":"Medidas escondidas no mapa.");};
 setTimeout(()=>$("#b-km").classList.toggle("on",VERMED),0);
 /* ================= editar os pontos de uma linha / área (aumentar, mover, apagar) ================= */

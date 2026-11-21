@@ -240,9 +240,11 @@ function normUsu(u) { return String(u || "").trim().toLowerCase().replace(/\s+/g
 function lerUsuarios() { return linhas(abaUsu(), COL_USU).filter(function (o) { return String(o.id) !== ""; }); }
 function permsDe(o) { var p = {}; try { p = JSON.parse(o.perms || "{}"); } catch (x) {} return p; }
 function publico(o) { return { usuario: String(o.id), nome: String(o.nome), email: String(o.email || ""), status: String(o.status || "ativo"), papel: String(o.papel || "tecnico"), perms: permsDe(o), aparelho: String(o.aparelho_nome || (o.aparelho ? "1 celular" : "")), pedido: String(o.pedido_aparelho || ""), bloqueado: String(o.bloqueado) === "SIM", ultimo: o.ultimo_acesso ? String(o.ultimo_acesso) : "" }; }
+/* a chave dos mapas da empresa só vai para quem tem a permissão "mapas" (ou é o administrador) */
+function chavePara(o) { var p = permsDe(o); return (String(o.papel) === "admin" || (p && p.mapas)) ? prop("CHAVE_MAPAS") : ""; }
 function resposta(o, aparelho) {
   var tok = String(o.id) + "|" + aparelho + "|" + Date.now();
-  return { ok: true, token: tok + "." + assinar(tok), usuario: String(o.id), nome: String(o.nome), papel: String(o.papel || "tecnico"), perms: permsDe(o), chaveMapas: prop("CHAVE_MAPAS") };
+  return { ok: true, token: tok + "." + assinar(tok), usuario: String(o.id), nome: String(o.nome), papel: String(o.papel || "tecnico"), perms: permsDe(o), chaveMapas: chavePara(o) };
 }
 function entrar(d) {
   var usu = normUsu(d.usuario), senha = String(d.senha || ""), ap = String(d.aparelho || "");
@@ -267,7 +269,7 @@ function sessao(d) {
   if (usu === "admin") return { ok: true, valido: true, admin: true, papel: "admin", perms: PERMS.reduce(function (m, k) { m[k] = true; return m; }, {}), chaveMapas: prop("CHAVE_MAPAS"), exigir: prop("EXIGIR_LOGIN") === "1" };
   var o = lerUsuarios().filter(function (x) { return String(x.id) === usu; })[0];
   if (!o || String(o.bloqueado) === "SIM" || String(o.status) === "aguardando" || String(o.status) === "recusado" || String(o.aparelho) !== ap) return { ok: true, valido: false, motivo: !o ? "removido" : String(o.bloqueado) === "SIM" ? "bloqueado" : "aparelho" };
-  return { ok: true, valido: true, nome: String(o.nome), papel: String(o.papel || "tecnico"), perms: permsDe(o), chaveMapas: prop("CHAVE_MAPAS"), exigir: prop("EXIGIR_LOGIN") === "1" };
+  return { ok: true, valido: true, nome: String(o.nome), papel: String(o.papel || "tecnico"), perms: permsDe(o), chaveMapas: chavePara(o), exigir: prop("EXIGIR_LOGIN") === "1" };
 }
 function listarUsuarios() { return { ok: true, usuarios: lerUsuarios().map(publico), exigir: prop("EXIGIR_LOGIN") === "1", auto: prop("AUTO_APROVAR") === "1", temChaveMapas: !!prop("CHAVE_MAPAS"), emailAdmin: emailAdmin(), perms: PERMS }; }
 /* a própria pessoa se cadastra; fica AGUARDANDO até o administrador liberar (ou libera sozinho se "liberar automático" estiver ligado) */
