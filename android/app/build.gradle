@@ -3,7 +3,7 @@ android {
   namespace 'br.sucuriu.estradas'
   compileSdk 36
   defaultConfig {
-    applicationId 'br.sucuriu.estradas'
+    applicationId 'br.com.malhamaps.app'
     minSdk 24
     targetSdk 36
     versionCode 7
