@@ -157,7 +157,7 @@ public class MainActivity extends Activity {
         try {
             File dir = new File(getCacheDir(), "fotos"); dir.mkdirs();
             File f = new File(dir, "foto_" + System.currentTimeMillis() + ".jpg");
-            fotoUri = FileProvider.getUriForFile(this, "br.sucuriu.estradas.arquivos", f);
+            fotoUri = FileProvider.getUriForFile(this, getPackageName() + ".arquivos", f);
             Intent i = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
             i.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, fotoUri);
             i.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -249,7 +249,7 @@ public class MainActivity extends Activity {
                 File dir = new File(getCacheDir(), "exportar"); dir.mkdirs();
                 File f = new File(dir, nomeArq.replaceAll("[^\\w\\-. ]", "_"));
                 try (FileOutputStream o = new FileOutputStream(f)) { o.write(Base64.decode(b64, Base64.DEFAULT)); }
-                Uri u = FileProvider.getUriForFile(MainActivity.this, "br.sucuriu.estradas.arquivos", f);
+                Uri u = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".arquivos", f);
                 Intent i = new Intent(Intent.ACTION_SEND);
                 i.setType(mime); i.putExtra(Intent.EXTRA_STREAM, u); i.putExtra(Intent.EXTRA_TEXT, texto); i.putExtra(Intent.EXTRA_SUBJECT, nomeArq);
                 i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
