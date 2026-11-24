@@ -94,7 +94,19 @@ public class MainActivity extends Activity {
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         web = new WebView(this);
-        setContentView(web);
+        /* Android 15+ desenha por baixo das barras do sistema: a moldura afasta o app da barra de status e dos botões */
+        final android.widget.FrameLayout moldura = new android.widget.FrameLayout(this);
+        moldura.setBackgroundColor(0xFF1B3A2F);
+        moldura.addView(web, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        setContentView(moldura);
+        if (Build.VERSION.SDK_INT >= 30) moldura.setOnApplyWindowInsetsListener((v, ins) -> {
+            android.graphics.Insets i = ins.getInsets(android.view.WindowInsets.Type.systemBars() | android.view.WindowInsets.Type.displayCutout() | android.view.WindowInsets.Type.ime());
+            v.setPadding(i.left, i.top, i.right, i.bottom);
+            return android.view.WindowInsets.CONSUMED;
+        });
+        /* Android 13+ (e obrigatório no 16): botão voltar volta a tela do app em vez de fechar */
+        if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+            android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, () -> { if (web.canGoBack()) web.goBack(); else finish(); });
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -244,7 +256,7 @@ public class MainActivity extends Activity {
                 runOnUiThread(() -> startActivity(Intent.createChooser(i, "Enviar anotações")));
             } catch (Exception e) { }
         }
-        @JavascriptInterface public String versao() { return "1.4"; }
+        @JavascriptInterface public String versao() { return "1.6"; }
         @JavascriptInterface public boolean temVoz() { return true; }
         @JavascriptInterface public void ouvir() {
             runOnUiThread(() -> {
