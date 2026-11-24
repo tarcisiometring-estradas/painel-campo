@@ -34,7 +34,7 @@
       </intent-filter>
     </activity>
     <service android:name=".TrilhaServico" android:exported="false" android:foregroundServiceType="location"/>
-    <provider android:name="androidx.core.content.FileProvider" android:authorities="br.sucuriu.estradas.arquivos" android:exported="false" android:grantUriPermissions="true">
+    <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.arquivos" android:exported="false" android:grantUriPermissions="true">
       <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/arquivos"/>
     </provider>
   </application>
