@@ -67,6 +67,7 @@ label.f input,label.f textarea,label.f select{width:100%;padding:10px;border-rad
 .fotos button{position:absolute;top:4px;right:4px;width:32px;height:32px;border-radius:50%;border:0;background:#000c;color:#fff;font-size:16px;cursor:pointer}
 .bola{display:inline-block;width:12px;height:12px;border-radius:50%;border:1px solid #0005;vertical-align:middle;margin-right:4px}
 .tri-st{font-size:13px;color:var(--mut)}.tri-st b{color:var(--ink)}
+.tri-min{display:flex;align-items:center;gap:8px;justify-content:space-between}.tri-min .btn{flex:none;min-height:40px;padding:6px 12px}.tri-av{font-size:13px;background:#7a4a00;color:#fff;border-radius:8px;padding:6px 8px}
 @media (prefers-reduced-motion:reduce){#sheet{transition:none}}
 </style></head>
 <body>
@@ -409,9 +410,19 @@ function triGuardada(){try{return JSON.parse(localStorage.getItem("mm-trilha")||
 const triPts=()=>TRI.segs.flat();
 const triCompr=()=>TRI.segs.reduce((s,S)=>s+compr(S),0);
 /* junta um ponto do GPS: precisão ≤ 40 m, anda ≥ 5 m; buraco grande no tempo = pedaço novo */
-function triAdd(lat,lon,acc,t){if(!(acc<=40))return false;if(!TRI.segs.length)TRI.segs.push([]);let S=TRI.segs[TRI.segs.length-1];const u=S[S.length-1];
-  const buraco=TRI.nat?90000:20000;if(u&&TRI.ult&&t-TRI.ult>buraco&&dist(u,[lat,lon])>25){S=[];TRI.segs.push(S);}
-  TRI.ult=Math.max(TRI.ult,t);if(!S.length||dist(S[S.length-1],[lat,lon])>=5){S.push([+(+lat).toFixed(7),+(+lon).toFixed(7)]);return true;}return false;}
+function triAdd(lat,lon,acc,t){if(!(acc<=40))return false;lat=+lat;lon=+lon;if(!TRI.segs.length)TRI.segs.push([]);let S=TRI.segs[TRI.segs.length-1];const u=S[S.length-1];
+  /* ponto fora de ordem (posição velha que o GPS devolve ao voltar): ignora */
+  if(TRI.ult&&t<TRI.ult-1000)return false;
+  if(u&&TRI.ult){const dt=Math.max(1,(t-TRI.ult)/1000),d=dist(u,[lat,lon]);
+    /* salto impossível (> 160 km/h) = posição errada: ignora */
+    if(d>60&&d/dt>45)return false;
+    /* buraco no tempo (tela apagada, GPS parado): corta e começa pedaço novo — nunca liga com reta */
+    if(t-TRI.ult>20000&&d>25){S=[];TRI.segs.push(S);}}
+  TRI.ult=Math.max(TRI.ult,t);
+  if(!S.length||dist(S[S.length-1],[lat,lon])>=5){
+    /* espinho: A→B→C em que B escapou e voltou (B longe dos dois, A perto de C): tira o B */
+    if(S.length>=2){const A=S[S.length-2],B=S[S.length-1],dab=dist(A,B),dbc=dist(B,[lat,lon]);if(dab>25&&dbc>25&&dist(A,[lat,lon])<0.35*Math.min(dab,dbc))S.pop();}
+    S.push([+lat.toFixed(7),+lon.toFixed(7)]);return true;}return false;}
 function triPasso(t){if(!TRI.on||TRI.nat||TRI.pausa)return;const f=GPS.fix;if(triAdd(f.lat,f.lon,f.acc,t)){triGuardar();triStatus();}}
 /* busca no celular os pontos gravados (inclusive os da tela desligada) */
 function triPuxar(){if(!TRI.on||!TRI.nat)return;let L=[];try{L=JSON.parse(EstradasApp.trilhaPontos(TRI.idx)||"[]");}catch(e){L=[];}
@@ -433,6 +444,7 @@ function triPausar(){TRI.pausa=!TRI.pausa;if(TRI.nat){try{if(TRI.pausa){triPuxar
   triTela(!TRI.pausa);triGuardar();triUI();aviso(TRI.pausa?"Trilha pausada. O que andar agora não entra.":"Gravando de novo.");}
 function triParar(){triPuxar();triRelogio(false);triTela(false);if(TRI.nat)try{EstradasApp.trilhaParar();}catch(e){}}
 function triStatus(){const e=$("#t-st");if(!e)return;const P=triPts(),pd=TRI.segs.filter(S=>S.length>1).length;
+  if(triMin()){e.innerHTML=`${TRI.pausa?"⏸":"⏺"} <b>${fM(triCompr())}</b> · ${fT(Date.now()-TRI.ini)}`;return;}
   e.innerHTML=`${TRI.pausa?"⏸ Pausada":"⏺ Gravando"}: <b>${fM(triCompr())}</b> · ${fT(Date.now()-TRI.ini)} · ${P.length} pontos${pd>1?` · ${pd} pedaços`:""}${P.length>2?` · se fechar a área: <b>${fA(areaG(P))}</b>`:""}`;}
 /* parar e salvar (de qualquer mapa ou da lista) — salva no mapa onde a trilha começou */
 async function triSalvar(depois){triParar();const segs=TRI.segs.filter(S=>S.length>1);
@@ -442,10 +454,15 @@ async function triSalvar(depois){triParar();const segs=TRI.segs.filter(S=>S.leng
   TRI.on=false;
   if(TRI.cont){const n=acharNota(TRI.cont)||await dbPor("notas",TRI.cont);if(n){editor({...n,pts:segs.flat(),segs,dur},false,fim,volta);return;}}
   salvarForma("trilha",segs.flat(),fim,{segs,dur,ini:TRI.ini,mapa:TRI.mapa},volta);}
+const triMin=()=>{try{return localStorage.getItem("mm-tri-min")==="1";}catch(e){return false;}};
 function triUI(){if(!TRI.on||!M)return;const outro=TRI.mapa!==M.id;
-  $("#info").innerHTML=`<div id="t-st"></div><div class="tri-st">${outro?"Esta trilha começou em outro mapa e vai ser salva lá (aparece em todos os mapas por onde passar). ":""}${TRI.nat?"✓ Pode desligar a tela: o celular continua gravando (aviso “Gravando trilha” na barra).":"Mantenha a tela ligada. Se ela apagar, a trilha é cortada ali e continua quando voltar (sem linha reta)."}</div>
+  if(triMin()){$("#info").innerHTML=`<div class="tri-min"><div id="t-st"></div><button class="btn" id="t-mx" aria-label="Mostrar controles da trilha">▴ Mostrar</button></div>`;$("#info").style.display="grid";triStatus();
+    $("#t-mx").onclick=()=>{try{localStorage.setItem("mm-tri-min","0");}catch(e){}triUI();};aplicar();return;}
+  const bat=TRI.nat&&window.EstradasApp&&typeof EstradasApp.bateriaOk==="function"&&!EstradasApp.bateriaOk();
+  $("#info").innerHTML=`<div class="tri-min"><div id="t-st"></div><button class="btn" id="t-mn" aria-label="Esconder controles da trilha">▾ Esconder</button></div>${bat?`<div class="tri-av">⚠️ O celular pode cortar o GPS com a tela apagada. Abra: Configurações › Apps › MalhaMaps › Bateria › <b>Sem restrições</b>.</div>`:""}<div class="tri-st">${outro?"Esta trilha começou em outro mapa e vai ser salva lá (aparece em todos os mapas por onde passar). ":""}${TRI.nat?"✓ Pode desligar a tela: o celular continua gravando (aviso “Gravando trilha” na barra).":"Mantenha a tela ligada. Se ela apagar, a trilha é cortada ali e continua quando voltar (sem linha reta)."}</div>
    <div class="linha"><button class="btn" id="t-pa">${TRI.pausa?"▶ Continuar":"⏸ Pausar"}</button><button class="btn pri" id="t-sv">⏹ Parar e salvar</button><button class="btn dan" id="t-x">Descartar</button></div><div id="t-cf"></div>`;
   $("#info").style.display="grid";triStatus();
+  $("#t-mn").onclick=()=>{try{localStorage.setItem("mm-tri-min","1");}catch(e){}triUI();};
   $("#t-pa").onclick=triPausar;$("#t-sv").onclick=()=>triSalvar();
   $("#t-x").onclick=()=>{$("#t-cf").innerHTML=`<div class="linha"><span>Jogar fora ${TRI.cont?"o pedaço novo desta":"esta"} trilha (${fM(triCompr())})?</span><button class="btn dan" id="t-xs">Sim, descartar</button><button class="btn" id="t-xn">Não</button></div>`;
     $("#t-xn").onclick=()=>$("#t-cf").innerHTML="";$("#t-xs").onclick=()=>{triParar();TRI.on=false;TRI.segs=[];TRI.cont=null;triEsquecer();info();aplicar();aviso("Trilha descartada.");};};
@@ -477,7 +494,7 @@ function editor(n,novo,depois,cancelou){const E={...n,fotos:[...fotosDe(n)],cor:
      ${n.tipo==="area"||E.virar==="area"?`<label class="f">Preenchimento da área: <span id="f-tv">${E.transp}%</span> <span class="muted" style="font-weight:400">(0% = só o contorno, o mapa aparece inteiro)</span><input type="range" id="f-tr" min="0" max="80" step="5" value="${E.transp}"></label>`:""}
      ${n.tipo!=="ponto"?`<div class="f"><b>Espessura da linha</b><div class="seg">${ESP.map(([k,w,t])=>`<button class="btn ${(E.esp||"media")===k?"on":""}" data-esp="${k}"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="${E.cor==="#FFFFFF"?"#888":E.cor}" stroke-width="${w}" stroke-linecap="round"/></svg>${t}</button>`).join("")}</div></div>`:""}
      <div class="f"><b>Fotos${E.fotos.length?" · "+E.fotos.length:""}</b>${E.fotos.length?`<div class="fotos">${E.fotos.map((f,i)=>`<div><img src="${urlDe(f)}" alt="Foto ${i+1}"><button data-rf="${i}" aria-label="Tirar esta foto">✕</button></div>`).join("")}</div>`:""}
-      <div class="seg"><button class="btn" id="f-f">📷 Tirar foto</button><button class="btn" id="f-g2">🖼 Da galeria</button></div></div>
+      <div class="seg"><button class="btn" id="f-f">📷 Tirar foto</button><button class="btn" id="f-g2">🖼 Da galeria</button><button class="btn ${carimboOn()?"on":""}" id="f-cb" aria-pressed="${carimboOn()}">🏷 Carimbo ${carimboOn()?"ligado":"desligado"}</button></div><div class="muted" style="font-size:12px">Carimbo: data, coordenada e mapa no canto da foto. Vale para as próximas fotos até você mudar.</div></div>
      <button class="btn pri" id="f-ok">${novo?"Salvar no mapa":"Salvar alterações"}</button>`);
     $("#f-n").value=E.nome||"";$("#f-o").value=E.obs||"";ligar();};
   const ligar=()=>{$("#f-x").onclick=()=>{fechar();URLS.forEach(u=>URL.revokeObjectURL(u));cancelou&&cancelou();};
@@ -488,7 +505,13 @@ function editor(n,novo,depois,cancelou){const E={...n,fotos:[...fotosDe(n)],cor:
     document.querySelectorAll("#sheet [data-virar]").forEach(b=>b.onclick=()=>{ler();E.virar=b.dataset.virar;montar();});
     const tr=$("#f-tr");if(tr)tr.oninput=()=>{E.transp=+tr.value;$("#f-tv").textContent=tr.value+"%";};
     document.querySelectorAll("#sheet [data-rf]").forEach(b=>b.onclick=()=>{ler();E.fotos.splice(+b.dataset.rf,1);montar();});
-    const pegar=id=>{ler();$(id).onchange=async e=>{const fs=[...e.target.files];e.target.value="";for(const f of fs)E.fotos.push(await reduzir(f));montar();};$(id).click();};
+    const pegar=id=>{ler();$(id).onchange=async e=>{const fs=[...e.target.files];e.target.value="";if(!fs.length)return;aviso(fs.length>1?`Preparando ${fs.length} fotos…`:"Preparando a foto…",20000);
+      const cam=id==="#foto",g=GPS.fix&&GPS.fix.acc<=50?GPS.fix:null,p0=n.pts&&n.pts[0];
+      for(const f of fs){const ctx={t:cam?Date.now():(f.lastModified||Date.now()),mapa:M?M.nome:""};
+        if(cam&&g)Object.assign(ctx,{lat:g.lat,lon:g.lon,acc:g.acc});else if(p0)Object.assign(ctx,{lat:p0[0],lon:p0[1]});
+        E.fotos.push(await reduzir(f,ctx));montar();}
+      aviso(fs.length>1?"Fotos prontas.":"Foto pronta.",1200);};$(id).click();};
+    const cb=$("#f-cb");if(cb)cb.onclick=()=>{ler();try{localStorage.setItem("mm-carimbo",carimboOn()?"0":"1");}catch(e){}montar();};
     $("#f-f").onclick=()=>pegar("#foto");$("#f-g2").onclick=()=>pegar("#foto2");
     $("#f-ok").onclick=async()=>{ler();const o={...n};delete o.foto;delete o._onde;delete o._toque;
       o.nome=(E.nome||"").trim()||(n.tipo==="ponto"?"":{linha:"Linha",area:"Área",trilha:"Trilha"}[n.tipo]);o.obs=(E.obs||"").trim();o.cor=E.cor;o.fotos=E.fotos;
@@ -542,8 +565,20 @@ function edvUI(){const N=EDV.pts.length,min=EDV.n.tipo==="area"?3:2;
   $("#e-x").onclick=()=>edvFim();
   $("#e-sv").onclick=async()=>{const o={...EDV.n,pts:EDV.pts,editado:Date.now()};if(o.segs)o.segs=[EDV.pts];delete o._de;delete o._out;await dbPut("notas",o);trocarNota(o);edvFim();aviso("Pontos salvos.");};}
 function edvFim(){EDV.on=false;EDV.n=null;$("#alvo").classList.remove("on");info();aplicar();}
-async function reduzir(f){const u=URL.createObjectURL(f);const im=new Image();await new Promise(ok=>{im.onload=ok;im.onerror=ok;im.src=u;});const k=Math.min(1,1600/Math.max(im.width||1,im.height||1));
-  const c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);return await new Promise(ok=>c.toBlob(ok,"image/jpeg",0.8));}
+/* foto: até 2400 px, boa qualidade, decodifica rápido; carimbo (data · coordenada · mapa) liga/desliga e fica lembrado */
+const carimboOn=()=>{try{return localStorage.getItem("mm-carimbo")!=="0";}catch(e){return true;}};
+async function reduzir(f,ctx){let im=null,W=0,H=0;
+  try{im=await createImageBitmap(f,{imageOrientation:"from-image"});W=im.width;H=im.height;}
+  catch(e){const u=URL.createObjectURL(f);im=new Image();await new Promise(ok=>{im.onload=ok;im.onerror=ok;im.src=u;});W=im.naturalWidth||im.width;H=im.naturalHeight||im.height;setTimeout(()=>URL.revokeObjectURL(u),0);}
+  if(!W||!H)return f;const k=Math.min(1,2400/Math.max(W,H));
+  const c=document.createElement("canvas");c.width=Math.round(W*k);c.height=Math.round(H*k);const x=c.getContext("2d");x.imageSmoothingQuality="high";x.drawImage(im,0,0,c.width,c.height);try{im.close&&im.close();}catch(e){}
+  if(ctx&&carimboOn()){const t=[new Date(ctx.t||Date.now()).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}).replace(",","")];
+    if(ctx.lat!=null)t.push(`${(+ctx.lat).toFixed(6)}, ${(+ctx.lon).toFixed(6)}${ctx.acc?" ±"+Math.round(ctx.acc)+" m":""}`);if(ctx.mapa)t.push(ctx.mapa);
+    const fs=Math.max(14,Math.round(Math.min(c.width,c.height)*0.028)),pd=Math.round(fs*0.5);x.font=`600 ${fs}px Arial,sans-serif`;
+    let txt=t.join("  ·  ");while(x.measureText(txt).width>c.width-pd*4&&txt.length>10)txt=txt.slice(0,-2);
+    const w=x.measureText(txt).width+pd*2,h=fs+pd*1.4;x.fillStyle="rgba(0,0,0,.55)";x.fillRect(pd,c.height-h-pd,w,h);
+    x.fillStyle="#fff";x.textBaseline="middle";x.fillText(txt,pd*2,c.height-pd-h/2);}
+  return await new Promise(ok=>c.toBlob(b=>ok(b||f),"image/jpeg",0.88));}
 function resumo(n){return n.tipo==="ponto"?`${n.pts[0][0].toFixed(6)}, ${n.pts[0][1].toFixed(6)}`:n.tipo==="area"?fA(areaG(n.pts)):fM(segsDe(n).reduce((s,S)=>s+compr(S),0))+(n.dur?" · "+fT(n.dur):"");}
 const ICO={ponto:"📍",linha:"📏",area:"⬛",trilha:"〰️"};
 const icoDe=n=>n.tipo==="ponto"&&n.sim?n.sim:ICO[n.tipo];
