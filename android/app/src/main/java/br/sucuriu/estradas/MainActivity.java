@@ -8,6 +8,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.provider.OpenableColumns;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -165,6 +167,22 @@ public class MainActivity extends Activity {
         } catch (Exception e) { if (escolha != null) { escolha.onReceiveValue(null); escolha = null; } }
     }
 
+    /* pede (uma vez) para o Android não pôr o app para dormir: sem isso a Samsung corta o GPS com a tela apagada */
+    void pedirBateria() {
+        if (Build.VERSION.SDK_INT < 23) return;
+        try {
+            PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+            if (pm.isIgnoringBatteryOptimizations(getPackageName())) return;
+            android.content.SharedPreferences sp = getSharedPreferences("app", MODE_PRIVATE);
+            if (sp.getInt("bateria_pedida", 0) >= 2) return;
+            sp.edit().putInt("bateria_pedida", sp.getInt("bateria_pedida", 0) + 1).apply();
+            runOnUiThread(() -> { try {
+                startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getPackageName())));
+            } catch (Exception e) { } });
+        } catch (Exception e) { }
+    }
+    @JavascriptInterface public boolean bateriaLivre() { try { return Build.VERSION.SDK_INT < 23 || ((PowerManager) getSystemService(POWER_SERVICE)).isIgnoringBatteryOptimizations(getPackageName()); } catch (Exception e) { return true; } }
+
     boolean temLocal() {
         return Build.VERSION.SDK_INT < 23 || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
@@ -256,7 +274,8 @@ public class MainActivity extends Activity {
                 runOnUiThread(() -> startActivity(Intent.createChooser(i, "Enviar anotações")));
             } catch (Exception e) { }
         }
-        @JavascriptInterface public String versao() { return "1.6"; }
+        @JavascriptInterface public String versao() { return "1.8"; }
+        @JavascriptInterface public boolean bateriaOk() { return bateriaLivre(); }
         @JavascriptInterface public boolean temVoz() { return true; }
         @JavascriptInterface public void ouvir() {
             runOnUiThread(() -> {
@@ -277,6 +296,7 @@ public class MainActivity extends Activity {
             if (!temLocal()) { runOnUiThread(() -> requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1)); return false; }
             if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED)
                 runOnUiThread(() -> requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 5));
+            pedirBateria();
             try { TrilhaServico.iniciar(MainActivity.this); return true; } catch (Exception e) { return false; }
         }
         @JavascriptInterface public void trilhaParar() { TrilhaServico.pararServico(MainActivity.this); }

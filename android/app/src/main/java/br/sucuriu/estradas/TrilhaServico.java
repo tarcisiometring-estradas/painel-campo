@@ -13,8 +13,11 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 import android.os.IBinder;
+import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.os.PowerManager;
 
 import java.io.BufferedReader;
@@ -39,6 +42,8 @@ public class TrilhaServico extends Service implements LocationListener {
     static boolean carregado = false;
     PowerManager.WakeLock trava;
     LocationManager lm;
+    Handler vigia;
+    long ultFix = 0; int novos = 0;
 
     static File arquivo(Context c) { return new File(c.getFilesDir(), "trilha_em_andamento.txt"); }
 
@@ -91,20 +96,43 @@ public class TrilhaServico extends Service implements LocationListener {
                 trava = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "estradas:trilha");
                 trava.acquire(12 * 60 * 60 * 1000L);
             } catch (Exception e) { }
-            try {
-                lm = (LocationManager) getSystemService(LOCATION_SERVICE);
-                lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, this, Looper.getMainLooper());
-            } catch (SecurityException e) { parar(); }
+            if (!registrar()) { parar(); return START_NOT_STICKY; }
+            ultFix = SystemClock.elapsedRealtime();
+            vigia = new Handler(Looper.getMainLooper());
+            vigia.postDelayed(ronda, 20000);
         }
         return START_STICKY;
     }
 
+    /** liga o GPS; usado também pelo vigia para religar quando o celular "esquece" o GPS com a tela apagada */
+    boolean registrar() {
+        try {
+            if (lm == null) lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+            try { lm.removeUpdates(this); } catch (Exception e) { }
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, this, Looper.getMainLooper());
+            return true;
+        } catch (SecurityException e) { return false; } catch (Exception e) { return true; }
+    }
+    /* a cada 20 s: se o GPS ficou 30 s mudo, religa (Samsung costuma parar o GPS com a tela apagada) */
+    final Runnable ronda = new Runnable() { @Override public void run() {
+        if (!ativo) return;
+        if (SystemClock.elapsedRealtime() - ultFix > 30000) { registrar(); ultFix = SystemClock.elapsedRealtime(); }
+        try { if (trava != null && !trava.isHeld()) trava.acquire(12 * 60 * 60 * 1000L); } catch (Exception e) { }
+        if (vigia != null) vigia.postDelayed(this, 20000);
+    } };
+
     @Override public void onLocationChanged(Location l) {
+        /* descarta posição velha (cache) que o Android às vezes entrega quando o GPS volta */
+        if (Build.VERSION.SDK_INT >= 17 && SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos() > 10_000_000_000L) return;
+        ultFix = SystemClock.elapsedRealtime();
         String p = String.format(Locale.US, "%.7f,%.7f,%.1f,%d", l.getLatitude(), l.getLongitude(), l.hasAccuracy() ? l.getAccuracy() : 99f, l.getTime());
         synchronized (PONTOS) {
             PONTOS.add(p);
             try (FileWriter w = new FileWriter(arquivo(this), true)) { w.write(p + "\n"); } catch (Exception e) { }
         }
+        if (++novos % 30 == 0) try {
+            ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(AVISO, aviso("GPS gravando · " + quantos(this) + " posições · " + DateFormat.format("HH:mm", System.currentTimeMillis())));
+        } catch (Exception e) { }
     }
     @Override public void onStatusChanged(String s, int st, Bundle b) { }
     @Override public void onProviderEnabled(String s) { }
@@ -112,6 +140,7 @@ public class TrilhaServico extends Service implements LocationListener {
 
     void parar() {
         ativo = false;
+        if (vigia != null) vigia.removeCallbacks(ronda);
         try { if (lm != null) lm.removeUpdates(this); } catch (Exception e) { }
         try { if (trava != null && trava.isHeld()) trava.release(); } catch (Exception e) { }
         stopForeground(true);
@@ -120,6 +149,7 @@ public class TrilhaServico extends Service implements LocationListener {
 
     @Override public void onDestroy() {
         ativo = false;
+        if (vigia != null) vigia.removeCallbacks(ronda);
         try { if (lm != null) lm.removeUpdates(this); } catch (Exception e) { }
         try { if (trava != null && trava.isHeld()) trava.release(); } catch (Exception e) { }
         super.onDestroy();
